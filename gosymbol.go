@@ -38,6 +38,7 @@ type Div struct {
 	RHS Expr
 }
 
+/* Evaluation functions for operands */
 func (e Var) Eval(args Arguments) float64 {
 	return args[e.Name]
 }
@@ -54,10 +55,11 @@ func (e Div) Eval(args Arguments) float64 {
 	return e.LHS.Eval(args) / e.RHS.Eval(args)
 }
 
+/* Implementing String() to get nicely formated expressions upon print */
 func (e Var) String() string {
 	return e.Name
 }
-func (e Add) String(args Arguments) string {
+func (e Add) String() string {
 	return fmt.Sprintf("( %v ) + ( %v )", e.LHS, e.RHS)
 }
 func (e Sub) String() string {
