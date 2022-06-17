@@ -58,6 +58,8 @@ func (e Var) D(varName string) Expr {
 	}
 }
 
+// TODO: implement "innre derivatan"
+
 func (e Add) D(varName string) Expr {
 	return Add{ RHS: e.RHS.D(varName), LHS: e.LHS.D(varName) }
 }
@@ -66,7 +68,7 @@ func (e Sub) D(varName string) Expr {
 	return Sub{ RHS: e.RHS.D(varName), LHS: e.LHS.D(varName) }
 }
 
-// Product rule
+// Product rule: D(fg) = D(f)g + fD(g)
 func (e Mul) D(varName string) Expr {
 	return Add{ 
 		LHS: Mul{ 
@@ -80,8 +82,24 @@ func (e Mul) D(varName string) Expr {
 	}
 }
 
+// Quote rule: D(f/g) = (D(f)g -fD(g))/g^2
 func (e Div) D(varName string) Expr {
-	panic("Not implemented")
+	return Div{
+		LHS: Sub{ 
+			LHS: Mul{ 
+				LHS: e.LHS.D(varName), 
+				RHS: e.RHS, 
+			}, 
+			RHS: Mul{ 
+				LHS: e.LHS, 
+				RHS: e.RHS.D(varName), 
+			}, 
+		},
+		RHS: Mul{
+			LHS: e.RHS,
+			RHS: e.RHS,
+		},
+	}
 }
 
 /* Evaluation functions for operands */
