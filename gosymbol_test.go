@@ -23,7 +23,7 @@ func TestExprPrint(t *testing.T) {
 		},
 		{
 			input: gosymbol.Sub(gosymbol.Var("X"), gosymbol.Var("Y")),
-			expectedOutput: "( X ) - ( Y )",
+			expectedOutput: "( X ) + ( ( -1 ) * ( Y ) )",
 		},
 		{
 			input: gosymbol.Mul(gosymbol.Var("X"), gosymbol.Var("Y")),

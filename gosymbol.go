@@ -24,20 +24,12 @@ type variable struct {
 
 type add struct {
 	Expr
-	LHS Expr
-	RHS Expr
-}
-
-type sub struct {
-	Expr
-	LHS Expr
-	RHS Expr
+	Operands []Expr
 }
 
 type mul struct {
 	Expr
-	LHS Expr
-	RHS Expr
+	Operands []Expr
 }
 
 type div struct {
@@ -56,16 +48,20 @@ func Var(name string) variable {
 	return variable{Name: name}
 }
 
-func Add(lhs, rhs Expr) add {
-	return add{LHS: lhs, RHS: rhs}
+func Neg(arg Expr) mul {
+	return Mul(Const(-1), arg)
 }
 
-func Sub(lhs, rhs Expr) sub {
-	return sub{LHS: lhs, RHS: rhs}
+func Add(ops...Expr) add {
+	return add{Operands: ops}
 }
 
-func Mul(lhs, rhs Expr) mul {
-	return mul{LHS: lhs, RHS: rhs}
+func Sub(lhs, rhs Expr) add {
+	return Add(lhs, Mul(Const(-1), rhs))
+}
+
+func Mul(ops ...Expr) mul {
+	return mul{Operands: ops}
 }
 
 func Div(lhs, rhs Expr) div {
@@ -87,19 +83,23 @@ func (e variable) D(varName string) Expr {
 }
 
 func (e add) D(varName string) Expr {
-	return Add(e.LHS.D(varName), e.RHS.D(varName))
+	differentiatedOps := make([]Expr, len(e.Operands))
+	for ix, op := range e.Operands {
+		differentiatedOps[ix] = op.D(varName)	
+	}
+	return Add(differentiatedOps...)
 }
 
-func (e sub) D(varName string) Expr {
-	return Sub(e.LHS.D(varName), e.RHS.D(varName))
-}
-
-// Product rule: D(fg) = D(f)g + fD(g)
+// Product rule: D(fghijk...) = D(f)ghijk... + fD(g)hijk... + ....
 func (e mul) D(varName string) Expr {
-	return Add(
-		Mul(e.LHS.D(varName), e.RHS),
-		Mul(e.LHS, e.RHS.D(varName)),
-	)
+	terms := make([]Expr, len(e.Operands))
+	for ix := 0; ix < len(e.Operands); ix++ {
+		var productOperands []Expr
+		copy(productOperands, e.Operands)
+		productOperands[ix] = productOperands[ix].D(varName)
+		terms[ix] = Mul(productOperands...)
+	}
+	return Add(terms...)
 }
 
 // Quote rule: D(f/g) = (D(f)g -fD(g))/g^2
@@ -124,15 +124,19 @@ func (e variable) Eval(args Arguments) float64 {
 }
 
 func (e add) Eval(args Arguments) float64 {
-	return e.LHS.Eval(args) + e.RHS.Eval(args)
-}
-
-func (e sub) Eval(args Arguments) float64 {
-	return e.LHS.Eval(args) - e.RHS.Eval(args)
+	sum := e.Operands[0].Eval(args) // Initiate with first operand since 0 may not always be identity
+	for ix := 1; ix < len(e.Operands); ix++ {
+		sum += e.Operands[ix].Eval(args)
+	}
+	return sum
 }
 
 func (e mul) Eval(args Arguments) float64 {
-	return e.LHS.Eval(args) * e.RHS.Eval(args)
+	prod := e.Operands[0].Eval(args) // Initiate with first operand since 1 may not always be identity
+	for ix := 1; ix < len(e.Operands); ix++ {
+		prod *= e.Operands[ix].Eval(args)
+	}
+	return prod
 }
 
 func (e div) Eval(args Arguments) float64 {
@@ -150,15 +154,19 @@ func (e variable) String() string {
 }
 
 func (e add) String() string {
-	return fmt.Sprintf("( %v ) + ( %v )", e.LHS, e.RHS)
-}
-
-func (e sub) String() string {
-	return fmt.Sprintf("( %v ) - ( %v )", e.LHS, e.RHS)
+	str := fmt.Sprintf("( %v )", e.Operands[0])
+	for ix := 1; ix < len(e.Operands); ix++ {
+		str += fmt.Sprintf(" + ( %v )", e.Operands[ix])
+	}
+	return str
 }
 
 func (e mul) String() string {
-	return fmt.Sprintf("( %v ) * ( %v )", e.LHS, e.RHS)
+	str := fmt.Sprintf("( %v )", e.Operands[0])
+	for ix := 1; ix < len(e.Operands); ix++ {
+		str += fmt.Sprintf(" * ( %v )", e.Operands[ix])
+	}
+	return str
 }
 
 func (e div) String() string {
