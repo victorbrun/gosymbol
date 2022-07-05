@@ -2,10 +2,12 @@ package gosymbol
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Expr interface {
 	String() string
+	Contains(Expr) bool
 	Eval(Arguments) float64
 	D(string) Expr
 }
@@ -146,7 +148,11 @@ func (e div) Eval(args Arguments) float64 {
 /* Implementing String() to get nicely formated expressions upon print */
 
 func (e constant) String() string {
-	return fmt.Sprint(e.Value)
+	if e.Value < 0 {
+		return fmt.Sprintf("( %v )", e.Value)	
+	} else {
+		return fmt.Sprint(e.Value)
+	}
 }
 
 func (e variable) String() string {
@@ -154,22 +160,36 @@ func (e variable) String() string {
 }
 
 func (e add) String() string {
-	str := fmt.Sprintf("( %v )", e.Operands[0])
+	str := fmt.Sprintf("( %v", e.Operands[0])
 	for ix := 1; ix < len(e.Operands); ix++ {
-		str += fmt.Sprintf(" + ( %v )", e.Operands[ix])
+		str += fmt.Sprintf(" + %v", e.Operands[ix])
 	}
+	str += " )"
 	return str
 }
 
 func (e mul) String() string {
-	str := fmt.Sprintf("( %v )", e.Operands[0])
+	str := fmt.Sprintf("( %v", e.Operands[0])
 	for ix := 1; ix < len(e.Operands); ix++ {
-		str += fmt.Sprintf(" * ( %v )", e.Operands[ix])
+		str += fmt.Sprintf(" * %v", e.Operands[ix])
 	}
+	str += " )"
 	return str
 }
 
 func (e div) String() string {
-	return fmt.Sprintf("( %v ) / ( %v )", e.LHS, e.RHS) 
+	return fmt.Sprintf("( %v / %v )", e.LHS, e.RHS) 
 }
+
+// Substitutes u for t in expr.
+func Substitute(expr, u, t Expr) Expr {
+	return nil
+}
+
+// Checks if expr contains u by formating expr and
+// u to strings and running a sub-string check.
+func Contains(expr, u Expr) bool {
+	return strings.Contains(fmt.Sprint(expr), fmt.Sprint(u))
+}
+
 
