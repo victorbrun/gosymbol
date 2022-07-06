@@ -206,3 +206,86 @@ func TestContains(t *testing.T) {
 		}
 	}
 }
+
+func TestSubstitute(t *testing.T) {
+	type inputArgs struct {
+		expr gosymbol.Expr
+		u gosymbol.Expr
+		t gosymbol.Expr
+	}
+
+	tests := []struct {
+		input inputArgs
+		expectedOutput gosymbol.Expr
+	} {
+		{ // Test 1: base case 1: constant
+			input: inputArgs{
+				expr: gosymbol.Const(7),
+				u: gosymbol.Const(7),
+				t: gosymbol.Const(-7),
+			},
+			expectedOutput: gosymbol.Const(-7),
+		},
+		{ // Test 2: base case 2: variable
+			input: inputArgs{
+				expr: gosymbol.Var("X"),
+				u: gosymbol.Var("X"),
+				t: gosymbol.Const(0),
+			},
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // Test 3: add operator
+			input: inputArgs{
+				expr: gosymbol.Add(gosymbol.Var("X"), gosymbol.Var("Y"), gosymbol.Const(0), gosymbol.Var("Y")),
+				u: gosymbol.Var("Y"),
+				t: gosymbol.Var("Z"),
+			},
+			expectedOutput: gosymbol.Add(gosymbol.Var("X"), gosymbol.Var("Z"), gosymbol.Const(0), gosymbol.Var("Z")),
+		},
+		{ // Test 4: mul operator
+			input: inputArgs{
+				expr: gosymbol.Mul(gosymbol.Var("X"), gosymbol.Var("Y"), gosymbol.Const(0), gosymbol.Var("Y")),
+				u: gosymbol.Var("Y"),
+				t: gosymbol.Var("Z"),
+			},
+			expectedOutput: gosymbol.Mul(gosymbol.Var("X"), gosymbol.Var("Z"), gosymbol.Const(0), gosymbol.Var("Z")),
+		},
+		{ // Test 5: div operator
+			input: inputArgs{
+				expr: gosymbol.Div(gosymbol.Var("X"), gosymbol.Var("Y")),
+				u: gosymbol.Var("Y"),
+				t: gosymbol.Var("Z"),
+			},
+			expectedOutput: gosymbol.Div(gosymbol.Var("X"), gosymbol.Var("Z")),
+		},
+		{ // Test 6: substituting whole subtree
+			input: inputArgs{
+				expr: gosymbol.Add(gosymbol.Div(gosymbol.Const(9), gosymbol.Var("X")), gosymbol.Var("Y"), gosymbol.Const(0), gosymbol.Var("Y")),
+				u: gosymbol.Div(gosymbol.Const(9), gosymbol.Var("X")),
+				t: gosymbol.Var("Z"),
+			},
+			expectedOutput: gosymbol.Add(gosymbol.Var("Z"), gosymbol.Var("Y"), gosymbol.Const(0), gosymbol.Var("Y")),
+		},
+		{ // Test 7: nested substitution, making sure that the recursion starts bottom up
+			input: inputArgs{
+				expr: gosymbol.Div(gosymbol.Const(1), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("X"))),
+				u: gosymbol.Div(gosymbol.Const(1), gosymbol.Var("X")),
+				t: gosymbol.Var("X"),
+			},
+			expectedOutput: gosymbol.Var("X"),
+		},
+	}
+
+	for ix, test := range tests {
+		result := gosymbol.Substitute(test.input.expr, test.input.u, test.input.t)
+		if !reflect.DeepEqual(result, test.expectedOutput) {
+			errMsg := fmt.Sprintf("Failed test: %v: Expected %v, Got: %v", ix+1, test.expectedOutput, result)
+			t.Error(errMsg)
+		}
+	}
+}
+
+
+
+
+

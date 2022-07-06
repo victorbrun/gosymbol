@@ -2,10 +2,15 @@ package gosymbol
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
 type Expr interface {
+	// Private functions
+	substitute(Expr, Expr) Expr
+
+	// Public functions
 	String() string
 	Contains(Expr) bool
 	Eval(Arguments) float64
@@ -183,7 +188,70 @@ func (e div) String() string {
 
 // Substitutes u for t in expr.
 func Substitute(expr, u, t Expr) Expr {
-	return nil
+	// If expr does not contain what you want to 
+	// substitute we exit and return expr unchanged
+	if !Contains(expr, u) {
+		return expr
+	}
+	
+	return expr.substitute(u, t)
+}
+
+func (e constant) substitute(u, t Expr) Expr {
+	if uTyped, ok := u.(constant); ok && e.Value == uTyped.Value {
+		return t
+	} else {
+		return e
+	}
+}
+
+func (e variable) substitute(u, t Expr) Expr {
+	if uTyped, ok := u.(variable); ok && e.Name == uTyped.Name {
+		return t
+	} else {
+		return e
+	}
+}
+
+func (e add) substitute(u, t Expr) Expr {
+	// If e equals u we return t, otherwise
+	// we run substitute to possibly alter every
+	// operand of e and then returns e.
+	if reflect.DeepEqual(e, u) {
+		return t
+	} else {
+		for ix, op := range e.Operands {
+			e.Operands[ix] = op.substitute(u, t)
+		}
+		return e
+	}
+}
+
+func (e mul) substitute(u, t Expr) Expr { 
+	// If e equals u we return t, otherwise
+	// we run substitute to possibly alter every
+	// operand of e and then returns e.
+	if reflect.DeepEqual(e, u) {
+		return t
+	} else {
+		for ix, op := range e.Operands {
+			e.Operands[ix] = op.substitute(u, t)
+		}
+		return e
+	}
+}
+
+func (e div) substitute(u, t Expr) Expr {
+	// If e equals u we return t, otherwise
+	// we run substitute to possibly alter every
+	// operand of e and then returns e.
+	if reflect.DeepEqual(e, u) {
+		return t
+	} else {
+		e.LHS = e.LHS.substitute(u, t)
+		e.RHS = e.RHS.substitute(u, t)
+		return e
+	}
 }
 
 // Checks if expr contains u by formating expr and
