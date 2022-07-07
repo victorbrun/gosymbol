@@ -3,16 +3,15 @@ package gosymbol
 import (
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 type Expr interface {
 	// Private functions
+	contains(Expr) bool
 	substitute(Expr, Expr) Expr
 
 	// Public functions
 	String() string
-	Contains(Expr) bool
 	Eval(Arguments) float64
 	D(string) Expr
 }
@@ -188,12 +187,14 @@ func (e div) String() string {
 
 // Substitutes u for t in expr.
 func Substitute(expr, u, t Expr) Expr {
-	// If expr does not contain what you want to 
-	// substitute we exit and return expr unchanged
-	if !Contains(expr, u) {
-		return expr
+	// While expr still contains u we 
+	// continue to substitute. This is catch
+	// the case when a substitution leads to 
+	// another substitutable sub-expression 
+	// (see test 7 in gosymbol_test.go).
+	for Contains(expr, u) {
+		expr = expr.substitute(u, t)
 	}
-	
 	return expr.substitute(u, t)
 }
 
@@ -256,8 +257,56 @@ func (e div) substitute(u, t Expr) Expr {
 
 // Checks if expr contains u by formating expr and
 // u to strings and running a sub-string check.
+// TODO: this breaks when trying to do nested substitution
 func Contains(expr, u Expr) bool {
-	return strings.Contains(fmt.Sprint(expr), fmt.Sprint(u))
+	return expr.contains(u)
+}
+
+func (e constant) contains(u Expr) bool {	
+	if uTyped, ok := u.(constant); ok && e.Value == uTyped.Value {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (e variable) contains(u Expr) bool {	
+	if uTyped, ok := u.(variable); ok && e.Name == uTyped.Name {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (e add) contains(u Expr) bool {
+	if reflect.DeepEqual(e, u) {
+		return true
+	}
+	
+	cumBool := false
+	for _, op := range e.Operands {
+		cumBool = cumBool || op.contains(u)	
+	}
+	return cumBool
+}
+
+func (e mul) contains(u Expr) bool {
+	if reflect.DeepEqual(e, u) {
+		return true
+	}
+	
+	cumBool := false
+	for _, op := range e.Operands {
+		cumBool = cumBool || op.contains(u)	
+	}
+	return cumBool
+}
+
+func (e div) contains(u Expr) bool {
+	if reflect.DeepEqual(e, u) {
+		return true
+	}
+	return e.LHS.contains(u) || e.RHS.contains(u)
 }
 
 

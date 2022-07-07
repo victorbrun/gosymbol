@@ -274,6 +274,14 @@ func TestSubstitute(t *testing.T) {
 			},
 			expectedOutput: gosymbol.Var("X"),
 		},
+		{ // Test 8: no expression matching u
+			input: inputArgs{
+				expr: gosymbol.Var("X"),
+				u: gosymbol.Var("Y"),
+				t: gosymbol.Const(0),
+			},
+			expectedOutput: gosymbol.Var("X"),
+		},
 	}
 
 	for ix, test := range tests {
