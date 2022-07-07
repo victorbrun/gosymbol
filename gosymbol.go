@@ -88,7 +88,7 @@ func Add(ops...Expr) add {
 }
 
 func Sub(lhs, rhs Expr) add {
-	return Add(lhs, Mul(Const(-1), rhs))
+	return Add(lhs, Neg(rhs))
 }
 
 func Mul(ops ...Expr) mul {
