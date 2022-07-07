@@ -18,6 +18,8 @@ type Expr interface {
 
 type Arguments map[string]float64
 
+/* Basic operators */
+
 type constant struct {
 	Expr
 	Value float64
@@ -44,7 +46,30 @@ type div struct {
 	RHS Expr
 }
 
-/* Factory */
+/* Common Functions */
+
+type exp struct {
+	Expr
+	Arg Expr
+}
+
+type log struct {
+	Expr
+	Arg Expr
+}
+
+type pow struct {
+	Expr
+	Base Expr
+	Exponent constant // For expressions in exponent use exp.
+}
+
+type root struct {
+	Expr
+	Arg Expr
+}
+
+/* Factories */
 
 func Const(val float64) constant {
 	return constant{Value: val}
@@ -72,6 +97,18 @@ func Mul(ops ...Expr) mul {
 
 func Div(lhs, rhs Expr) div {
 	return div{LHS: lhs, RHS: rhs}
+}
+
+func Exp(arg Expr) exp {
+	return exp{Arg: arg}
+}
+
+func Log(arg Expr) log {
+	return log{Arg: arg}
+}
+
+func Pow(base Expr, exponent constant) pow {
+	return pow{Base: base, Exponent: exponent}
 }
 
 /* Differentiation rules */
@@ -117,6 +154,23 @@ func (e div) D(varName string) Expr {
 		),
 		Mul(e.RHS, e.RHS),
 	)
+}
+
+func (e exp) D(varName string) Expr {
+	return Mul(e, e.Arg.D(varName))
+}
+
+func (e log) D(varName string) Expr {
+	return Mul(Pow(e.Arg, Const(-1)), e.Arg.D(varName))
+}
+
+func (e pow) D(varName string) Expr {
+	return Mul(e.Exponent, Pow(e.Base, Const(e.Exponent.Value-1)), e.Base.D(varName))
+}
+
+// TODO
+func (e root) D(varName string) Expr {
+	return nil
 }
 
 /* Evaluation functions for operands */
@@ -257,7 +311,6 @@ func (e div) substitute(u, t Expr) Expr {
 
 // Checks if expr contains u by formating expr and
 // u to strings and running a sub-string check.
-// TODO: this breaks when trying to do nested substitution
 func Contains(expr, u Expr) bool {
 	return expr.contains(u)
 }
