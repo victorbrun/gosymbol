@@ -2,8 +2,12 @@ package gosymbol
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 )
+
+type VarName string
+type Arguments map[VarName]float64
 
 type Expr interface {
 	// Private functions
@@ -13,10 +17,8 @@ type Expr interface {
 	// Public functions
 	String() string
 	Eval(Arguments) float64
-	D(string) Expr
+	D(VarName) Expr
 }
-
-type Arguments map[string]float64
 
 /* Basic operators */
 
@@ -27,7 +29,7 @@ type constant struct {
 
 type variable struct {
 	Expr
-	Name string
+	Name VarName
 }
 
 type add struct {
@@ -38,12 +40,6 @@ type add struct {
 type mul struct {
 	Expr
 	Operands []Expr
-}
-
-type div struct {
-	Expr
-	LHS Expr
-	RHS Expr
 }
 
 /* Common Functions */
@@ -64,7 +60,7 @@ type pow struct {
 	Exponent constant // For expressions in exponent use exp.
 }
 
-type root struct {
+type sqrt struct {
 	Expr
 	Arg Expr
 }
@@ -75,7 +71,7 @@ func Const(val float64) constant {
 	return constant{Value: val}
 }
 
-func Var(name string) variable {
+func Var(name VarName) variable {
 	return variable{Name: name}
 }
 
@@ -95,8 +91,8 @@ func Mul(ops ...Expr) mul {
 	return mul{Operands: ops}
 }
 
-func Div(lhs, rhs Expr) div {
-	return div{LHS: lhs, RHS: rhs}
+func Div(lhs, rhs Expr) mul {
+	return Mul(lhs, Pow(rhs, Const(-1)))
 }
 
 func Exp(arg Expr) exp {
@@ -111,13 +107,17 @@ func Pow(base Expr, exponent constant) pow {
 	return pow{Base: base, Exponent: exponent}
 }
 
+func Sqrt(arg Expr) sqrt {
+	return sqrt{Arg: arg}
+}
+
 /* Differentiation rules */
 
-func (e constant) D(varName string) Expr {
+func (e constant) D(varName VarName) Expr {
 	return Const(0.0)
 }
 
-func (e variable) D(varName string) Expr {
+func (e variable) D(varName VarName) Expr {
 	if varName == e.Name {
 		return Const(1.0)
 	} else {
@@ -125,7 +125,7 @@ func (e variable) D(varName string) Expr {
 	}
 }
 
-func (e add) D(varName string) Expr {
+func (e add) D(varName VarName) Expr {
 	differentiatedOps := make([]Expr, len(e.Operands))
 	for ix, op := range e.Operands {
 		differentiatedOps[ix] = op.D(varName)	
@@ -134,7 +134,7 @@ func (e add) D(varName string) Expr {
 }
 
 // Product rule: D(fghijk...) = D(f)ghijk... + fD(g)hijk... + ....
-func (e mul) D(varName string) Expr {
+func (e mul) D(varName VarName) Expr {
 	terms := make([]Expr, len(e.Operands))
 	for ix := 0; ix < len(e.Operands); ix++ {
 		var productOperands []Expr
@@ -145,32 +145,22 @@ func (e mul) D(varName string) Expr {
 	return Add(terms...)
 }
 
-// Quote rule: D(f/g) = (D(f)g -fD(g))/g^2
-func (e div) D(varName string) Expr {
-	return Div(
-		Sub(
-			Mul(e.LHS.D(varName), e.RHS),
-			Mul(e.LHS, e.RHS.D(varName)),
-		),
-		Mul(e.RHS, e.RHS),
-	)
-}
-
-func (e exp) D(varName string) Expr {
+func (e exp) D(varName VarName) Expr {
 	return Mul(e, e.Arg.D(varName))
 }
 
-func (e log) D(varName string) Expr {
+func (e log) D(varName VarName) Expr {
 	return Mul(Pow(e.Arg, Const(-1)), e.Arg.D(varName))
 }
 
-func (e pow) D(varName string) Expr {
+// Power rule: D(x^a) = ax^(a-1)
+func (e pow) D(varName VarName) Expr {
 	return Mul(e.Exponent, Pow(e.Base, Const(e.Exponent.Value-1)), e.Base.D(varName))
 }
 
-// TODO
-func (e root) D(varName string) Expr {
-	return nil
+// D(sqrt(f)) = (1/2)*(1/sqrt(f))*D(f)
+func (e sqrt) D(varName VarName) Expr {
+	return Mul(Div(Const(1), Const(2)), Div(Const(1), e), e.Arg.D(varName))
 }
 
 /* Evaluation functions for operands */
@@ -199,8 +189,16 @@ func (e mul) Eval(args Arguments) float64 {
 	return prod
 }
 
-func (e div) Eval(args Arguments) float64 {
-	return e.LHS.Eval(args) / e.RHS.Eval(args)
+func (e exp) Eval(args Arguments) float64 {
+	return math.Exp(e.Arg.Eval(args))
+}
+
+func (e log) Eval(args Arguments) float64 {
+	return math.Log(e.Arg.Eval(args))
+}
+
+func (e pow) Eval(args Arguments) float64 {
+	return math.Pow(e.Base.Eval(args), e.Exponent.Eval(args))
 }
 
 /* Implementing String() to get nicely formated expressions upon print */
@@ -214,7 +212,7 @@ func (e constant) String() string {
 }
 
 func (e variable) String() string {
-	return e.Name
+	return string(e.Name)
 }
 
 func (e add) String() string {
@@ -235,8 +233,16 @@ func (e mul) String() string {
 	return str
 }
 
-func (e div) String() string {
-	return fmt.Sprintf("( %v / %v )", e.LHS, e.RHS) 
+func (e exp) String() string {
+	return fmt.Sprintf("exp( %v )", e.Arg)
+}
+
+func (e log) String() string {
+	return fmt.Sprintf("log( %v )", e.Arg)
+}
+
+func (e pow) String() string {
+	return fmt.Sprintf("( %v^%v )", e.Base, e.Exponent)
 }
 
 // Substitutes u for t in expr.
@@ -296,17 +302,19 @@ func (e mul) substitute(u, t Expr) Expr {
 	}
 }
 
-func (e div) substitute(u, t Expr) Expr {
-	// If e equals u we return t, otherwise
-	// we run substitute to possibly alter every
-	// operand of e and then returns e.
-	if reflect.DeepEqual(e, u) {
-		return t
-	} else {
-		e.LHS = e.LHS.substitute(u, t)
-		e.RHS = e.RHS.substitute(u, t)
-		return e
-	}
+// TODO:
+func (e exp) substitute(u, t Expr) Expr {
+	return nil
+}
+
+// TODO:
+func (e log) substitute(u, t Expr) Expr {
+	return nil
+}
+
+// TODO:
+func (e pow) substitute(u, t Expr) Expr {
+	return nil
 }
 
 // Checks if expr contains u by formating expr and
@@ -355,11 +363,17 @@ func (e mul) contains(u Expr) bool {
 	return cumBool
 }
 
-func (e div) contains(u Expr) bool {
-	if reflect.DeepEqual(e, u) {
-		return true
-	}
-	return e.LHS.contains(u) || e.RHS.contains(u)
-}
+// TODO:
+func (e exp) contains(u Expr) bool {
+	return false
+} 
 
+// TODO:
+func (e log) contains(u Expr) bool {
+	return false
+} 
 
+// TODO:
+func (e pow) contains(u Expr) bool {
+	return false
+} 

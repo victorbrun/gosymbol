@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"math"
 
 	"github.com/victorbrun/gosymbol"
 )
@@ -39,7 +40,19 @@ func TestExprPrint(t *testing.T) {
 		},
 		{
 			input: gosymbol.Div(gosymbol.Var("X"), gosymbol.Var("Y")),
-			expectedOutput: "( X / Y )",
+			expectedOutput: "( X * ( Y^( -1 ) ) )",
+		},
+		{
+			input: gosymbol.Exp(gosymbol.Var("X")),
+			expectedOutput: "exp( X )",
+		},
+		{
+			input: gosymbol.Log(gosymbol.Var("X")),
+			expectedOutput: "log( X )",
+		},
+		{
+			input: gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(9)),
+			expectedOutput: "( X^9 )",
 		},
 	}
 	
@@ -64,10 +77,24 @@ func TestExprEval(t *testing.T) {
 	} {
 		{
 			input: inputArgs{
+				expr: gosymbol.Const(0),
+				args: gosymbol.Arguments{ "X": 10 },
+			},
+			expectedOutput: 0,
+		},
+		{
+			input: inputArgs{
 				expr: gosymbol.Var("X"),
 				args: gosymbol.Arguments{ "X": 1.0 },
 			},
 			expectedOutput: 1.0,
+		},
+		{
+			input: inputArgs{
+				expr: gosymbol.Neg(gosymbol.Const(10)),
+				args: gosymbol.Arguments{"X": 0},
+			},
+			expectedOutput: -10,
 		},
 		{
 			input: inputArgs{
@@ -98,6 +125,27 @@ func TestExprEval(t *testing.T) {
 			},
 			expectedOutput: 0.5,
 		},
+		{
+			input: inputArgs{
+				expr: gosymbol.Exp(gosymbol.Var("X")),
+				args: gosymbol.Arguments{"X": 0},
+			},
+			expectedOutput: 1,
+		},
+		{
+			input: inputArgs{
+				expr: gosymbol.Log(gosymbol.Var("X")),
+				args: gosymbol.Arguments{"X": 1},
+			},
+			expectedOutput: math.Log(1),
+		},
+		{
+			input: inputArgs{
+				expr: gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(-1)),
+				args: gosymbol.Arguments{"X": 10},
+			},
+			expectedOutput: 1/10.0,
+		},
 	}
 
 	for ix, test := range tests {
@@ -112,7 +160,7 @@ func TestExprEval(t *testing.T) {
 func TestD(t *testing.T) {
 	type inputArgs struct {
 		expr gosymbol.Expr
-		diffVar string
+		diffVar gosymbol.VarName
 	}
 
 	tests := []struct{
