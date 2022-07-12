@@ -304,17 +304,33 @@ func (e mul) substitute(u, t Expr) Expr {
 
 // TODO:
 func (e exp) substitute(u, t Expr) Expr {
-	return nil
+	if reflect.DeepEqual(e, u) {
+		return t
+	}
+	e.Arg = e.Arg.substitute(u, t)
+	return e
 }
 
 // TODO:
 func (e log) substitute(u, t Expr) Expr {
-	return nil
+	if reflect.DeepEqual(e, u) {
+		return t
+	}
+	e.Arg = e.Arg.substitute(u, t)
+	return e
 }
 
 // TODO:
 func (e pow) substitute(u, t Expr) Expr {
-	return nil
+	if reflect.DeepEqual(e, u) {
+		return t
+	} else if tTyped, ok := t.(constant); reflect.DeepEqual(e.Exponent, u) && ok {
+		e.Exponent = tTyped
+		return e
+	} else {
+		e.Base = e.Base.substitute(u, t)
+		return e
+	}
 }
 
 // Checks if expr contains u by formating expr and
@@ -363,17 +379,23 @@ func (e mul) contains(u Expr) bool {
 	return cumBool
 }
 
-// TODO:
 func (e exp) contains(u Expr) bool {
-	return false
+	if reflect.DeepEqual(e, u) {
+		return true
+	}
+	return e.Arg.contains(u)
 } 
 
-// TODO:
 func (e log) contains(u Expr) bool {
-	return false
+	if reflect.DeepEqual(e, u) {
+		return true
+	}
+	return e.Arg.contains(u)
 } 
 
-// TODO:
 func (e pow) contains(u Expr) bool {
-	return false
+	if reflect.DeepEqual(e, u) {
+		return true
+	}
+	return e.Base.contains(u)
 } 

@@ -187,7 +187,28 @@ func TestD(t *testing.T) {
 				diffVar: "Y",
 			},
 			expectedOutput: gosymbol.Const(0),
-		},	
+		},
+		/*{ // Test 4
+			input: inputArgs{
+				expr: gosymbol.Exp(gosymbol.Var("X")),
+				diffVar: "X",
+			},
+			expectedOutput: gosymbol.Exp(gosymbol.Var("X")),
+		},
+		{ // Test 5
+			input: inputArgs{
+				expr: gosymbol.Log(gosymbol.Var("X")),
+				diffVar: "X",
+			},
+			expectedOutput: gosymbol.Div(gosymbol.Const(1), gosymbol.Var("X")),
+		},
+		{ // Test 6
+			input: inputArgs{
+				expr: gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(2)),
+				diffVar: "X",
+			},
+			expectedOutput: gosymbol.Mul(gosymbol.Const(2), gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(1))),
+		},*/
 	}
 
 	for ix, test := range tests {
@@ -298,7 +319,7 @@ func TestSubstitute(t *testing.T) {
 			},
 			expectedOutput: gosymbol.Mul(gosymbol.Var("X"), gosymbol.Var("Z"), gosymbol.Const(0), gosymbol.Var("Z")),
 		},
-		{ // Test 5: div operator
+		{ // Test 5: Div
 			input: inputArgs{
 				expr: gosymbol.Div(gosymbol.Var("X"), gosymbol.Var("Y")),
 				u: gosymbol.Var("Y"),
@@ -329,6 +350,30 @@ func TestSubstitute(t *testing.T) {
 				t: gosymbol.Const(0),
 			},
 			expectedOutput: gosymbol.Var("X"),
+		},
+		{ // Test 9: exp operator
+			input: inputArgs{
+				expr: gosymbol.Exp(gosymbol.Var("X")),
+				u: gosymbol.Exp(gosymbol.Var("X")),
+				t: gosymbol.Var("Y"),
+			},
+			expectedOutput: gosymbol.Var("Y"),
+		},
+		{ // Test 10: log operator
+			input: inputArgs{
+				expr: gosymbol.Log(gosymbol.Var("X")),
+				u: gosymbol.Log(gosymbol.Var("X")),
+				t: gosymbol.Var("Y"),
+			},
+			expectedOutput: gosymbol.Var("Y"),
+		},
+		{ // Test 11: pow operator
+			input: inputArgs{
+				expr: gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(10)),
+				u: gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(10)),
+				t: gosymbol.Var("Y"),
+			},
+			expectedOutput: gosymbol.Var("Y"),
 		},
 	}
 
