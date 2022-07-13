@@ -8,6 +8,7 @@ import (
 
 type VarName string
 type Arguments map[VarName]float64
+type Func func(Arguments) float64
 
 type Expr interface {
 	// Private functions
@@ -16,7 +17,7 @@ type Expr interface {
 
 	// Public functions
 	String() string
-	Eval(Arguments) float64
+	Eval() Func
 	D(VarName) Expr
 }
 
@@ -165,40 +166,44 @@ func (e sqrt) D(varName VarName) Expr {
 
 /* Evaluation functions for operands */
 
-func (e constant) Eval(args Arguments) float64 {
-	return e.Value
+func (e constant) Eval() Func {
+	return func(args Arguments) float64 {return e.Value}
 }
 
-func (e variable) Eval(args Arguments) float64 {
-	return args[e.Name]
+func (e variable) Eval() Func {
+	return func(args Arguments) float64 {return args[e.Name]}
 }
 
-func (e add) Eval(args Arguments) float64 {
-	sum := e.Operands[0].Eval(args) // Initiate with first operand since 0 may not always be identity
-	for ix := 1; ix < len(e.Operands); ix++ {
-		sum += e.Operands[ix].Eval(args)
+func (e add) Eval() Func {
+	return func(args Arguments) float64 {
+		sum := e.Operands[0].Eval()(args) // Initiate with first operand since 0 may not always be identity
+		for ix := 1; ix < len(e.Operands); ix++ {
+			sum += e.Operands[ix].Eval()(args)
+		}
+		return sum
 	}
-	return sum
 }
 
-func (e mul) Eval(args Arguments) float64 {
-	prod := e.Operands[0].Eval(args) // Initiate with first operand since 1 may not always be identity
-	for ix := 1; ix < len(e.Operands); ix++ {
-		prod *= e.Operands[ix].Eval(args)
+func (e mul) Eval() Func {
+	return func(args Arguments) float64 {
+		prod := e.Operands[0].Eval()(args) // Initiate with first operand since 1 may not always be identity
+		for ix := 1; ix < len(e.Operands); ix++ {
+			prod *= e.Operands[ix].Eval()(args)
+		}
+		return prod
 	}
-	return prod
 }
 
-func (e exp) Eval(args Arguments) float64 {
-	return math.Exp(e.Arg.Eval(args))
+func (e exp) Eval() Func {
+	return func(args Arguments) float64 {return math.Exp(e.Arg.Eval()(args))}
 }
 
-func (e log) Eval(args Arguments) float64 {
-	return math.Log(e.Arg.Eval(args))
+func (e log) Eval() Func {
+	return func(args Arguments) float64 {return math.Log(e.Arg.Eval()(args))}
 }
 
-func (e pow) Eval(args Arguments) float64 {
-	return math.Pow(e.Base.Eval(args), e.Exponent.Eval(args))
+func (e pow) Eval() Func {
+	return func(args Arguments) float64 {return math.Pow(e.Base.Eval()(args), e.Exponent.Eval()(args))}
 }
 
 /* Implementing String() to get nicely formated expressions upon print */
@@ -302,7 +307,6 @@ func (e mul) substitute(u, t Expr) Expr {
 	}
 }
 
-// TODO:
 func (e exp) substitute(u, t Expr) Expr {
 	if reflect.DeepEqual(e, u) {
 		return t
@@ -311,7 +315,6 @@ func (e exp) substitute(u, t Expr) Expr {
 	return e
 }
 
-// TODO:
 func (e log) substitute(u, t Expr) Expr {
 	if reflect.DeepEqual(e, u) {
 		return t
@@ -320,7 +323,6 @@ func (e log) substitute(u, t Expr) Expr {
 	return e
 }
 
-// TODO:
 func (e pow) substitute(u, t Expr) Expr {
 	if reflect.DeepEqual(e, u) {
 		return t
@@ -398,4 +400,10 @@ func (e pow) contains(u Expr) bool {
 		return true
 	}
 	return e.Base.contains(u)
-} 
+}
+
+// Returns the different variable names 
+// present in the given expression.
+func VariableNames(expr Expr) []VarName {
+	return nil
+}

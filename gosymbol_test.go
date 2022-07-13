@@ -149,7 +149,7 @@ func TestExprEval(t *testing.T) {
 	}
 
 	for ix, test := range tests {
-		result := test.input.expr.Eval(test.input.args)
+		result := test.input.expr.Eval()(test.input.args)
 		if result != test.expectedOutput {
 			errMsg := fmt.Sprintf("Failed test: %v\nExpected: %v\nGot: %v", ix+1, test.expectedOutput, result)
 			t.Error(errMsg)
