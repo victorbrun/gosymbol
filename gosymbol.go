@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"sort"
 )
 
 type VarName string
@@ -14,6 +15,7 @@ type Expr interface {
 	// Private functions
 	contains(Expr) bool
 	substitute(Expr, Expr) Expr
+	variableNames(*[]string)
 
 	// Public functions
 	String() string
@@ -402,8 +404,60 @@ func (e pow) contains(u Expr) bool {
 	return e.Base.contains(u)
 }
 
-// Returns the different variable names 
+// TODO: Returns the different variable names 
 // present in the given expression.
 func VariableNames(expr Expr) []VarName {
-	return nil
+	var stringSlice []string
+	expr.variableNames(&stringSlice)
+	if len(stringSlice) == 0 {
+		return []VarName{}
+	}
+
+	// Checks for and deletes duplicates of variable names
+	// TODO: speed up by checking for duplicates during sorting
+	sort.Strings(stringSlice)
+	var variableNamesSlice []VarName
+	variableNamesSlice = append(variableNamesSlice, VarName(stringSlice[0]))
+	jx := 0
+	for ix := 1; ix < len(stringSlice); ix++ {
+		if variableNamesSlice[jx] != VarName(stringSlice[ix]) {
+			variableNamesSlice = append(variableNamesSlice, VarName(stringSlice[ix]))
+			jx++
+		}
+	}
+
+	return variableNamesSlice
 }
+
+func (e constant) variableNames(targetSlice *[]string) {}
+
+func (e variable) variableNames(targetSlice *[]string) {
+	*targetSlice = append(*targetSlice, string(e.Name))
+}
+
+func (e add) variableNames(targetSlice *[]string) {
+	for _, op := range e.Operands {
+		op.variableNames(targetSlice)
+	}
+}
+
+func (e mul) variableNames(targetSlice *[]string) {
+	for _, op := range e.Operands {
+		op.variableNames(targetSlice)
+	}
+}
+
+func (e pow) variableNames(targetSlice *[]string) {
+	e.Base.variableNames(targetSlice)
+}
+
+
+func (e exp) variableNames(targetSlice *[]string) {
+	e.Arg.variableNames(targetSlice)
+}
+
+
+func (e log) variableNames(targetSlice *[]string) {
+	e.Arg.variableNames(targetSlice)
+}
+
