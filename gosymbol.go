@@ -404,7 +404,7 @@ func (e pow) contains(u Expr) bool {
 	return e.Base.contains(u)
 }
 
-// TODO: Returns the different variable names 
+// Returns the different variable names 
 // present in the given expression.
 func VariableNames(expr Expr) []VarName {
 	var stringSlice []string
@@ -451,11 +451,9 @@ func (e pow) variableNames(targetSlice *[]string) {
 	e.Base.variableNames(targetSlice)
 }
 
-
 func (e exp) variableNames(targetSlice *[]string) {
 	e.Arg.variableNames(targetSlice)
 }
-
 
 func (e log) variableNames(targetSlice *[]string) {
 	e.Arg.variableNames(targetSlice)

@@ -386,3 +386,39 @@ func TestSubstitute(t *testing.T) {
 	}
 }
 
+func TestVariableNames(t *testing.T) {
+	tests := []struct {
+		input gosymbol.Expr
+		expectedOutput []gosymbol.VarName
+	}{
+		{
+			input: gosymbol.Const(0),
+			expectedOutput: []gosymbol.VarName{},
+		},
+		{
+			input: gosymbol.Var("X"),
+			expectedOutput: []gosymbol.VarName{"X"},
+		},
+		{
+			input: gosymbol.Mul(gosymbol.Var("X"), gosymbol.Var("X"), gosymbol.Var("Y")),
+			expectedOutput: []gosymbol.VarName{"X", "Y"},
+		},
+		{
+			input: gosymbol.Add(gosymbol.Var("X"), gosymbol.Var("X"), gosymbol.Var("Y")),
+			expectedOutput: []gosymbol.VarName{"X", "Y"},
+		},
+		{
+			input: gosymbol.Pow(gosymbol.Mul(gosymbol.Var("X"), gosymbol.Var("X"), gosymbol.Var("Y")), gosymbol.Const(10)), 
+			expectedOutput: []gosymbol.VarName{"X", "Y"},
+		},
+	}
+
+	for ix, test := range tests {
+		result := gosymbol.VariableNames(test.input)
+		if !reflect.DeepEqual(result, test.expectedOutput) {
+			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
+			t.Error(errMsg)
+		}
+	}
+}
+
