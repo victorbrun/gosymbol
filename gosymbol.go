@@ -18,6 +18,7 @@ type Expr interface {
 	substitute(Expr, Expr) Expr
 	variableNames(*[]string)
 	numberOfOperands() int
+	operand(int) Expr
 
 	// Public functions
 	String() string
@@ -472,6 +473,40 @@ func (e add) numberOfOperands() int {return len(e.Operands)}
 func (e mul) numberOfOperands() int {return len(e.Operands)}
 func (e pow) numberOfOperands() int {return 2} // TODO: Should this be 1 or 2?
 
+// Returns the n:th (starting at 1) operand (left to right) of expr.
+// If expr has no operands it returns nil.
+// If n is larger than NumberOfOperands(expr)-1 it will panic.
+func Operand(expr Expr, n int) Expr {
+	return expr.operand(n)
+}
+
+func (e constant) operand(n int) Expr {return nil}
+func (e variable) operand(n int) Expr {return nil}
+func (e add) operand(n int) Expr {
+	if n > NumberOfOperands(e) {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, len(e.Operands))
+		panic(errMsg)
+	}
+	return e.Operands[n-1]
+}
+func (e mul) operand(n int) Expr {
+	if n > NumberOfOperands(e) {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, len(e.Operands))
+		panic(errMsg)
+	}
+	return e.Operands[n-1]
+}
+func (e pow) operand(n int) Expr {	
+	if n > NumberOfOperands(e) {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, 2)
+		panic(errMsg)
+	} else if n == 1 {
+		return e.Base
+	} else {
+		return e.Exponent
+	}
+}
+
 
 // TODO: figure this out
 func Simplify(expr Expr) Expr {
@@ -484,3 +519,4 @@ func Simplify(expr Expr) Expr {
 func Expand(expr Expr) Expr {
 	return nil
 }
+
