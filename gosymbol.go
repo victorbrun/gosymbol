@@ -5,6 +5,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+
 )
 
 type VarName string
@@ -16,6 +17,7 @@ type Expr interface {
 	contains(Expr) bool
 	substitute(Expr, Expr) Expr
 	variableNames(*[]string)
+	numberOfOperands() int
 
 	// Public functions
 	String() string
@@ -459,3 +461,26 @@ func (e log) variableNames(targetSlice *[]string) {
 	e.Arg.variableNames(targetSlice)
 }
 
+// Returns the number of operands for top level operation.
+func NumberOfOperands(expr Expr) int {
+	return expr.numberOfOperands()
+}
+
+func (e constant) numberOfOperands() int {return 0}
+func (e variable) numberOfOperands() int {return 0}
+func (e add) numberOfOperands() int {return len(e.Operands)}
+func (e mul) numberOfOperands() int {return len(e.Operands)}
+func (e pow) numberOfOperands() int {return 2} // TODO: Should this be 1 or 2?
+
+
+// TODO: figure this out
+func Simplify(expr Expr) Expr {
+	// To implement:
+	// 
+	return nil
+}
+
+// TODO: figure this out
+func Expand(expr Expr) Expr {
+	return nil
+}
