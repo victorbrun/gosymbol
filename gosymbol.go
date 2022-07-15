@@ -19,6 +19,7 @@ type Expr interface {
 	variableNames(*[]string)
 	numberOfOperands() int
 	operand(int) Expr
+	simplify() Expr
 
 	// Public functions
 	String() string
@@ -27,6 +28,10 @@ type Expr interface {
 }
 
 /* Basic operators */
+
+type undefined struct {
+	Expr
+}
 
 type constant struct {
 	Expr
@@ -508,12 +513,17 @@ func (e pow) operand(n int) Expr {
 }
 
 
-// TODO: figure this out
-func Simplify(expr Expr) Expr {
-	// To implement:
-	// 
+// Simplifies expr according to:
+// 1. 
+func Simplify(expr Expr) Expr { 
 	return nil
 }
+
+func (e constant) simplify() Expr {return nil}
+func (e variable) simplify() Expr {return nil}
+func (e add) simplify() Expr {return nil}
+func (e mul) simplify() Expr {return nil}
+func (e pow) simplify() Expr {return nil}
 
 // TODO: figure this out
 func Expand(expr Expr) Expr {
