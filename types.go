@@ -39,6 +39,9 @@ type constrainedVariable struct {
 type simplificationRule struct {
 	lhs Expr
 	rhs Expr
+
+	// The mapping from lhs to rhs.
+	transform func(Expr) Expr
 }
 
 

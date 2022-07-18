@@ -39,6 +39,12 @@ var powerSimplificationRules []simplificationRule = []simplificationRule{
 	{ // (x^y)^z = x^(y*z)
 		lhs: Pow(Pow(Var("x"), Var("y")), Var("z")),
 		rhs: Pow(Var("x"), Mul(Var("y"), Var("z"))),
+		transform: func(expr Expr) Expr {
+			x := Operand( Operand(expr, 1), 1)
+			y := Operand( Operand(expr, 1), 2)
+			z := Operand(expr, 2)
+			return Pow(x, Mul(y, z))
+		},
 	},
 }
 
