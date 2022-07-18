@@ -14,6 +14,7 @@ type Func func(Arguments) float64
 
 type Expr interface {
 	// Private functions
+	equal(Expr) bool
 	contains(Expr) bool
 	substitute(Expr, Expr) Expr
 	variableNames(*[]string)
@@ -68,7 +69,7 @@ type log struct {
 type pow struct {
 	Expr
 	Base Expr
-	Exponent constant // For expressions in exponent use exp.
+	Exponent Expr
 }
 
 type sqrt struct {
@@ -77,6 +78,10 @@ type sqrt struct {
 }
 
 /* Factories */
+
+func Undefined() undefined {
+	return undefined{}
+}
 
 func Const(val float64) constant {
 	return constant{Value: val}
@@ -114,7 +119,7 @@ func Log(arg Expr) log {
 	return log{Arg: arg}
 }
 
-func Pow(base Expr, exponent constant) pow {
+func Pow(base Expr, exponent Expr) pow {
 	return pow{Base: base, Exponent: exponent}
 }
 
@@ -164,9 +169,15 @@ func (e log) D(varName VarName) Expr {
 	return Mul(Pow(e.Arg, Const(-1)), e.Arg.D(varName))
 }
 
-// Power rule: D(x^a) = ax^(a-1)
+// IF EXPONENT IS CONSTANT: Power rule: D(x^a) = ax^(a-1)
+// IF EXPONENT IS NOT CONSTANT: Exponential deriv: D(f^g) = D(exp(g*log(f))) = exp(g*log(f))*D(g*log(f))
 func (e pow) D(varName VarName) Expr {
-	return Mul(e.Exponent, Pow(e.Base, Const(e.Exponent.Value-1)), e.Base.D(varName))
+	if exponentTyped, ok := e.Exponent.(constant); ok {
+		return Mul(e.Exponent, Pow(e.Base, Const(exponentTyped.Value-1)), e.Base.D(varName))
+	} else {
+		exponentLogBaseProd := Mul(e.Exponent, Log(e.Base))
+		return Mul(Exp(exponentLogBaseProd), exponentLogBaseProd.D(varName))
+	}
 }
 
 // D(sqrt(f)) = (1/2)*(1/sqrt(f))*D(f)
@@ -175,6 +186,10 @@ func (e sqrt) D(varName VarName) Expr {
 }
 
 /* Evaluation functions for operands */
+
+func (e undefined) Eval() Func {
+	return func(args Arguments) float64 {return math.NaN()}
+}
 
 func (e constant) Eval() Func {
 	return func(args Arguments) float64 {return e.Value}
@@ -217,6 +232,10 @@ func (e pow) Eval() Func {
 }
 
 /* Implementing String() to get nicely formated expressions upon print */
+
+func (e undefined) String() string {
+	return "Undefined"
+}
 
 func (e constant) String() string {
 	if e.Value < 0 {
@@ -271,6 +290,14 @@ func Substitute(expr, u, t Expr) Expr {
 		expr = expr.substitute(u, t)
 	}
 	return expr.substitute(u, t)
+}
+
+func (e undefined) substitutes(u, t Expr) Expr {
+	if _, ok := u.(undefined); ok {
+		return t
+	} else {
+		return e
+	}
 }
 
 func (e constant) substitute(u, t Expr) Expr {
@@ -345,10 +372,19 @@ func (e pow) substitute(u, t Expr) Expr {
 	}
 }
 
+func Equal(t, u Expr) bool {
+	return reflect.DeepEqual(t, u)
+}
+
 // Checks if expr contains u by formating expr and
 // u to strings and running a sub-string check.
 func Contains(expr, u Expr) bool {
 	return expr.contains(u)
+}
+
+func (e undefined) contains(u Expr) bool {
+	_, ok := u.(undefined)
+	return ok
 }
 
 func (e constant) contains(u Expr) bool {	
@@ -437,6 +473,8 @@ func VariableNames(expr Expr) []VarName {
 	return variableNamesSlice
 }
 
+func (e undefined) variableNames(targetSlice *[]string) {}
+
 func (e constant) variableNames(targetSlice *[]string) {}
 
 func (e variable) variableNames(targetSlice *[]string) {
@@ -472,6 +510,7 @@ func NumberOfOperands(expr Expr) int {
 	return expr.numberOfOperands()
 }
 
+func (e undefined) numberOfOperands() int {return 0}
 func (e constant) numberOfOperands() int {return 0}
 func (e variable) numberOfOperands() int {return 0}
 func (e add) numberOfOperands() int {return len(e.Operands)}
@@ -485,8 +524,10 @@ func Operand(expr Expr, n int) Expr {
 	return expr.operand(n)
 }
 
+func (e undefined) operand(n int) Expr {return nil}
 func (e constant) operand(n int) Expr {return nil}
 func (e variable) operand(n int) Expr {return nil}
+
 func (e add) operand(n int) Expr {
 	if n > NumberOfOperands(e) {
 		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, len(e.Operands))
@@ -494,6 +535,7 @@ func (e add) operand(n int) Expr {
 	}
 	return e.Operands[n-1]
 }
+
 func (e mul) operand(n int) Expr {
 	if n > NumberOfOperands(e) {
 		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, len(e.Operands))
@@ -501,6 +543,7 @@ func (e mul) operand(n int) Expr {
 	}
 	return e.Operands[n-1]
 }
+
 func (e pow) operand(n int) Expr {	
 	if n > NumberOfOperands(e) {
 		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, 2)
@@ -512,18 +555,27 @@ func (e pow) operand(n int) Expr {
 	}
 }
 
-
-// Simplifies expr according to:
-// 1. 
-func Simplify(expr Expr) Expr { 
-	return nil
+func isSameType(a, b any) bool {
+	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }
 
-func (e constant) simplify() Expr {return nil}
-func (e variable) simplify() Expr {return nil}
-func (e add) simplify() Expr {return nil}
-func (e mul) simplify() Expr {return nil}
-func (e pow) simplify() Expr {return nil}
+func Simplify(expr Expr) Expr {
+	return expr.simplify()
+}
+
+func (e pow) simplify() Expr {
+	// Iterating though every simplification rule
+	// and if one matches it is applied and we exit
+	// this function.
+	for _, rule := range powerSimplificationRules {
+		if rule.match(e) {
+			return rule.rhs
+		} 
+	}
+
+	// If no match is found we return input expression.
+	return e
+}
 
 // TODO: figure this out
 func Expand(expr Expr) Expr {

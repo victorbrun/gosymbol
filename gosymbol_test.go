@@ -392,6 +392,10 @@ func TestVariableNames(t *testing.T) {
 		expectedOutput []gosymbol.VarName
 	}{
 		{
+			input: gosymbol.Undefined(),
+			expectedOutput: []gosymbol.VarName{},
+		},
+		{
 			input: gosymbol.Const(0),
 			expectedOutput: []gosymbol.VarName{},
 		},
@@ -422,3 +426,26 @@ func TestVariableNames(t *testing.T) {
 	}
 }
 
+func TestSimplify(t *testing.T) {
+	tests := []struct {
+		input gosymbol.Expr
+		expectedOutput gosymbol.Expr
+	} {
+		{
+			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{
+			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+	}
+	
+	for ix, test := range tests {
+		result := gosymbol.Simplify(test.input)
+		if !gosymbol.Equal(result, test.expectedOutput) {
+			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
+			t.Error(errMsg)
+		}
+	}
+}
