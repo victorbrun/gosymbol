@@ -311,6 +311,46 @@ func Equal(t, u Expr) bool {
 	return reflect.DeepEqual(t, u)
 }
 
+// Returns true if t and u are equal up to type 
+// for every element in resp. syntax tree, otherwise 
+// false. This means that two constants of different 
+// value, or variables with different names, would
+// return true.
+func TypeEqual(t, u Expr) bool {
+	if !isSameType(t, u) {
+		return false
+	} else if NumberOfOperands(t) != NumberOfOperands(u) {
+		return false
+	}
+
+	// Base cases are the leaf node types
+	switch t.(type) {
+	case undefined:
+		_, ok := u.(undefined)
+		return ok
+	case constant:
+		_, ok := u.(constant)
+		return ok
+	case variable: 
+	_, ok := u.(variable)
+		return ok
+	}
+
+	// Recusively checks if every operand is type equal 
+	// as well. Breaks and returns false if any of the
+	// operands are not equal.
+	// TODO: this does not take associativty of e.g. add and mul into account.
+	for ix := 1; ix <= NumberOfOperands(t); ix++ {
+		tOperand := Operand(t, ix)
+		uOperand := Operand(u, ix)
+		if !TypeEqual(tOperand, uOperand) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Checks if expr contains u by formating expr and
 // u to strings and running a sub-string check.
 func Contains(expr, u Expr) bool {
@@ -449,7 +489,7 @@ func (e constant) numberOfOperands() int {return 0}
 func (e variable) numberOfOperands() int {return 0}
 func (e add) numberOfOperands() int {return len(e.Operands)}
 func (e mul) numberOfOperands() int {return len(e.Operands)}
-func (e pow) numberOfOperands() int {return 2} // TODO: Should this be 1 or 2?
+func (e pow) numberOfOperands() int {return 2} 
 
 // Returns the n:th (starting at 1) operand (left to right) of expr.
 // If expr has no operands it returns nil.
@@ -535,8 +575,10 @@ func (e pow) simplify() Expr {
 	// Iterating though every simplification rule
 	// and if one matches it is applied and we exit
 	// this function.
-	for _, rule := range powerSimplificationRules {
+	for ix, rule := range powerSimplificationRules {	
+		fmt.Printf("RULE %v:\n", ix)
 		if rule.match(e) {
+			// TODO: USE SUBSTITUTE FUNCTION HERE!!!
 			return rule.rhs
 		} 
 	}
@@ -550,25 +592,27 @@ func (e log) simplify() Expr {return nil}
 
 // Returns true if expr matches the pattern defined
 // by r, else it returns false.
-func (r simplificationRule) match(expr Expr) bool {
+func (rule simplificationRule) match(expr Expr) bool {
 	// Rule concerns the top most operator in the 
 	// tree so these need to have matching types.
-	if !isSameType(r.lhs, expr) {
+	if !isSameType(rule.lhs, expr) {
 		return false
 	} 
 
 	// Iterate though each operand of both expr and r.lhs,
 	// checking if they match "good enough".
-	for ix := 1; ix <= NumberOfOperands(r.lhs); ix++ {
-		ruleOperand := Operand(r.lhs, ix)
+	for ix := 1; ix <= NumberOfOperands(rule.lhs); ix++ {
+		ruleOperand := Operand(rule.lhs, ix)
 		exprOperand := Operand(expr, ix)
-
-		fmt.Printf("ruleOperand: %v\n", ruleOperand)
-		fmt.Printf("exprOperand: %v\n", exprOperand) 
+		
+		fmt.Printf("	ruleOperand: %v\n", ruleOperand)
+		fmt.Printf("	exprOperand: %v\n", exprOperand) 
 
 		if _, ok := ruleOperand.(variable); ok {
 			continue
 		} else if opTyped, ok := ruleOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {
+			continue
+		} else if TypeEqual(ruleOperand, exprOperand) {
 			continue
 		} else if Equal(ruleOperand, exprOperand) {
 			continue
