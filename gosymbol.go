@@ -8,75 +8,6 @@ import (
 
 )
 
-type VarName string
-type Arguments map[VarName]float64
-type Func func(Arguments) float64
-
-type Expr interface {
-	// Private functions
-	equal(Expr) bool
-	contains(Expr) bool
-	substitute(Expr, Expr) Expr
-	variableNames(*[]string)
-	numberOfOperands() int
-	operand(int) Expr
-	simplify() Expr
-
-	// Public functions
-	String() string
-	Eval() Func
-	D(VarName) Expr
-}
-
-/* Basic operators */
-
-type undefined struct {
-	Expr
-}
-
-type constant struct {
-	Expr
-	Value float64
-}
-
-type variable struct {
-	Expr
-	Name VarName
-}
-
-type add struct {
-	Expr
-	Operands []Expr
-}
-
-type mul struct {
-	Expr
-	Operands []Expr
-}
-
-/* Common Functions */
-
-type exp struct {
-	Expr
-	Arg Expr
-}
-
-type log struct {
-	Expr
-	Arg Expr
-}
-
-type pow struct {
-	Expr
-	Base Expr
-	Exponent Expr
-}
-
-type sqrt struct {
-	Expr
-	Arg Expr
-}
-
 /* Factories */
 
 func Undefined() undefined {
@@ -185,7 +116,7 @@ func (e sqrt) D(varName VarName) Expr {
 	return Mul(Div(Const(1), Const(2)), Div(Const(1), e), e.Arg.D(varName))
 }
 
-/* Evaluation functions for operands */
+/* Evaluation */
 
 func (e undefined) Eval() Func {
 	return func(args Arguments) float64 {return math.NaN()}
@@ -231,7 +162,7 @@ func (e pow) Eval() Func {
 	return func(args Arguments) float64 {return math.Pow(e.Base.Eval()(args), e.Exponent.Eval()(args))}
 }
 
-/* Implementing String() to get nicely formated expressions upon print */
+/* Evaluation to string */
 
 func (e undefined) String() string {
 	return "Undefined"
@@ -247,6 +178,10 @@ func (e constant) String() string {
 
 func (e variable) String() string {
 	return string(e.Name)
+}
+
+func (e constrainedVariable) String() string {
+	return fmt.Sprintf("%v_CONSTRAINED", e.Name)
 }
 
 func (e add) String() string {
@@ -474,7 +409,6 @@ func VariableNames(expr Expr) []VarName {
 }
 
 func (e undefined) variableNames(targetSlice *[]string) {}
-
 func (e constant) variableNames(targetSlice *[]string) {}
 
 func (e variable) variableNames(targetSlice *[]string) {
@@ -559,8 +493,42 @@ func isSameType(a, b any) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }
 
+/* Automatic Simplification */
+
 func Simplify(expr Expr) Expr {
 	return expr.simplify()
+}
+
+func (e undefined) simplify() Expr {return e}
+func (e constant) simplify() Expr {return e}
+func (e variable) simplify() Expr {return e} 
+
+func (e add) simplify() Expr {
+	// Iterating though every simplification rule
+	// and if one matches it is applied and we exit
+	// this function.
+	for _, rule := range powerSimplificationRules {
+		if rule.match(e) {
+			return rule.rhs
+		} 
+	}
+
+	// If no match is found we return input expression.
+	return e
+}
+
+func (e mul) simplify() Expr {
+	// Iterating though every simplification rule
+	// and if one matches it is applied and we exit
+	// this function.
+	for _, rule := range powerSimplificationRules {
+		if rule.match(e) {
+			return rule.rhs
+		} 
+	}
+
+	// If no match is found we return input expression.
+	return e
 }
 
 func (e pow) simplify() Expr {
@@ -577,8 +545,43 @@ func (e pow) simplify() Expr {
 	return e
 }
 
+func (e exp) simplify() Expr {return nil}
+func (e log) simplify() Expr {return nil}
+
+// Returns true if expr matches the pattern defined
+// by r, else it returns false.
+func (r simplificationRule) match(expr Expr) bool {
+	// Rule concerns the top most operator in the 
+	// tree so these need to have matching types.
+	if !isSameType(r.lhs, expr) {
+		return false
+	} 
+
+	// Iterate though each operand of both expr and r.lhs,
+	// checking if they match "good enough".
+	for ix := 1; ix <= NumberOfOperands(r.lhs); ix++ {
+		ruleOperand := Operand(r.lhs, ix)
+		exprOperand := Operand(expr, ix)
+
+		fmt.Printf("ruleOperand: %v\n", ruleOperand)
+		fmt.Printf("exprOperand: %v\n", exprOperand) 
+
+		if _, ok := ruleOperand.(variable); ok {
+			continue
+		} else if opTyped, ok := ruleOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {
+			continue
+		} else if Equal(ruleOperand, exprOperand) {
+			continue
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
 // TODO: figure this out
 func Expand(expr Expr) Expr {
 	return nil
 }
+
 

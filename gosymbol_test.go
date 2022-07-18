@@ -432,6 +432,10 @@ func TestSimplify(t *testing.T) {
 		expectedOutput gosymbol.Expr
 	} {
 		{
+			input: gosymbol.Pow(gosymbol.Undefined(), gosymbol.Var("y")),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{
 			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(10)),
 			expectedOutput: gosymbol.Const(0),
 		},
@@ -439,9 +443,22 @@ func TestSimplify(t *testing.T) {
 			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(0)),
 			expectedOutput: gosymbol.Undefined(),
 		},
+		{
+			input: gosymbol.Pow(gosymbol.Const(1), gosymbol.Exp(gosymbol.Const(7))),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{
+			input: gosymbol.Pow(gosymbol.Var("kuk"), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{
+			input: gosymbol.Pow(gosymbol.Pow(gosymbol.Var("i"), gosymbol.Var("j")), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k")))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("i"), gosymbol.Mul(gosymbol.Var("j"), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k"))))),
+		},
 	}
 	
 	for ix, test := range tests {
+		fmt.Printf("TEST %v:\n", ix+1)
 		result := gosymbol.Simplify(test.input)
 		if !gosymbol.Equal(result, test.expectedOutput) {
 			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)

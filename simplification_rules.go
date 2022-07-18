@@ -1,5 +1,8 @@
 package gosymbol
 
+var additionSimplificationRules []simplificationRule = []simplificationRule{}
+var multiplicationSimplificationRules []simplificationRule = []simplificationRule{}
+
 var powerSimplificationRules []simplificationRule = []simplificationRule{
 	{ // (Undefined)^x = Undefined
 		lhs: Pow(Undefined(), Var("x")),
@@ -39,35 +42,6 @@ var powerSimplificationRules []simplificationRule = []simplificationRule{
 	},
 }
 
-var mulSimplificationRules []simplificationRule = []simplificationRule{}
-var addSimplificationRules []simplificationRule = []simplificationRule{}
 
-func (r simplificationRule) match(expr Expr) bool {
-	// Rule concerns the top most operator in the 
-	// tree so these need to have matching types.
-	if !isSameType(r.lhs, expr) {
-		return false
-	} 
-
-	// Iterate though each operand of both expr and r.lhs,
-	// checking if they match "good enough".
-	for ix := 1; ix <= NumberOfOperands(r.lhs); ix++ {
-		ruleOperand := Operand(r.lhs, ix)
-		exprOperand := Operand(expr, ix)
-		if _, ok := ruleOperand.(variable); ok {
-			continue
-		} else if opTyped, ok := ruleOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {
-			continue
-		} else if Equal(ruleOperand, exprOperand) {
-			continue
-		} else {
-			return false
-		}
-	}
-	return true
-}
-
-
-
-
-
+var exponentialSimplificationRules []simplificationRule = []simplificationRule{}
+var logarithmicSimplificationRules []simplificationRule = []simplificationRule{}
