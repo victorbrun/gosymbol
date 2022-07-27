@@ -22,6 +22,10 @@ func Var(name VarName) variable {
 	return variable{Name: name}
 }
 
+func ConstrVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
+	return constrainedVariable{Name: name, Constraint: constrFunc}
+}
+
 func Neg(arg Expr) mul {
 	return Mul(Const(-1), arg)
 }
@@ -56,6 +60,10 @@ func Pow(base Expr, exponent Expr) pow {
 
 func Sqrt(arg Expr) sqrt {
 	return sqrt{Arg: arg}
+}
+
+func TransformationRule(pattern Expr, transform func(Expr) Expr) transformationRule {
+	return transformationRule{pattern: pattern, transform: transform}
 }
 
 /* Differentiation rules */
@@ -549,8 +557,8 @@ func (e add) simplify() Expr {
 	// this function.
 	for _, rule := range powerSimplificationRules {
 		if rule.match(e) {
-			return rule.rhs
-		} 
+			return rule.transform(e)
+		}
 	}
 
 	// If no match is found we return input expression.
@@ -563,7 +571,7 @@ func (e mul) simplify() Expr {
 	// this function.
 	for _, rule := range powerSimplificationRules {
 		if rule.match(e) {
-			return rule.rhs
+			return rule.transform(e)
 		} 
 	}
 
@@ -575,12 +583,10 @@ func (e pow) simplify() Expr {
 	// Iterating though every simplification rule
 	// and if one matches it is applied and we exit
 	// this function.
-	for ix, rule := range powerSimplificationRules {	
-		fmt.Printf("RULE %v:\n", ix)
+	for _, rule := range powerSimplificationRules {	
 		if rule.match(e) {
-			// TODO: USE SUBSTITUTE FUNCTION HERE!!!
-			return rule.rhs
-		} 
+			return rule.transform(e)
+		} 	
 	}
 
 	// If no match is found we return input expression.
@@ -592,22 +598,19 @@ func (e log) simplify() Expr {return nil}
 
 // Returns true if expr matches the pattern defined
 // by r, else it returns false.
-func (rule simplificationRule) match(expr Expr) bool {
+func (rule transformationRule) match(expr Expr) bool {
 	// Rule concerns the top most operator in the 
 	// tree so these need to have matching types.
-	if !isSameType(rule.lhs, expr) {
+	if !isSameType(rule.pattern, expr) {
 		return false
 	} 
 
 	// Iterate though each operand of both expr and r.lhs,
 	// checking if they match "good enough".
-	for ix := 1; ix <= NumberOfOperands(rule.lhs); ix++ {
-		ruleOperand := Operand(rule.lhs, ix)
+	for ix := 1; ix <= NumberOfOperands(rule.pattern); ix++ {
+		ruleOperand := Operand(rule.pattern, ix)
 		exprOperand := Operand(expr, ix)
 		
-		fmt.Printf("	ruleOperand: %v\n", ruleOperand)
-		fmt.Printf("	exprOperand: %v\n", exprOperand) 
-
 		if _, ok := ruleOperand.(variable); ok {
 			continue
 		} else if opTyped, ok := ruleOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {

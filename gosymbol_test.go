@@ -458,7 +458,6 @@ func TestSimplify(t *testing.T) {
 	}
 	
 	for ix, test := range tests {
-		fmt.Printf("TEST %v:\n", ix+1)
 		result := gosymbol.Simplify(test.input)
 		if !gosymbol.Equal(result, test.expectedOutput) {
 			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)

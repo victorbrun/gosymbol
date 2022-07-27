@@ -33,17 +33,11 @@ type constrainedVariable struct {
 	Constraint func(expr Expr) bool
 }
 
-// Simplification always occurs left to right.
-// This means that the left expression aout to be the
-// more complicated one, e.g. x^a * x^b = x^(a+b).
-type simplificationRule struct {
-	lhs Expr
-	rhs Expr
-
-	// The mapping from lhs to rhs.
-	transform func(Expr) Expr
+type transformationRule struct {
+	pattern Expr
+	// The mapping from pattern to whatever you define
+	transform func(Expr) Expr 
 }
-
 
 /* Basic operators */
 
