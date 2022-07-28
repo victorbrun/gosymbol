@@ -537,6 +537,9 @@ func (e pow) operand(n int) Expr {
 	}
 }
 
+// TODO: see Computer Algebra and Symbolic Computation page 10 to understand this shit
+func Map(F Expr, u ...Expr) Expr {return nil}
+
 func isSameType(a, b any) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }
