@@ -33,8 +33,22 @@ type constrainedVariable struct {
 	Constraint func(expr Expr) bool
 }
 
+// Used to define transformations from an expression
+// into another. The transformation can happen in two ways:
+// TODO: continue documentation and mention that a variable with
+// the same name as an constrained variable is considered to the same
+// variable by mathPattern.
+//
+//This structure is, for example, used in the simplifation
+// of expressions. 
 type transformationRule struct {
+	// One of pattern and patternFunction must be defined.
+	// pattern is prioritised, i.e. if pattern is matched 
+	// then patternFunction will be ignored. To match on 
+	// patternFunciton set pattern = nil.
 	pattern Expr
+	patternFunction func(Expr) bool
+
 	// The mapping from pattern to whatever you define
 	transform func(Expr) Expr 
 }

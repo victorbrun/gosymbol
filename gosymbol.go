@@ -540,6 +540,7 @@ func (e pow) operand(n int) Expr {
 // TODO: see Computer Algebra and Symbolic Computation page 10 to understand this shit
 func Map(F Expr, u ...Expr) Expr {return nil}
 
+
 func isSameType(a, b any) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }
@@ -599,20 +600,83 @@ func (e pow) simplify() Expr {
 func (e exp) simplify() Expr {return nil}
 func (e log) simplify() Expr {return nil}
 
+// Applies rule to expr and returns the transformed expression.
+// If transormation cannot be applied for some reason the outgoing
+// expression will be the same as the ingoing one.
+func (rule transformationRule) apply(expr Expr) Expr {
+	// TODO
+	return nil
+}
+
+func (rule transformationRule) match(expr Expr) bool {
+	// Fisrt check if pattern is defined. If not
+	// we execute patternFunction if it exists. 
+	// If no pattern or patternFunction exists we return false 
+	if rule.pattern != nil {
+		rule.matchPattern(expr)
+		return false
+	} else if rule.patternFunction != nil {
+		return rule.patternFunction(expr)
+	} else {
+		return false
+	}
+}
+
+func (rule transformationRule) matchPattern(expr Expr) bool {
+	if !isSameType(rule.pattern, expr) {return false}
+
+	nOpsPattern := NumberOfOperands(rule.pattern)
+	nOpsExpr := NumberOfOperands(expr)
+	if nOpsPattern != nOpsExpr {return false}
+
+	varNameExprMap := make(map[VarName]Expr)
+	for ix := 1; ix <= nOpsPattern; ix++ {
+		patternOperand := Operand(rule.pattern, ix)
+		exprOperand := Operand(expr, ix)
+		
+		if opTyped, ok := patternOperand.(variable); ok {
+			// Checks if variable has an associated expression
+			// already and if it equals the current exprOperand.
+			// If no expression is associated to variable we associate
+			// the current exprOperand with it.
+			if e, ok := varNameExprMap[opTyped.Name]; ok {
+				if !Equal(e, expr) {
+					return false
+				}
+			} else {
+				varNameExprMap[opTyped.Name] = exprOperand
+			}
+		} else if opTyped, ok := patternOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {
+			// Does the same as for the non-constrained variable. NOTE: this implies
+			// that a non-constrained variable and a constrained one with the same name
+			// is considered to be the same variable if they have the same name.
+			if e, ok := varNameExprMap[opTyped.Name]; ok {
+				if !Equal(e, expr) {
+					return false
+				}
+			} else {
+				varNameExprMap[opTyped.Name] = exprOperand
+			}
+		}
+
+	}
+	return true
+}
+
 // Returns true if expr matches the pattern defined
 // by r, else it returns false.
-func (rule transformationRule) match(expr Expr) bool {
+func (rule transformationRule) match2(expr Expr) bool {
 	// Rule concerns the top most operator in the 
 	// tree so these need to have matching types.
 	if !isSameType(rule.pattern, expr) {
 		return false
 	} 
 
-	// Iterate though each operand of both expr and r.lhs,
+	// Iterate though each operand of both expr and rule.pattern,
 	// checking if they match "good enough".
 	for ix := 1; ix <= NumberOfOperands(rule.pattern); ix++ {
 		ruleOperand := Operand(rule.pattern, ix)
-		exprOperand := Operand(expr, ix)
+		exprOperand := Operand(expr, ix) 
 		
 		if _, ok := ruleOperand.(variable); ok {
 			continue

@@ -1,5 +1,7 @@
 package gosymbol
 
+import "reflect"
+
 /* Constrain functions */
 
 // TODO: would be useful with a bool function negator,
@@ -17,7 +19,60 @@ func negOrZeroConstant(expr Expr) bool {
 
 
 var additionSimplificationRules []transformationRule = []transformationRule{}
-var multiplicationSimplificationRules []transformationRule = []transformationRule{}
+
+var productSimplificationRules []transformationRule = []transformationRule{
+	{ // (Undefined) * ... = Undefined 
+		patternFunction: func(expr Expr) bool {
+			_, ok := expr.(mul)
+			return  ok && Contains(expr, Undefined())
+		},
+		transform: func(expr Expr) Expr {return Undefined()},
+	},
+	{ // 0 * ... = 0
+		patternFunction: func(expr Expr) bool {
+			// Ensures expr is of type mul
+			_, ok := expr.(mul)
+			if !ok {return false}
+
+			// Returns true if any operand is 0
+			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+				op := Operand(expr, ix)
+				if reflect.DeepEqual(op, Const(0)) {
+					return true
+				}
+			}
+
+			return false
+		},
+		transform: func(expr Expr) Expr {return Const(0)},
+	},
+	{ // Multiplication with only one operand simplify to the operand
+		pattern: Mul(Var("x")),
+		transform: func(expr Expr) Expr {
+			return Operand(expr, 1)
+		},
+	},
+	{ // Multiplication of no operands simplify to 1
+		pattern: Mul(),
+		transform: func(expr Expr) Expr {
+			return Const(1)		
+		},
+	},
+	{ // x*x = x^2
+		// TODO: check if the match function on transformationRule
+		// treats variables with same name as the same symbol, or if 
+		// it is used just to symbol something arbitrary. I.e. if e.g.
+		// x = 8 can x = 9 at the same time in the same expression?
+		pattern: Mul(Var("x"), Var("x")),
+		transform: func(expr Expr) Expr {
+			base := Operand(expr, 1)
+			exponent := Const(0)
+			return Pow(base, exponent)
+		},
+	},
+	{ // x*x^n = x^(n+1)
+	},
+}
 
 var powerSimplificationRules []transformationRule = []transformationRule{
 	{ // (Undefined)^x = Undefined
