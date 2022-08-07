@@ -5,7 +5,6 @@ import (
 	"math"
 	"reflect"
 	"sort"
-
 )
 
 /* Factories */
@@ -222,20 +221,30 @@ func (e pow) String() string {
 	return fmt.Sprintf("( %v^%v )", e.Base, e.Exponent)
 }
 
+/* Helper Functionality */
+
 // Substitutes u for t in expr.
 func Substitute(expr, u, t Expr) Expr {
-	// While expr still contains u we 
-	// continue to substitute. This is catch
-	// the case when a substitution leads to 
-	// another substitutable sub-expression 
-	// (see test 7 in gosymbol_test.go).
-	for Contains(expr, u) {
-		expr = expr.substitute(u, t)
+	if Equal(u, t) {
+		return u
+	} else if Equal(expr, u) {
+		return t
+	} else if Contains(expr, u) {	
+		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+			processedOp := Substitute(Operand(expr, ix), u, t)
+			expr = expr.replaceOperand(ix, processedOp)
+		}
+		// Subsituting here again in order to continue to Substitute
+		// if the result from above substitution is something that can be
+		// Substituted again. Se test 7 and test 12 in gosymbol_test.go.
+		return Substitute(expr, u, t)
+	} else {
+		return expr
 	}
-	return expr.substitute(u, t)
 }
 
 func (e undefined) substitutes(u, t Expr) Expr {
+	fmt.Printf("e = %v\nu = %v\nt = %v", e, u, t)
 	if _, ok := u.(undefined); ok {
 		return t
 	} else {
@@ -315,6 +324,65 @@ func (e pow) substitute(u, t Expr) Expr {
 	}
 }
 
+// Replaces operand n of expr with u.
+func (expr undefined) replaceOperand(n int, u Expr) Expr {
+	return expr
+}
+
+func (expr constant) replaceOperand(n int, u Expr) Expr {
+	return expr
+}
+
+func (expr variable) replaceOperand(n int, u Expr) Expr {
+	return expr
+}
+
+func (expr add) replaceOperand(n int, u Expr) Expr {
+	if n <= len(expr.Operands) {
+			expr.Operands[n-1] = u
+	}
+	return expr
+}
+
+func (expr mul) replaceOperand(n int, u Expr) Expr {
+	if n <= len(expr.Operands) {
+			expr.Operands[n-1] = u
+	}
+	return expr
+}
+
+func (expr pow) replaceOperand(n int, u Expr) Expr {
+	if n == 1 {
+		expr.Base = u
+	} else if n == 2 {
+		expr.Exponent = u
+	}
+	return expr
+}
+
+func (expr exp) replaceOperand(n int, u Expr) Expr {
+	if n == 1 {
+		expr.Arg = u
+	}
+	return expr
+}
+
+func (expr log) replaceOperand(n int, u Expr) Expr {
+	if n == 1 {
+		expr.Arg = u
+	}
+	return expr
+}
+
+func (expr sqrt) replaceOperand(n int, u Expr) Expr {
+	if n == 1 {
+		expr.Arg = u
+	}
+	return expr
+}
+
+// Checks syntactic equality between t and u, i.e. t and u must
+// be "written" exactly the same.
 func Equal(t, u Expr) bool {
 	return reflect.DeepEqual(t, u)
 }
@@ -545,67 +613,51 @@ func isSameType(a, b any) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }
 
+// Lexographically sorts the exression's leaf nodes
+func lexographicalSort(expr Expr) Expr {return nil}
+
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
-	return expr.simplify()
-}
+	// Recusively sorts all operands
+	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+		op := Operand(expr, ix)
+		expr = Substitute(expr, op, Simplify(op)) // TODO: this call probably does a lot of unnecessary work 
+	}
 
-func (e undefined) simplify() Expr {return e}
-func (e constant) simplify() Expr {return e}
-func (e variable) simplify() Expr {return e} 
-
-func (e add) simplify() Expr {
-	// Iterating though every simplification rule
-	// and if one matches it is applied and we exit
-	// this function.
-	for _, rule := range powerSimplificationRules {
-		if rule.match(e) {
-			return rule.transform(e)
+	rulesApplication := func(expr Expr, ruleSlice []transformationRule) Expr {
+		for _, rule := range ruleSlice {
+			expr = rule.apply(expr)
 		}
+		return expr
 	}
 
-	// If no match is found we return input expression.
-	return e
-}
-
-func (e mul) simplify() Expr {
-	// Iterating though every simplification rule
-	// and if one matches it is applied and we exit
-	// this function.
-	for _, rule := range powerSimplificationRules {
-		if rule.match(e) {
-			return rule.transform(e)
-		} 
+	switch expr.(type) {
+	case undefined:
+		return expr
+	case constant:
+		return expr
+	case variable:
+		return expr
+	case add:
+		return rulesApplication(expr, sumSimplificationRules)
+	case mul:
+		return rulesApplication(expr, productSimplificationRules)	
+	case pow:
+		return rulesApplication(expr, powerSimplificationRules)
+	default:
+		return expr
 	}
-
-	// If no match is found we return input expression.
-	return e
 }
-
-func (e pow) simplify() Expr {
-	// Iterating though every simplification rule
-	// and if one matches it is applied and we exit
-	// this function.
-	for _, rule := range powerSimplificationRules {	
-		if rule.match(e) {
-			return rule.transform(e)
-		} 	
-	}
-
-	// If no match is found we return input expression.
-	return e
-}
-
-func (e exp) simplify() Expr {return nil}
-func (e log) simplify() Expr {return nil}
 
 // Applies rule to expr and returns the transformed expression.
 // If transormation cannot be applied for some reason the outgoing
 // expression will be the same as the ingoing one.
 func (rule transformationRule) apply(expr Expr) Expr {
-	// TODO
-	return nil
+	if rule.match(expr) {
+		return rule.transform(expr)
+	}
+	return expr
 }
 
 func (rule transformationRule) match(expr Expr) bool {
@@ -657,8 +709,8 @@ func (rule transformationRule) matchPattern(expr Expr) bool {
 			} else {
 				varNameExprMap[opTyped.Name] = exprOperand
 			}
-		}
-
+		} 
+		// TODO: there are more cases
 	}
 	return true
 }

@@ -18,7 +18,7 @@ func negOrZeroConstant(expr Expr) bool {
 }
 
 
-var additionSimplificationRules []transformationRule = []transformationRule{}
+var sumSimplificationRules []transformationRule = []transformationRule{}
 
 var productSimplificationRules []transformationRule = []transformationRule{
 	{ // (Undefined) * ... = Undefined 

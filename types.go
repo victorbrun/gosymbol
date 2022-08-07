@@ -12,6 +12,7 @@ type Expr interface {
 	variableNames(*[]string)
 	numberOfOperands() int
 	operand(int) Expr
+	replaceOperand(int, Expr) Expr
 	simplify() Expr
 
 	// Public functions
@@ -79,6 +80,12 @@ type mul struct {
 	Operands []Expr
 }
 
+type pow struct {
+	Expr
+	Base Expr
+	Exponent Expr
+}
+
 /* Common Functions */
 
 type exp struct {
@@ -89,12 +96,6 @@ type exp struct {
 type log struct {
 	Expr
 	Arg Expr
-}
-
-type pow struct {
-	Expr
-	Base Expr
-	Exponent Expr
 }
 
 type sqrt struct {

@@ -375,6 +375,15 @@ func TestSubstitute(t *testing.T) {
 			},
 			expectedOutput: gosymbol.Var("Y"),
 		},
+		{ // Test 12: 4 level nested substitution
+			input: inputArgs{
+				expr: gosymbol.Div(gosymbol.Const(1), gosymbol.Div(gosymbol.Const(1),gosymbol.Div(gosymbol.Const(1), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("X"))))),
+				u: gosymbol.Div(gosymbol.Const(1), gosymbol.Var("X")),
+				t: gosymbol.Var("X"),
+			},
+			expectedOutput: gosymbol.Var("X"),
+			
+		},
 	}
 
 	for ix, test := range tests {
