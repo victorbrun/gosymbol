@@ -568,8 +568,6 @@ func lexographicalSort(expr Expr) Expr {return nil}
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
-	fmt.Println(expr)
-
 	// Recusively sorts all operands
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
@@ -597,7 +595,6 @@ func Simplify(expr Expr) Expr {
 	case mul:
 		return rulesApplication(expr, productSimplificationRules)	
 	case pow:
-		fmt.Println("here")
 		return rulesApplication(expr, powerSimplificationRules)
 	default:
 		return expr

@@ -440,29 +440,57 @@ func TestSimplify(t *testing.T) {
 		input gosymbol.Expr
 		expectedOutput gosymbol.Expr
 	} {
-		{
+		{ // undefined^y = undefined
 			input: gosymbol.Pow(gosymbol.Undefined(), gosymbol.Var("y")),
 			expectedOutput: gosymbol.Undefined(),
 		},
-		{
+		{ // 0^x = 0
 			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(10)),
 			expectedOutput: gosymbol.Const(0),
 		},
-		{
+		{ // 0^0 = undefined
 			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(0)),
 			expectedOutput: gosymbol.Undefined(),
 		},
-		{
+		{ // 1^x = undefined
 			input: gosymbol.Pow(gosymbol.Const(1), gosymbol.Exp(gosymbol.Const(7))),
 			expectedOutput: gosymbol.Const(1),
 		},
-		{
+		{ // x^0 = 1
 			input: gosymbol.Pow(gosymbol.Var("kuk"), gosymbol.Const(0)),
 			expectedOutput: gosymbol.Const(1),
 		},
-		{
+		{ // (i^j)^k = i^(j*k)
 			input: gosymbol.Pow(gosymbol.Pow(gosymbol.Var("i"), gosymbol.Var("j")), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k")))),
 			expectedOutput: gosymbol.Pow(gosymbol.Var("i"), gosymbol.Mul(gosymbol.Var("j"), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k"))))),
+		},
+		{ // undefined * ... = undefined
+			input: gosymbol.Mul(gosymbol.Undefined(), gosymbol.Var("x"), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // 0 * ... = 0
+			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Const(-9), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // undefined * 0 = undefined 
+			input: gosymbol.Mul(gosymbol.Undefined(), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // 0 * undefined = undefined
+			input: gosymbol.Mul(gosymbol.Const(0), gosymbol.Undefined()),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // Mult with only one operand simplifies to the operand
+			input: gosymbol.Mul(gosymbol.Exp(gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Exp(gosymbol.Var("x")),
+		},
+		{ // Mult with no operands simplify to 1 
+			input: gosymbol.Mul(),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{ // x*x = x^2
+			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2)),
 		},
 	}
 	

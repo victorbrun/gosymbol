@@ -66,7 +66,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		pattern: Mul(Var("x"), Var("x")),
 		transform: func(expr Expr) Expr {
 			base := Operand(expr, 1)
-			exponent := Const(0)
+			exponent := Operand(expr, 2)
 			return Pow(base, exponent)
 		},
 	},
