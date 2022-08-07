@@ -485,6 +485,9 @@ func (e variable) numberOfOperands() int {return 0}
 func (e add) numberOfOperands() int {return len(e.Operands)}
 func (e mul) numberOfOperands() int {return len(e.Operands)}
 func (e pow) numberOfOperands() int {return 2} 
+func (e exp) numberOfOperands() int {return 1}
+func (e log) numberOfOperands() int {return 1}
+func (e sqrt) numberOfOperands() int {return 1}
 
 // Returns the n:th (starting at 1) operand (left to right) of expr.
 // If expr has no operands it returns nil.
@@ -594,7 +597,7 @@ func Simplify(expr Expr) Expr {
 	case mul:
 		return rulesApplication(expr, productSimplificationRules)	
 	case pow:
-		println("here")
+		fmt.Println("here")
 		return rulesApplication(expr, powerSimplificationRules)
 	default:
 		return expr
@@ -616,8 +619,7 @@ func (rule transformationRule) match(expr Expr) bool {
 	// we execute patternFunction if it exists. 
 	// If no pattern or patternFunction exists we return false 
 	if rule.pattern != nil {
-		rule.matchPattern(expr)
-		return false
+		return rule.matchPattern(expr)
 	} else if rule.patternFunction != nil {
 		return rule.patternFunction(expr)
 	} else {
@@ -625,6 +627,8 @@ func (rule transformationRule) match(expr Expr) bool {
 	}
 }
 
+// Returns true if expr matches the defined pattern by rule,
+// otherwise it returns false.
 func (rule transformationRule) matchPattern(expr Expr) bool {
 	if !isSameType(rule.pattern, expr) {return false}
 
@@ -660,34 +664,9 @@ func (rule transformationRule) matchPattern(expr Expr) bool {
 			} else {
 				varNameExprMap[opTyped.Name] = exprOperand
 			}
-		} 
-		// TODO: there are more cases
-	}
-	return true
-}
-
-// Returns true if expr matches the pattern defined
-// by r, else it returns false.
-func (rule transformationRule) match2(expr Expr) bool {
-	// Rule concerns the top most operator in the 
-	// tree so these need to have matching types.
-	if !isSameType(rule.pattern, expr) {
-		return false
-	} 
-
-	// Iterate though each operand of both expr and rule.pattern,
-	// checking if they match "good enough".
-	for ix := 1; ix <= NumberOfOperands(rule.pattern); ix++ {
-		ruleOperand := Operand(rule.pattern, ix)
-		exprOperand := Operand(expr, ix) 
-		
-		if _, ok := ruleOperand.(variable); ok {
+		} else if TypeEqual(patternOperand, exprOperand) {
 			continue
-		} else if opTyped, ok := ruleOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {
-			continue
-		} else if TypeEqual(ruleOperand, exprOperand) {
-			continue
-		} else if Equal(ruleOperand, exprOperand) {
+		} else if TypeEqual(patternOperand, exprOperand) {
 			continue
 		} else {
 			return false
