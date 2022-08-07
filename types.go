@@ -8,7 +8,6 @@ type Expr interface {
 	// Private functions
 	equal(Expr) bool
 	contains(Expr) bool
-	substitute(Expr, Expr) Expr
 	variableNames(*[]string)
 	numberOfOperands() int
 	operand(int) Expr

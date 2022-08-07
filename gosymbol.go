@@ -243,87 +243,6 @@ func Substitute(expr, u, t Expr) Expr {
 	}
 }
 
-func (e undefined) substitutes(u, t Expr) Expr {
-	fmt.Printf("e = %v\nu = %v\nt = %v", e, u, t)
-	if _, ok := u.(undefined); ok {
-		return t
-	} else {
-		return e
-	}
-}
-
-func (e constant) substitute(u, t Expr) Expr {
-	if uTyped, ok := u.(constant); ok && e.Value == uTyped.Value {
-		return t
-	} else {
-		return e
-	}
-}
-
-func (e variable) substitute(u, t Expr) Expr {
-	if uTyped, ok := u.(variable); ok && e.Name == uTyped.Name {
-		return t
-	} else {
-		return e
-	}
-}
-
-func (e add) substitute(u, t Expr) Expr {
-	// If e equals u we return t, otherwise
-	// we run substitute to possibly alter every
-	// operand of e and then returns e.
-	if reflect.DeepEqual(e, u) {
-		return t
-	} else {
-		for ix, op := range e.Operands {
-			e.Operands[ix] = op.substitute(u, t)
-		}
-		return e
-	}
-}
-
-func (e mul) substitute(u, t Expr) Expr { 
-	// If e equals u we return t, otherwise
-	// we run substitute to possibly alter every
-	// operand of e and then returns e.
-	if reflect.DeepEqual(e, u) {
-		return t
-	} else {
-		for ix, op := range e.Operands {
-			e.Operands[ix] = op.substitute(u, t)
-		}
-		return e
-	}
-}
-
-func (e exp) substitute(u, t Expr) Expr {
-	if reflect.DeepEqual(e, u) {
-		return t
-	}
-	e.Arg = e.Arg.substitute(u, t)
-	return e
-}
-
-func (e log) substitute(u, t Expr) Expr {
-	if reflect.DeepEqual(e, u) {
-		return t
-	}
-	e.Arg = e.Arg.substitute(u, t)
-	return e
-}
-
-func (e pow) substitute(u, t Expr) Expr {
-	if reflect.DeepEqual(e, u) {
-		return t
-	} else if tTyped, ok := t.(constant); reflect.DeepEqual(e.Exponent, u) && ok {
-		e.Exponent = tTyped
-		return e
-	} else {
-		e.Base = e.Base.substitute(u, t)
-		return e
-	}
-}
-
 // Replaces operand n of expr with u.
 func (expr undefined) replaceOperand(n int, u Expr) Expr {
 	return expr
@@ -605,6 +524,33 @@ func (e pow) operand(n int) Expr {
 	}
 }
 
+func (e exp) operand(n int) Expr {	
+	if n == 1 {
+		return e.Arg
+	} else {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, 2)
+		panic(errMsg)
+	}
+}
+
+func (e log) operand(n int) Expr {	
+	if n == 1 {
+		return e.Arg
+	} else {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, 2)
+		panic(errMsg)
+	}
+}
+
+func (e sqrt) operand(n int) Expr {	
+	if n == 1 {
+		return e.Arg
+	} else {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, 2)
+		panic(errMsg)
+	}
+}
+
 // TODO: see Computer Algebra and Symbolic Computation page 10 to understand this shit
 func Map(F Expr, u ...Expr) Expr {return nil}
 
@@ -619,12 +565,15 @@ func lexographicalSort(expr Expr) Expr {return nil}
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
+	fmt.Println(expr)
+
 	// Recusively sorts all operands
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
-		expr = Substitute(expr, op, Simplify(op)) // TODO: this call probably does a lot of unnecessary work 
+		expr = expr.replaceOperand(ix, Simplify(op)) 
 	}
 
+	// Application of all Simplification rules follow this same pattern
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) Expr {
 		for _, rule := range ruleSlice {
 			expr = rule.apply(expr)
@@ -632,6 +581,7 @@ func Simplify(expr Expr) Expr {
 		return expr
 	}
 
+	// Applies simplification rules depending on the operator type
 	switch expr.(type) {
 	case undefined:
 		return expr
@@ -644,6 +594,7 @@ func Simplify(expr Expr) Expr {
 	case mul:
 		return rulesApplication(expr, productSimplificationRules)	
 	case pow:
+		println("here")
 		return rulesApplication(expr, powerSimplificationRules)
 	default:
 		return expr
