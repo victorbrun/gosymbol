@@ -644,7 +644,8 @@ func (rule transformationRule) matchPattern(expr Expr) bool {
 			// If no expression is associated to variable we associate
 			// the current exprOperand with it.
 			if e, ok := varNameExprMap[opTyped.Name]; ok {
-				if !Equal(e, expr) {
+				fmt.Println(e, exprOperand)
+				if !Equal(e, exprOperand) {
 					return false
 				}
 			} else {
@@ -655,7 +656,7 @@ func (rule transformationRule) matchPattern(expr Expr) bool {
 			// that a non-constrained variable and a constrained one with the same name
 			// is considered to be the same variable if they have the same name.
 			if e, ok := varNameExprMap[opTyped.Name]; ok {
-				if !Equal(e, expr) {
+				if !Equal(e, exprOperand) {
 					return false
 				}
 			} else {

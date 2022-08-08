@@ -66,8 +66,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		pattern: Mul(Var("x"), Var("x")),
 		transform: func(expr Expr) Expr {
 			base := Operand(expr, 1)
-			exponent := Operand(expr, 2)
-			return Pow(base, exponent)
+			return Pow(base, Const(2))
 		},
 	},
 	{ // x*x^n = x^(n+1)
