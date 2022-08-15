@@ -562,13 +562,39 @@ func isSameType(a, b any) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }
 
-// Lexographically sorts the exression's leaf nodes
-func lexographicalSort(expr Expr) Expr {return nil}
+// Returns the deepest depth of expr
+func Depth(expr Expr) int {
+	switch expr.(type) {
+	case undefined:
+		return 0
+	case constant:
+		return 0
+	case variable:
+		return 0
+	case constrainedVariable:
+		return 0
+	default:
+		maxDepth := 0
+		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+			op := Operand(expr, ix)
+			opDepth := Depth(op)
+			if opDepth > maxDepth {
+				maxDepth = opDepth
+			}
+		}
+		return maxDepth + 1
+	}
+}
+
+// A concurrent implementation of Depth 
+func DepthConcurrent(expr Expr) int {
+	return -1
+}
 
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
-	// Recusively sorts all operands
+	// Recusively simplify all operands
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
 		expr = expr.replaceOperand(ix, Simplify(op)) 
@@ -602,8 +628,8 @@ func Simplify(expr Expr) Expr {
 }
 
 // Applies rule to expr and returns the transformed expression.
-// If transormation cannot be applied for some reason the outgoing
-// expression will be the same as the ingoing one.
+// If expression does not match rule the ingoing expression 
+// will just be returned.
 func (rule transformationRule) apply(expr Expr) Expr {
 	if rule.match(expr) {
 		return rule.transform(expr)
@@ -616,7 +642,8 @@ func (rule transformationRule) match(expr Expr) bool {
 	// we execute patternFunction if it exists. 
 	// If no pattern or patternFunction exists we return false 
 	if rule.pattern != nil {
-		return rule.matchPattern(expr)
+		varCache := make(map[VarName]Expr)
+		return patternMatch(rule.pattern, expr, varCache)
 	} else if rule.patternFunction != nil {
 		return rule.patternFunction(expr)
 	} else {
@@ -624,6 +651,7 @@ func (rule transformationRule) match(expr Expr) bool {
 	}
 }
 
+// This is where the magic happens!
 // Returns true if expr matches the defined pattern by rule,
 // otherwise it returns false.
 func (rule transformationRule) matchPattern(expr Expr) bool {
@@ -638,14 +666,23 @@ func (rule transformationRule) matchPattern(expr Expr) bool {
 		patternOperand := Operand(rule.pattern, ix)
 		exprOperand := Operand(expr, ix)
 		
-		if opTyped, ok := patternOperand.(variable); ok {
+		if opTyped, ok := patternOperand.(constant); ok {
+			// When pattern operand is constant the pattern 
+			// is defined for the exact constant value.
+			if exprTyped, ok := exprOperand.(constant); ok && (opTyped.Value == exprTyped.Value) {
+				continue
+			} else {
+				return false
+			}
+
+		} else if opTyped, ok := patternOperand.(variable); ok {
 			// Checks if variable has an associated expression
 			// already and if it equals the current exprOperand.
 			// If no expression is associated to variable we associate
 			// the current exprOperand with it.
 			if e, ok := varNameExprMap[opTyped.Name]; ok {
-				fmt.Println(e, exprOperand)
 				if !Equal(e, exprOperand) {
+					fmt.Printf("PATTERNOP: %v, EXPROP: %v, SAVEDEXPR: %v \n", patternOperand, exprOperand, e)
 					return false
 				}
 			} else {
@@ -664,9 +701,101 @@ func (rule transformationRule) matchPattern(expr Expr) bool {
 			}
 		} else if TypeEqual(patternOperand, exprOperand) {
 			continue
-		} else if TypeEqual(patternOperand, exprOperand) {
+		} else if Equal(patternOperand, exprOperand) {
 			continue
 		} else {
+			return false
+		}
+	}
+
+	fmt.Printf("PATTER: %v, EXPR: %v\n", rule.pattern, expr)
+	return true
+}
+
+// Recursively checks if expr matches pattern. varCache is an empty
+// map internally used to keep track of what the variables in pattern 
+// corresponds to in expr. The function expects that no variable has the 
+// same name as a constrained variable.
+func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
+	switch v := pattern.(type) {
+	case undefined:
+		_, ok := expr.(undefined)
+		return ok
+	case constant:
+		exprTyped, ok := expr.(constant)
+		return ok && v.Value == exprTyped.Value 
+	case variable:
+		// If we have come accross the variable name
+		// before it have an assigned expression, so 
+		// we check if current expression matches. If
+		// we have not come accross the variable name 
+		// we cache the current expression.
+		if e, ok := varCache[v.Name]; ok {
+			return patternMatch(e, expr, varCache) // Should this be patternMatch or Equal??
+		} else {
+			varCache[v.Name] = expr
+			return true
+		}
+	case constrainedVariable:
+		// Does just as above but before assigning an expression
+		// to a variable the constraint function is checked as well
+		if e, ok := varCache[v.Name]; ok {
+			return patternMatch(e, expr, varCache)
+		} else if v.Constraint(expr) {
+			varCache[v.Name] = expr
+			return true
+		} else {
+			return false
+		}
+	case add:
+		_, ok := expr.(add)
+		if !ok {
+			return false
+		}
+		return patternMatchOperands(v, expr, varCache) 
+	case mul:
+		_, ok := expr.(mul)
+		if !ok {
+			return false
+		}
+		return patternMatchOperands(v, expr, varCache)
+	case pow:
+		_, ok := expr.(pow)
+		if !ok {
+			return false
+		}
+		return patternMatchOperands(v, expr, varCache)
+	case exp:
+		_, ok := expr.(pow)
+		if !ok {
+			return false
+		}
+		return patternMatchOperands(v, expr, varCache)
+	case log:
+		_, ok := expr.(pow)
+		if !ok {
+			return false
+		}
+		return patternMatchOperands(v, expr, varCache)
+	default:
+		errMsg := fmt.Errorf("ERROR: expression of type: %v have no matchPattern case implemented", reflect.TypeOf(v))
+		panic(errMsg)
+	}
+}
+
+// Checks if the operands of pattern and expr match.
+// This function does not check if the main operator
+// of pattern and expr match.
+func patternMatchOperands(pattern, expr Expr, varCache map[VarName]Expr) bool {
+	if NumberOfOperands(pattern) != NumberOfOperands(expr) {
+		return false
+	}
+
+	// Recursively checks if each operand matches
+	for ix := 1; ix < NumberOfOperands(pattern); ix++ {
+		patternOp := Operand(pattern, ix)
+		exprOp := Operand(expr, ix)
+		if !patternMatch(patternOp, exprOp, varCache) {
 			return false
 		}
 	}

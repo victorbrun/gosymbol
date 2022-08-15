@@ -1,6 +1,9 @@
 package gosymbol
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 /* Constrain functions */
 
@@ -70,6 +73,14 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x*x^n = x^(n+1)
+		pattern: Mul(Var("x"), Pow(Var("x"), Var("y"))),
+		transform: func(expr Expr) Expr {
+			newBase := Operand(expr, 1)
+			oldExponent := Operand(Operand(expr, 2), 2)
+			newExponent := Add(oldExponent, Const(1))
+			fmt.Println(newBase, oldExponent, newExponent)
+			return Pow(newBase, newExponent)
+		},
 	},
 }
 

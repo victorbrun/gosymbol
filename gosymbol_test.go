@@ -2,9 +2,9 @@ package gosymbol_test
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
-	"math"
 
 	"github.com/victorbrun/gosymbol"
 )
@@ -492,13 +492,51 @@ func TestSimplify(t *testing.T) {
 			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Const(10)),
 			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2)),
 		},
+		{ // x*x^n = x^(n+1)
+			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2))),
+			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(3)),
+		},
 	}
 	
 	for ix, test := range tests {
+		//fmt.Printf("TEST: %v\n", ix+1)
 		result := gosymbol.Simplify(test.input)
 		if !gosymbol.Equal(result, test.expectedOutput) {
 			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
 			t.Error(errMsg)
 		}
 	}
+}
+
+func TestDepth(t *testing.T) {
+	tests := []struct {
+		input gosymbol.Expr
+		expectedOutput int
+	} {
+		{
+			input: gosymbol.Undefined(),
+			expectedOutput: 0,
+		},
+		{
+			input: gosymbol.Const(1),
+			expectedOutput: 0,
+		},
+		{
+			input: gosymbol.Var("x"),
+			expectedOutput: 0,
+		},
+		{
+			input: gosymbol.ConstrVar("x", func(expr gosymbol.Expr) bool {return true}),
+			expectedOutput: 0,
+		},
+	}
+
+	for ix, test := range tests {
+		result := gosymbol.Depth(test.input)
+		if result != test.expectedOutput {
+			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
+			t.Error(errMsg)
+		}
+	}
+
 }
