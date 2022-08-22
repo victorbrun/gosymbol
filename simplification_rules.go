@@ -61,10 +61,6 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x*x = x^2
-		// TODO: check if the match function on transformationRule
-		// treats variables with same name as the same symbol, or if 
-		// it is used just to symbol something arbitrary. I.e. if e.g.
-		// x = 8 can x = 9 at the same time in the same expression?
 		pattern: Mul(Var("x"), Var("x")),
 		transform: func(expr Expr) Expr {
 			base := Operand(expr, 1)

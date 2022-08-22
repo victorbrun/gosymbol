@@ -528,6 +528,14 @@ func TestDepth(t *testing.T) {
 			input: gosymbol.ConstrVar("x", func(expr gosymbol.Expr) bool {return true}),
 			expectedOutput: 0,
 		},
+		{
+			input: gosymbol.Add(gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x")),
+			expectedOutput: 1,
+		},
+		{
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("x"),gosymbol.Pow(gosymbol.Const(10), gosymbol.Exp(gosymbol.Var("x")))), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x")),
+			expectedOutput: 4,
+		},
 	}
 
 	for ix, test := range tests {
