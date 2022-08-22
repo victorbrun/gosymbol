@@ -232,7 +232,7 @@ func Substitute(expr, u, t Expr) Expr {
 	} else if Contains(expr, u) {	
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			processedOp := Substitute(Operand(expr, ix), u, t)
-			expr = expr.replaceOperand(ix, processedOp)
+			expr = replaceOperand(expr, ix, processedOp)
 		}
 		// Subsituting here again in order to continue to Substitute
 		// if the result from above substitution is something that can be
@@ -243,68 +243,130 @@ func Substitute(expr, u, t Expr) Expr {
 	}
 }
 
-// Replaces operand n of expr with u.
-func (expr undefined) replaceOperand(n int, u Expr) Expr {
-	return expr
-}
-
-func (expr constant) replaceOperand(n int, u Expr) Expr {
-	return expr
-}
-
-func (expr variable) replaceOperand(n int, u Expr) Expr {
-	return expr
-}
-
-func (expr add) replaceOperand(n int, u Expr) Expr {
-	if n <= len(expr.Operands) {
-			expr.Operands[n-1] = u
+/*
+Replaces operand number n in t with u and returns the resulting
+expression. The function panics if n is larger than 
+the NumberOfOperands(t).
+*/
+func replaceOperand(t Expr, n int, u Expr) Expr {
+	nop := NumberOfOperands(t)
+	if n > nop {
+		errMsg := fmt.Sprintf("ERROR: trying to access operand %v but expr has only %v operands.", n, nop)
+		panic(errMsg)
+	} else if n <= 0 {
+		errMsg := fmt.Sprintf("ERROR: there exists no non-positive indexed operands, you are trying to replace operand: %v", nop)
+		panic(errMsg)
 	}
-	return expr
-}
 
-func (expr mul) replaceOperand(n int, u Expr) Expr {
-	if n <= len(expr.Operands) {
-			expr.Operands[n-1] = u
+	// Since the first cases has no operands
+	// we consider replacing one as just returning
+	// the original expression
+	switch v := t.(type) {
+	case undefined:
+		return v
+	case constant:
+		return v
+	case variable:
+		return v
+	case constrainedVariable:
+		return v
+	case add:
+		v.Operands[n-1] = u
+		return v
+	case mul:
+		v.Operands[n-1] = u
+		return v
+	case pow:
+		if n == 1 {
+			v.Base = u
+		} else {
+			v.Exponent = u
+		}
+		return v
+	case exp:
+		v.Arg = u
+		return v
+	case log:
+		v.Arg = u
+		return v
+	case sqrt:
+		v.Arg = u
+		return v
+	default:
+		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
+		panic(errMsg)
 	}
-	return expr
 }
 
-func (expr pow) replaceOperand(n int, u Expr) Expr {
-	if n == 1 {
-		expr.Base = u
-	} else if n == 2 {
-		expr.Exponent = u
-	}
-	return expr
-}
-
-func (expr exp) replaceOperand(n int, u Expr) Expr {
-	if n == 1 {
-		expr.Arg = u
-	}
-	return expr
-}
-
-func (expr log) replaceOperand(n int, u Expr) Expr {
-	if n == 1 {
-		expr.Arg = u
-	}
-	return expr
-}
-
-func (expr sqrt) replaceOperand(n int, u Expr) Expr {
-	if n == 1 {
-		expr.Arg = u
-	}
-	return expr
-}
-
-// Checks syntactic equality between t and u, i.e. t and u must
-// be "written" exactly the same.
+/* 
+Recursively checks exact syntactical equality between t and u,
+i.e. it does not simplify any expression nor does it 
+take any properties, e.g. commutativity, into account.
+*/
 func Equal(t, u Expr) bool {
-	return reflect.DeepEqual(t, u)
+	switch v := t.(type) {
+	case undefined:
+		_, ok := u.(undefined)
+		return ok
+	case constant:
+		uTyped, ok := u.(constant)
+		return ok && v.Value == uTyped.Value
+	case variable:
+		uTyped, ok := u.(variable)
+		return ok && v.Name == uTyped.Name
+	case constrainedVariable:
+		// TODO: how do we check equality of constrain??
+		return false
+	case add:
+		_, ok := u.(add)
+		if !ok {
+			return false
+		} else if NumberOfOperands(v) != NumberOfOperands(u) {
+			return false
+		}
+
+		for ix := 1; ix <= NumberOfOperands(v); ix++ {
+			exprOp := Operand(v, ix)
+			uOp := Operand(u, ix)
+			if !Equal(exprOp, uOp) {
+				return false
+			}
+		}
+		return true
+	case mul:
+		_, ok := u.(mul)
+		if !ok {
+			return false
+		} else if NumberOfOperands(v) != NumberOfOperands(u) {
+			return false
+		}
+
+		for ix := 1; ix <= NumberOfOperands(v); ix++ {
+			exprOp := Operand(v, ix)
+			uOp := Operand(u, ix)
+			if !Equal(exprOp, uOp) {
+				return false
+			}
+		}
+		return true
+	case pow:
+		_, ok := u.(pow)
+		return ok && Equal(Operand(v, 1), Operand(u, 1)) && Equal(Operand(v, 2), Operand(u, 2))
+	case exp:
+		_, ok := u.(exp)
+		return ok && Equal(Operand(v, 1), Operand(u, 1))
+	case log:
+		_, ok := u.(log)
+		return ok && Equal(Operand(v, 1), Operand(u, 1))
+	case sqrt:
+		_, ok := u.(sqrt)
+		return ok && Equal(Operand(v, 1), Operand(u, 1))
+	default:
+		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
+		panic(errMsg)
+	}
 }
+
 
 // Returns true if t and u are equal up to type 
 // for every element in resp. syntax tree, otherwise 
@@ -346,83 +408,42 @@ func TypeEqual(t, u Expr) bool {
 	return true
 }
 
-// Checks if expr contains u by formating expr and
-// u to strings and running a sub-string check.
+/* 
+Recursively checks exact equality between expr and u,
+i.e. it does not simplify any expression nor does it 
+take any properties, e.g. commutativity, into account.
+*/
 func Contains(expr, u Expr) bool {
-	return expr.contains(u)
-}
-
-func (e undefined) contains(u Expr) bool {
-	_, ok := u.(undefined)
-	return ok
-}
-
-func (e constant) contains(u Expr) bool {	
-	if uTyped, ok := u.(constant); ok && e.Value == uTyped.Value {
-		return true
-	} else {
+	switch v := expr.(type) {
+	case undefined:
+		_, ok := u.(undefined)
+		return ok
+	case constant:
+		uTyped, ok := u.(constant)
+		return ok && v.Value == uTyped.Value
+	case variable:
+		uTyped, ok := u.(variable)
+		return ok && v.Name == uTyped.Name
+	case constrainedVariable:
+		// TODO: how do we check equality of constrain??
+		return false
+	default:
+		if Equal(v,u) {return true}
+		for ix := 1; ix <= NumberOfOperands(v); ix++ {
+			vOp := Operand(v, ix)
+			if Contains(vOp, u) {
+				return true
+			}
+		}
 		return false
 	}
-}
-
-func (e variable) contains(u Expr) bool {	
-	if uTyped, ok := u.(variable); ok && e.Name == uTyped.Name {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (e add) contains(u Expr) bool {
-	if reflect.DeepEqual(e, u) {
-		return true
-	}
-	
-	cumBool := false
-	for _, op := range e.Operands {
-		cumBool = cumBool || op.contains(u)	
-	}
-	return cumBool
-}
-
-func (e mul) contains(u Expr) bool {
-	if reflect.DeepEqual(e, u) {
-		return true
-	}
-	
-	cumBool := false
-	for _, op := range e.Operands {
-		cumBool = cumBool || op.contains(u)	
-	}
-	return cumBool
-}
-
-func (e exp) contains(u Expr) bool {
-	if reflect.DeepEqual(e, u) {
-		return true
-	}
-	return e.Arg.contains(u)
-} 
-
-func (e log) contains(u Expr) bool {
-	if reflect.DeepEqual(e, u) {
-		return true
-	}
-	return e.Arg.contains(u)
-} 
-
-func (e pow) contains(u Expr) bool {
-	if reflect.DeepEqual(e, u) {
-		return true
-	}
-	return e.Base.contains(u)
 }
 
 // Returns the different variable names 
 // present in the given expression.
 func VariableNames(expr Expr) []VarName {
 	var stringSlice []string
-	expr.variableNames(&stringSlice)
+	variableNames(expr, &stringSlice)
 	if len(stringSlice) == 0 {
 		return []VarName{}
 	}
@@ -443,51 +464,56 @@ func VariableNames(expr Expr) []VarName {
 	return variableNamesSlice
 }
 
-func (e undefined) variableNames(targetSlice *[]string) {}
-func (e constant) variableNames(targetSlice *[]string) {}
-
-func (e variable) variableNames(targetSlice *[]string) {
-	*targetSlice = append(*targetSlice, string(e.Name))
-}
-
-func (e add) variableNames(targetSlice *[]string) {
-	for _, op := range e.Operands {
-		op.variableNames(targetSlice)
+/* 
+Recursively travesrses the whole AST and appends
+the variable names to targetSlice. 
+*/
+func variableNames(expr Expr, targetSlice *[]string) {
+	switch v := expr.(type) {
+	case undefined:
+		return 
+	case constant:
+		return
+	case variable:
+		*targetSlice = append(*targetSlice, string(v.Name))
+	case constrainedVariable:
+		*targetSlice = append(*targetSlice, string(v.Name))
+	default:
+		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+			op := Operand(expr, ix)
+			variableNames(op, targetSlice)
+		}
 	}
-}
-
-func (e mul) variableNames(targetSlice *[]string) {
-	for _, op := range e.Operands {
-		op.variableNames(targetSlice)
-	}
-}
-
-func (e pow) variableNames(targetSlice *[]string) {
-	e.Base.variableNames(targetSlice)
-}
-
-func (e exp) variableNames(targetSlice *[]string) {
-	e.Arg.variableNames(targetSlice)
-}
-
-func (e log) variableNames(targetSlice *[]string) {
-	e.Arg.variableNames(targetSlice)
 }
 
 // Returns the number of operands for top level operation.
 func NumberOfOperands(expr Expr) int {
-	return expr.numberOfOperands()
+	switch v := expr.(type) {
+	case undefined:
+		return 0 
+	case constant:
+		return 0
+	case variable:
+		return 0
+	case constrainedVariable:
+		return 0
+	case add:
+		return len(v.Operands)
+	case mul:
+		return len(v.Operands)
+	case pow:
+		return 2
+	case exp:
+		return 1
+	case log:
+		return 1
+	case sqrt:
+		return 1
+	default:
+		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
+		panic(errMsg)
+	}
 }
-
-func (e undefined) numberOfOperands() int {return 0}
-func (e constant) numberOfOperands() int {return 0}
-func (e variable) numberOfOperands() int {return 0}
-func (e add) numberOfOperands() int {return len(e.Operands)}
-func (e mul) numberOfOperands() int {return len(e.Operands)}
-func (e pow) numberOfOperands() int {return 2} 
-func (e exp) numberOfOperands() int {return 1}
-func (e log) numberOfOperands() int {return 1}
-func (e sqrt) numberOfOperands() int {return 1}
 
 // Returns the n:th (starting at 1) operand (left to right) of expr.
 // If expr has no operands it returns nil.
@@ -571,7 +597,7 @@ func Simplify(expr Expr) Expr {
 	// Recusively simplify all operands
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
-		expr = expr.replaceOperand(ix, Simplify(op)) 
+		expr = replaceOperand(expr, ix, Simplify(op)) 
 	}
 
 	// Application of all Simplification rules follow this same pattern
