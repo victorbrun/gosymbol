@@ -651,67 +651,6 @@ func (rule transformationRule) match(expr Expr) bool {
 	}
 }
 
-// This is where the magic happens!
-// Returns true if expr matches the defined pattern by rule,
-// otherwise it returns false.
-func (rule transformationRule) matchPattern(expr Expr) bool {
-	if !isSameType(rule.pattern, expr) {return false}
-
-	nOpsPattern := NumberOfOperands(rule.pattern)
-	nOpsExpr := NumberOfOperands(expr)
-	if nOpsPattern != nOpsExpr {return false}
-
-	varNameExprMap := make(map[VarName]Expr)
-	for ix := 1; ix <= nOpsPattern; ix++ {
-		patternOperand := Operand(rule.pattern, ix)
-		exprOperand := Operand(expr, ix)
-		
-		if opTyped, ok := patternOperand.(constant); ok {
-			// When pattern operand is constant the pattern 
-			// is defined for the exact constant value.
-			if exprTyped, ok := exprOperand.(constant); ok && (opTyped.Value == exprTyped.Value) {
-				continue
-			} else {
-				return false
-			}
-
-		} else if opTyped, ok := patternOperand.(variable); ok {
-			// Checks if variable has an associated expression
-			// already and if it equals the current exprOperand.
-			// If no expression is associated to variable we associate
-			// the current exprOperand with it.
-			if e, ok := varNameExprMap[opTyped.Name]; ok {
-				if !Equal(e, exprOperand) {
-					fmt.Printf("PATTERNOP: %v, EXPROP: %v, SAVEDEXPR: %v \n", patternOperand, exprOperand, e)
-					return false
-				}
-			} else {
-				varNameExprMap[opTyped.Name] = exprOperand
-			}
-		} else if opTyped, ok := patternOperand.(constrainedVariable); ok && opTyped.Constraint(exprOperand) {
-			// Does the same as for the non-constrained variable. NOTE: this implies
-			// that a non-constrained variable and a constrained one with the same name
-			// is considered to be the same variable if they have the same name.
-			if e, ok := varNameExprMap[opTyped.Name]; ok {
-				if !Equal(e, exprOperand) {
-					return false
-				}
-			} else {
-				varNameExprMap[opTyped.Name] = exprOperand
-			}
-		} else if TypeEqual(patternOperand, exprOperand) {
-			continue
-		} else if Equal(patternOperand, exprOperand) {
-			continue
-		} else {
-			return false
-		}
-	}
-
-	fmt.Printf("PATTER: %v, EXPR: %v\n", rule.pattern, expr)
-	return true
-}
-
 // Recursively checks if expr matches pattern. varCache is an empty
 // map internally used to keep track of what the variables in pattern 
 // corresponds to in expr. The function expects that no variable has the 
@@ -792,7 +731,7 @@ func patternMatchOperands(pattern, expr Expr, varCache map[VarName]Expr) bool {
 	}
 
 	// Recursively checks if each operand matches
-	for ix := 1; ix < NumberOfOperands(pattern); ix++ {
+	for ix := 1; ix <= NumberOfOperands(pattern); ix++ {
 		patternOp := Operand(pattern, ix)
 		exprOp := Operand(expr, ix)
 		if !patternMatch(patternOp, exprOp, varCache) {

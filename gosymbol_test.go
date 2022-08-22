@@ -494,12 +494,11 @@ func TestSimplify(t *testing.T) {
 		},
 		{ // x*x^n = x^(n+1)
 			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2))),
-			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(3)),
+			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Add(gosymbol.Const(2), gosymbol.Const(1))),
 		},
 	}
 	
 	for ix, test := range tests {
-		//fmt.Printf("TEST: %v\n", ix+1)
 		result := gosymbol.Simplify(test.input)
 		if !gosymbol.Equal(result, test.expectedOutput) {
 			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)

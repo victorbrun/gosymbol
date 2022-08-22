@@ -1,7 +1,6 @@
 package gosymbol
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -78,7 +77,6 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			newBase := Operand(expr, 1)
 			oldExponent := Operand(Operand(expr, 2), 2)
 			newExponent := Add(oldExponent, Const(1))
-			fmt.Println(newBase, oldExponent, newExponent)
 			return Pow(newBase, newExponent)
 		},
 	},
