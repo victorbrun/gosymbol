@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"sort"
 
-	"golang.org/x/text/cases"
 )
 
 /* Factories */
@@ -749,11 +748,12 @@ func Expand(expr Expr) Expr {
 }
 
 /*
-Returns true if e1 "comes before" e2 and false otherwise.
+Checks whether the ordering e1 < e2 is true.
+The function returns true if e1 "comes before" e2 and false otherwis false.
 "comes before" is defined using the order relation defined in [1].
 E.g.:
-O-1: if e1 and e2 are constants then order(e1, e2) -> e1 < e2
-O-2: if e1 and e2 are variables order(e1, e2) is defined by the
+O-1: if e1 and e2 are constants then checkOrder(e1, e2) -> e1 < e2
+O-2: if e1 and e2 are variables checkOrder(e1, e2) is defined by the
 lexographical order of the symbols.
 O-3: etc.
 
@@ -761,7 +761,7 @@ NOTE: the function assumes that e1 and e2 are automatically simplified algebraic
 
 [1] COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003. Figure 3.9.
 */
-func order(e1, e2 Expr) bool {
+func checkOrder(e1, e2 Expr) bool {
 	switch e1Typed := e1.(type) {
 	case constant:
 		switch e2Typed := e2.(type) {
@@ -779,17 +779,17 @@ func order(e1, e2 Expr) bool {
 		case constrainedVariable:
 			return e1Typed.Name < e2Typed.Name // This is very ugly :(
 		case add:
-			return order(Add(e1), e2)
+			return checkOrder(Add(e1), e2)
 		case mul:
-			return order(Mul(e1), e2)
+			return checkOrder(Mul(e1), e2)
 		case pow:
-			return order(Pow(e1, Const(1)), e2)
+			return checkOrder(Pow(e1, Const(1)), e2)
 		case exp:
-			return order(Exp(e1), e2)
+			return checkOrder(Exp(e1), e2)
 		case log:
-			return order(Log(e1), e2)
+			return checkOrder(Log(e1), e2)
 		case sqrt:
-			return order(Sqrt(e1), e2)
+			return checkOrder(Sqrt(e1), e2)
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
@@ -803,27 +803,171 @@ func order(e1, e2 Expr) bool {
 		case constrainedVariable:
 			return orderRule2_1(e1Typed, e2Typed)
 		case add:
-			return order(Add(e1), e2)
+			return checkOrder(Add(e1), e2)
 		case mul:
-			return order(Mul(e1), e2)
+			return checkOrder(Mul(e1), e2)
 		case pow:
-			return order(Pow(e1, Const(1)), e2)
+			return checkOrder(Pow(e1, Const(1)), e2)
 		case exp:
-			return order(Exp(e1), e2)
+			return checkOrder(Exp(e1), e2)
 		case log:
-			return order(Log(e1), e2)
+			return checkOrder(Log(e1), e2)
 		case sqrt:
-			return order(Sqrt(e1), e2)
+			return checkOrder(Sqrt(e1), e2)
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
 		}
 	case add:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return checkOrder(e1, Add(e2))
+		case constrainedVariable:
+			return checkOrder(e1, Add(e2))
+		case add:
+			return orderRule3(e1Typed, e2Typed)
+		case mul:
+			return checkOrder(Mul(e1), e2)
+		case pow:
+			return checkOrder(Pow(e1, Const(1)), e2)
+		case exp:
+			return checkOrder(Exp(e1), e2)
+		case log:
+			return checkOrder(Log(e1), e2)
+		case sqrt:
+			return checkOrder(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
 	case mul:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return checkOrder(e1, Mul(e2))
+		case constrainedVariable:
+			return checkOrder(e1, Mul(e2))
+		case add: 
+			return checkOrder(Add(e1), e2)
+		case mul:
+			return orderRule3_1(e1Typed, e2Typed)
+		case pow:
+			return checkOrder(Pow(e1, Const(1)), e2)
+		case exp:
+			return checkOrder(Exp(e1), e2)
+		case log:
+			return checkOrder(Log(e1), e2)
+		case sqrt:
+			return checkOrder(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
 	case pow:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return checkOrder(e1, Mul(e2))
+		case constrainedVariable:
+			return checkOrder(e1, Mul(e2))
+		case add: 
+			return checkOrder(Add(e1), e2)
+		case mul:
+			return checkOrder(Mul(e1), e2)
+		case pow:
+			return orderRule4(e1Typed, e2Typed)
+		case exp:
+			return checkOrder(Exp(e1), e2)
+		case log:
+			return checkOrder(Log(e1), e2)
+		case sqrt:
+			return checkOrder(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
 	case exp:
+		switch e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return checkOrder(e1, Mul(e2))
+		case constrainedVariable:
+			return checkOrder(e1, Mul(e2))
+		case add: 
+			return checkOrder(Add(e1), e2)
+		case mul:
+			return checkOrder(Mul(e1), e2)
+		case pow:
+			return checkOrder(Pow(e1, Const(1)), e2)
+		case exp:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return checkOrder(e1Arg, e2Arg)
+		case log:
+			return checkOrder(Log(e1), e2)
+		case sqrt:
+			return checkOrder(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
 	case log:
+		switch e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return checkOrder(e1, Mul(e2))
+		case constrainedVariable:
+			return checkOrder(e1, Mul(e2))
+		case add: 
+			return checkOrder(Add(e1), e2)
+		case mul:
+			return checkOrder(Mul(e1), e2)
+		case pow:
+			return checkOrder(Pow(e1, Const(1)), e2)
+		case exp:
+			return checkOrder(Exp(e1), e2)
+		case log:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return checkOrder(e1Arg, e2Arg)
+		case sqrt:
+			return checkOrder(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
 	case sqrt:
+		switch e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return checkOrder(e1, Mul(e2))
+		case constrainedVariable:
+			return checkOrder(e1, Mul(e2))
+		case add: 
+			return checkOrder(Add(e1), e2)
+		case mul:
+			return checkOrder(Mul(e1), e2)
+		case pow:
+			return checkOrder(Pow(e1, Const(1)), e2)
+		case exp:
+			return checkOrder(Exp(e1), e2)
+		case log:
+			return checkOrder(Log(e1), e2)
+		case sqrt:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return checkOrder(e1Arg, e2Arg)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
 	default:
 		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 		panic(errMsg)
@@ -831,7 +975,7 @@ func order(e1, e2 Expr) bool {
 }
 
 func orderRule1(e1, e2 constant) bool {return e1.Value < e2.Value}
-func orderRule2(e1, e2 variable) bool {return e1.Name < e1.Name}
+func orderRule2(e1, e2 variable) bool {return e1.Name < e2.Name}
 func orderRule2_1(e1, e2 constrainedVariable) bool {return e1.Name < e2.Name}
 func orderRule3(e1, e2 add) bool {
 	e1NumOp := NumberOfOperands(e1)
@@ -840,7 +984,7 @@ func orderRule3(e1, e2 add) bool {
 	e2LastOp := Operand(e2, e2NumOp)
 	
 	if !Equal(e1LastOp, e2LastOp) {
-		return order(e1LastOp, e2LastOp)
+		return checkOrder(e1LastOp, e2LastOp)
 	}
 
 	bnd := 0
@@ -854,7 +998,7 @@ func orderRule3(e1, e2 add) bool {
 		e1Op := Operand(e1, ix)
 		e2Op := Operand(e2, ix)
 		if !Equal(e1Op, e2Op) {
-			return order(e1Op, e2Op)
+			return checkOrder(e1Op, e2Op)
 		}
 	}
 	return e1NumOp < e2NumOp
@@ -866,7 +1010,7 @@ func orderRule3_1(e1, e2 mul) bool {
 	e2LastOp := Operand(e2, e2NumOp)
 	
 	if !Equal(e1LastOp, e2LastOp) {
-		return order(e1LastOp, e2LastOp)
+		return checkOrder(e1LastOp, e2LastOp)
 	}
 
 	bnd := 0
@@ -880,7 +1024,7 @@ func orderRule3_1(e1, e2 mul) bool {
 		e1Op := Operand(e1, ix)
 		e2Op := Operand(e2, ix)
 		if !Equal(e1Op, e2Op) {
-			return order(e1Op, e2Op)
+			return checkOrder(e1Op, e2Op)
 		}
 	}
 	return e1NumOp < e2NumOp
@@ -889,11 +1033,11 @@ func orderRule4(e1, e2 pow) bool {
 	e1Base := Operand(e1, 1)
 	e2Base := Operand(e2, 2)
 	if !Equal(e1Base, e2Base) {
-		return order(e1Base, e2Base)
+		return checkOrder(e1Base, e2Base)
 	} else {
 		e1Exponent := Operand(e1, 2)
 		e2Exponent := Operand(e2, 2)
-		return order(e1Exponent, e2Exponent)
+		return checkOrder(e1Exponent, e2Exponent)
 	}
 }
 func orderRule5(e1, e2 Expr) bool {
