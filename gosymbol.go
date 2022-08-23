@@ -5,6 +5,8 @@ import (
 	"math"
 	"reflect"
 	"sort"
+
+	"golang.org/x/text/cases"
 )
 
 /* Factories */
@@ -555,7 +557,7 @@ func Operand(expr Expr, n int) Expr {
 }
 
 // TODO: see Computer Algebra and Symbolic Computation page 10 to understand this shit
-func Map(F Expr, u ...Expr) Expr {return nil}
+func Map(F Expr, u ...Expr) Expr {panic("Not implemented yet")}
 
 
 func isSameType(a, b any) bool {
@@ -588,7 +590,7 @@ func Depth(expr Expr) int {
 
 // A concurrent implementation of Depth 
 func DepthConcurrent(expr Expr) int {
-	return -1
+	panic("ERROR: Not implemented yet")
 }
 
 /* Automatic Simplification */
@@ -745,5 +747,169 @@ func patternMatchOperands(pattern, expr Expr, varCache map[VarName]Expr) bool {
 func Expand(expr Expr) Expr {
 	return nil
 }
+
+/*
+Returns true if e1 "comes before" e2 and false otherwise.
+"comes before" is defined using the order relation defined in [1].
+E.g.:
+O-1: if e1 and e2 are constants then order(e1, e2) -> e1 < e2
+O-2: if e1 and e2 are variables order(e1, e2) is defined by the
+lexographical order of the symbols.
+O-3: etc.
+
+NOTE: the function assumes that e1 and e2 are automatically simplified algebraic expressions (ASAEs)
+
+[1] COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003. Figure 3.9.
+*/
+func order(e1, e2 Expr) bool {
+	switch e1Typed := e1.(type) {
+	case constant:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return orderRule1(e1Typed, e2Typed) 
+		default:
+			return true
+		}
+	case variable:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return orderRule2(e1Typed, e2Typed)
+		case constrainedVariable:
+			return e1Typed.Name < e2Typed.Name // This is very ugly :(
+		case add:
+			return order(Add(e1), e2)
+		case mul:
+			return order(Mul(e1), e2)
+		case pow:
+			return order(Pow(e1, Const(1)), e2)
+		case exp:
+			return order(Exp(e1), e2)
+		case log:
+			return order(Log(e1), e2)
+		case sqrt:
+			return order(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
+	case constrainedVariable:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
+		case variable:
+			return e1Typed.Name < e2Typed.Name // This is very ugly :(
+		case constrainedVariable:
+			return orderRule2_1(e1Typed, e2Typed)
+		case add:
+			return order(Add(e1), e2)
+		case mul:
+			return order(Mul(e1), e2)
+		case pow:
+			return order(Pow(e1, Const(1)), e2)
+		case exp:
+			return order(Exp(e1), e2)
+		case log:
+			return order(Log(e1), e2)
+		case sqrt:
+			return order(Sqrt(e1), e2)
+		default:
+			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+			panic(errMsg)
+		}
+	case add:
+	case mul:
+	case pow:
+	case exp:
+	case log:
+	case sqrt:
+	default:
+		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
+		panic(errMsg)
+	}
+}
+
+func orderRule1(e1, e2 constant) bool {return e1.Value < e2.Value}
+func orderRule2(e1, e2 variable) bool {return e1.Name < e1.Name}
+func orderRule2_1(e1, e2 constrainedVariable) bool {return e1.Name < e2.Name}
+func orderRule3(e1, e2 add) bool {
+	e1NumOp := NumberOfOperands(e1)
+	e2NumOp := NumberOfOperands(e2)
+	e1LastOp := Operand(e1, e1NumOp)
+	e2LastOp := Operand(e2, e2NumOp)
+	
+	if !Equal(e1LastOp, e2LastOp) {
+		return order(e1LastOp, e2LastOp)
+	}
+
+	bnd := 0
+	if e1NumOp < e2NumOp {
+		bnd = e1NumOp
+	} else {
+		bnd = e2NumOp
+	}
+
+	for ix := bnd; ix >= 1; ix-- {
+		e1Op := Operand(e1, ix)
+		e2Op := Operand(e2, ix)
+		if !Equal(e1Op, e2Op) {
+			return order(e1Op, e2Op)
+		}
+	}
+	return e1NumOp < e2NumOp
+}
+func orderRule3_1(e1, e2 mul) bool {
+	e1NumOp := NumberOfOperands(e1)
+	e2NumOp := NumberOfOperands(e2)
+	e1LastOp := Operand(e1, e1NumOp)
+	e2LastOp := Operand(e2, e2NumOp)
+	
+	if !Equal(e1LastOp, e2LastOp) {
+		return order(e1LastOp, e2LastOp)
+	}
+
+	bnd := 0
+	if e1NumOp < e2NumOp {
+		bnd = e1NumOp
+	} else {
+		bnd = e2NumOp
+	}
+
+	for ix := bnd; ix >= 1; ix-- {
+		e1Op := Operand(e1, ix)
+		e2Op := Operand(e2, ix)
+		if !Equal(e1Op, e2Op) {
+			return order(e1Op, e2Op)
+		}
+	}
+	return e1NumOp < e2NumOp
+}
+func orderRule4(e1, e2 pow) bool {
+	e1Base := Operand(e1, 1)
+	e2Base := Operand(e2, 2)
+	if !Equal(e1Base, e2Base) {
+		return order(e1Base, e2Base)
+	} else {
+		e1Exponent := Operand(e1, 2)
+		e2Exponent := Operand(e2, 2)
+		return order(e1Exponent, e2Exponent)
+	}
+}
+func orderRule5(e1, e2 Expr) bool {
+	panic("rule dedicated to factorial which is not implemented")
+}
+
+
+/*
+Sorts the expression by changing the order of depth 0 operands
+in commutative operators to lexographical. The operands
+of depth > 0 will be sorted after depth.
+*/
+func Sort(expr Expr) Expr {
+ panic("Not implemented yet")
+}
+
+
 
 

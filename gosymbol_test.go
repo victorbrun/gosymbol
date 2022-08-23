@@ -488,6 +488,10 @@ func TestSimplify(t *testing.T) {
 			input: gosymbol.Mul(),
 			expectedOutput: gosymbol.Const(1),
 		},
+		{ // 1 * x = x
+			input: gosymbol.Mul(gosymbol.Const(1), gosymbol.Exp(gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Exp(gosymbol.Var("x")),
+		},
 		{ // x*x = x^2
 			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Const(10)),
 			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2)),
@@ -495,6 +499,10 @@ func TestSimplify(t *testing.T) {
 		{ // x*x^n = x^(n+1)
 			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2))),
 			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Add(gosymbol.Const(2), gosymbol.Const(1))),
+		},
+		{ // x * (1/x) = 1
+			input: gosymbol.Mul(gosymbol.Exp(gosymbol.Var("x")), gosymbol.Div(gosymbol.Const(1), gosymbol.Exp(gosymbol.Var("x")))),
+			expectedOutput: gosymbol.Const(1),
 		},
 	}
 	

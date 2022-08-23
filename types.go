@@ -5,15 +5,6 @@ type Arguments map[VarName]float64
 type Func func(Arguments) float64
 
 type Expr interface {
-	// Private functions
-	equal(Expr) bool
-	contains(Expr) bool
-	variableNames(*[]string)
-	numberOfOperands() int
-	operand(int) Expr
-	replaceOperand(int, Expr) Expr
-	simplify() Expr
-
 	// Public functions
 	String() string
 	Eval() Func

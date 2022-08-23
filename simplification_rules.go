@@ -20,7 +20,27 @@ func negOrZeroConstant(expr Expr) bool {
 }
 
 
-var sumSimplificationRules []transformationRule = []transformationRule{}
+var sumSimplificationRules []transformationRule = []transformationRule{
+	{ // (Undefined) + ... = Undefined 
+		patternFunction: func(expr Expr) bool {
+			_, ok := expr.(add)
+			return  ok && Contains(expr, Undefined())
+		},
+		transform: func(expr Expr) Expr {return Undefined()},
+	},
+	{ // Addition with only one operand simplify to the operand
+		pattern: Add(Var("x")),
+		transform: func(expr Expr) Expr {
+			return Operand(expr, 1)
+		},
+	},
+	{ // Addition of no operands simplify to 0
+		pattern: Add(),
+		transform: func(expr Expr) Expr {
+			return Const(0)		
+		},
+	},
+}
 
 var productSimplificationRules []transformationRule = []transformationRule{
 	{ // (Undefined) * ... = Undefined 
@@ -58,6 +78,12 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		pattern: Mul(),
 		transform: func(expr Expr) Expr {
 			return Const(1)		
+		},
+	},
+	{ // 1 * x = x
+		pattern: Mul(Const(1), Var("x")),
+		transform: func(expr Expr) Expr {
+			return Operand(expr, 2)
 		},
 	},
 	{ // x*x = x^2
