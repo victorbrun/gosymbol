@@ -5,7 +5,6 @@ import (
 	"math"
 	"reflect"
 	"sort"
-
 )
 
 /* Factories */
@@ -597,12 +596,12 @@ func DepthConcurrent(expr Expr) int {
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
-	// Recusively simplify all operands
+	// Recusively simplify all operands.
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
 		expr = replaceOperand(expr, ix, Simplify(op)) 
 	}
-
+	
 	// Application of all Simplification rules follow this same pattern
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) Expr {
 		for _, rule := range ruleSlice {
@@ -612,12 +611,16 @@ func Simplify(expr Expr) Expr {
 	}
 
 	// Applies simplification rules depending on the operator type
+	// This will extend as more rules gets added! The base cases
+	// are fully simplified so we just return them.
 	switch expr.(type) {
 	case undefined:
 		return expr
 	case constant:
 		return expr
 	case variable:
+		return expr
+	case constrainedVariable:
 		return expr
 	case add:
 		return rulesApplication(expr, sumSimplificationRules)
@@ -628,6 +631,7 @@ func Simplify(expr Expr) Expr {
 	default:
 		return expr
 	}
+
 }
 
 // Applies rule to expr and returns the transformed expression.
@@ -654,10 +658,12 @@ func (rule transformationRule) match(expr Expr) bool {
 	}
 }
 
-// Recursively checks if expr matches pattern. varCache is an empty
-// map internally used to keep track of what the variables in pattern 
-// corresponds to in expr. The function expects that no variable has the 
-// same name as a constrained variable.
+/*
+Recursively checks if expr matches pattern. varCache is an empty
+map internally used to keep track of what the variables in pattern 
+corresponds to in expr. The function expects that no variable has the 
+same name as a constrained variable.
+*/
 func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 	switch v := pattern.(type) {
 	case undefined:

@@ -80,10 +80,26 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Const(1)		
 		},
 	},
-	{ // 1 * x = x
-		pattern: Mul(Const(1), Var("x")),
+	{ // 1 * x_1 * ... * x_n = x_1 * ... * x_n 
+		patternFunction: func(expr Expr) bool {
+			_, ok := expr.(mul)
+			return ok && Contains(expr, Const(1))
+		},
 		transform: func(expr Expr) Expr {
-			return Operand(expr, 2)
+			if NumberOfOperands(expr) == 1 {
+				return expr
+			}
+
+			// To account for possibility of more than one 1 
+			// we append non-1s
+			var newFactors []Expr
+			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+				op := Operand(expr, ix)
+				if !Equal(op, Const(1)) {
+					newFactors = append(newFactors, op)
+				}
+			}
+			return Mul(newFactors...)
 		},
 	},
 	{ // x*x = x^2
