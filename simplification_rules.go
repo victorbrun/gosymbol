@@ -111,6 +111,12 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 			return Undefined()
 		},
 	},
+	{ // x^(Undefined) = Undefined
+		pattern: Pow(Var("x"), Undefined()),
+		transform: func(expr Expr) Expr {
+			return Undefined()
+		},
+	},
 	{ // 0^x = 0 for x in R_+
 		pattern: Pow(Const(0), ConstrVar("x", positiveConstant)),
 		transform: func(expr Expr) Expr {
@@ -133,6 +139,25 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 		pattern: Pow(Var("x"), Const(0)),
 		transform: func(expr Expr) Expr {
 			return Const(1)
+		},
+	},
+	{ // (v_1 * ... * v_m)^n = v_1^n * ... * v_m^n 
+		patternFunction: func(expr Expr) bool {
+			if _, ok := expr.(pow); ok {
+				base := Operand(expr, 1)
+				_, ok := base.(mul)
+				return ok
+			}
+			return false
+		},
+		transform: func(expr Expr) Expr {
+			base := Operand(expr, 1)
+			exponent := Operand(expr, 2)
+			for ix := 1; ix <= NumberOfOperands(base); ix++ {
+				factor := Operand(base, ix)
+				base = replaceOperand(base, ix, Pow(factor, exponent))
+			}
+			return base
 		},
 	},
 	{ // (x^y)^z = x^(y*z)

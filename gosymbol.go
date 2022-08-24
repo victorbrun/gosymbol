@@ -1066,6 +1066,25 @@ func orderRule5(e1, e2 Expr) bool {
 	panic("rule dedicated to factorial which is not implemented")
 }
 
+/*
+Returns a new expression where the
+terms in in s1 has been prepended
+to the terms in s2, i.e. the order 
+of terms is not changed.
+*/
+func mergeSums(s1, s2 add) add {
+	panic("not implemented yet")
+}
+
+/*
+Returns a new expression where the
+factors in in p1 has been prepended
+to the factors in p2, i.e. the order 
+of factors is not changed.
+*/
+func mergeProducts(p1, p2 mul) mul {
+	panic("not implemented yet")
+}
 
 /*
 Sorts the expression by changing the order of depth 0 operands

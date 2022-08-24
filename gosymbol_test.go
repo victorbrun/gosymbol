@@ -9,6 +9,14 @@ import (
 	"github.com/victorbrun/gosymbol"
 )
 
+
+func correctnesCheck(t *testing.T, result, expectedOutput any, testNumber int) {
+		if !reflect.DeepEqual(result, expectedOutput) {
+			errMsg := fmt.Sprintf("Failed test: %v. Expected: %v, Got: %v", testNumber, expectedOutput, result)
+			t.Error(errMsg)
+		}
+}
+
 func TestExprPrint(t *testing.T) {
 	tests := []struct{
 		input gosymbol.Expr
@@ -58,10 +66,7 @@ func TestExprPrint(t *testing.T) {
 	
 	for ix, test := range tests {
 		result := fmt.Sprint(test.input)
-		if result != test.expectedOutput {
-			errMsg := fmt.Sprintf("Failed test: %v. Expected: %v \nGot: %v", ix+1, test.expectedOutput, result)
-			t.Error(errMsg)
-		}
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
 
@@ -150,10 +155,7 @@ func TestExprEval(t *testing.T) {
 
 	for ix, test := range tests {
 		result := test.input.expr.Eval()(test.input.args)
-		if result != test.expectedOutput {
-			errMsg := fmt.Sprintf("Failed test: %v\nExpected: %v\nGot: %v", ix+1, test.expectedOutput, result)
-			t.Error(errMsg)
-		}
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
 
@@ -212,11 +214,8 @@ func TestD(t *testing.T) {
 	}
 
 	for ix, test := range tests {
-		deriv := test.input.expr.D(test.input.diffVar)
-		if !reflect.DeepEqual(deriv, test.expectedOutput) {
-			errMsg := fmt.Sprintf("Failed test: %v\nExpected: %v\nGot: %v", ix+1, test.expectedOutput, deriv)
-			t.Error(errMsg)
-		}
+		result := test.input.expr.D(test.input.diffVar)
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
 
@@ -388,10 +387,7 @@ func TestSubstitute(t *testing.T) {
 
 	for ix, test := range tests {
 		result := gosymbol.Substitute(test.input.expr, test.input.u, test.input.t)
-		if !reflect.DeepEqual(result, test.expectedOutput) {
-			errMsg := fmt.Sprintf("Failed test: %v: Expected %v, Got: %v", ix+1, test.expectedOutput, result)
-			t.Error(errMsg)
-		}
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
 
@@ -428,10 +424,7 @@ func TestVariableNames(t *testing.T) {
 
 	for ix, test := range tests {
 		result := gosymbol.VariableNames(test.input)
-		if !reflect.DeepEqual(result, test.expectedOutput) {
-			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
-			t.Error(errMsg)
-		}
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
 
@@ -442,6 +435,10 @@ func TestSimplify(t *testing.T) {
 	} {
 		{ // undefined^y = undefined
 			input: gosymbol.Pow(gosymbol.Undefined(), gosymbol.Var("y")),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // x^undefined = undefined
+			input: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Undefined()),
 			expectedOutput: gosymbol.Undefined(),
 		},
 		{ // 0^x = 0
@@ -459,6 +456,10 @@ func TestSimplify(t *testing.T) {
 		{ // x^0 = 1
 			input: gosymbol.Pow(gosymbol.Var("kuk"), gosymbol.Const(0)),
 			expectedOutput: gosymbol.Const(1),
+		},
+		{
+			input: gosymbol.Pow(gosymbol.Mul(gosymbol.Var("x"), gosymbol.Const(3), gosymbol.Var("y")), gosymbol.Var("elle")),
+			expectedOutput: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("elle")), gosymbol.Pow(gosymbol.Const(3), gosymbol.Var("elle")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("elle"))),
 		},
 		{ // (i^j)^k = i^(j*k)
 			input: gosymbol.Pow(gosymbol.Pow(gosymbol.Var("i"), gosymbol.Var("j")), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k")))),
@@ -508,10 +509,7 @@ func TestSimplify(t *testing.T) {
 	
 	for ix, test := range tests {
 		result := gosymbol.Simplify(test.input)
-		if !gosymbol.Equal(result, test.expectedOutput) {
-			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
-			t.Error(errMsg)
-		}
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
 
@@ -548,10 +546,7 @@ func TestDepth(t *testing.T) {
 
 	for ix, test := range tests {
 		result := gosymbol.Depth(test.input)
-		if result != test.expectedOutput {
-			errMsg := fmt.Sprintf("Failed test: %v: Expected: %v, Got: %v", ix+1, test.expectedOutput, result)
-			t.Error(errMsg)
-		}
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 
 }
