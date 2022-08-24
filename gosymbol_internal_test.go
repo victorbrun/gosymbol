@@ -13,7 +13,7 @@ func correctnesCheck(t *testing.T, result, expectedOutput any, testNumber int) {
 		}
 }
 
-func TestCheckOrder(t *testing.T) {
+func TestComapre(t *testing.T) {
 	type inputArgs struct {
 		expr1 Expr
 		expr2 Expr
@@ -174,6 +174,90 @@ func TestCheckOrder(t *testing.T) {
 			input: inputArgs{
 				expr2: Var("x"),
 				expr1: Pow(Var("x"), Const(2)),
+			},
+			expectedOutput: false,
+		},
+		{ // Test 23: x < Exp(y)
+			input: inputArgs{
+				expr1: Var("x"),
+				expr2: Exp(Var("y")),
+			},
+			expectedOutput: true,
+		},
+		{ // Test 24: x |> Exp(y)
+			input: inputArgs{
+				expr2: Var("x"),
+				expr1: Exp(Var("y")),
+			},
+			expectedOutput: false,
+		},
+		{ // Test 25: Exp(x) < Exp(x^2)
+			input: inputArgs{
+				expr1: Exp(Var("x")),
+				expr2: Exp(Pow(Var("x"), Const(2))),
+			},
+			expectedOutput: true,
+		},
+		{ // Test 26: Exp(x) |> Exp(x^2)
+			input: inputArgs{
+				expr2: Exp(Var("x")),
+				expr1: Exp(Pow(Var("x"), Const(2))),
+			},
+			expectedOutput: false,
+		},
+		{ // Test 27: x < Log(y)
+			input: inputArgs{
+				expr1: Var("x"),
+				expr2: Log(Var("y")),
+			},
+			expectedOutput: true,
+		},
+		{ // Test 28: x |> Log(y)
+			input: inputArgs{
+				expr2: Var("x"),
+				expr1: Log(Var("y")),
+			},
+			expectedOutput: false,
+		},
+		{ // Test 29: Log(x) < Log(x^2)
+			input: inputArgs{
+				expr1: Log(Var("x")),
+				expr2: Log(Pow(Var("x"), Const(2))),
+			},
+			expectedOutput: true,
+		},
+		{ // Test 30: Log(x) |> Log(x^2)
+			input: inputArgs{
+				expr2: Log(Var("x")),
+				expr1: Log(Pow(Var("x"), Const(2))),
+			},
+			expectedOutput: false,
+		},
+		{ // Test 31: x < Sqrt(y)
+			input: inputArgs{
+				expr1: Var("x"),
+				expr2: Sqrt(Var("y")),
+			},
+			expectedOutput: true,
+		},
+		{ // Test 32: x |> Sqrt(y)
+			input: inputArgs{
+				expr2: Var("x"),
+				expr1: Sqrt(Var("y")),
+			},
+			expectedOutput: false,
+		},
+		{ // Test 33: Sqrt(x) < Sqrt(x^2)
+			input: inputArgs{
+				expr1: Sqrt(Var("x")),
+				expr2: Sqrt(Pow(Var("x"), Const(2))),
+			},
+			expectedOutput: true,
+		},
+		{ // Test 34: Sqrt(x) |> Sqrt(x^2)
+			input: inputArgs{
+				expr2: Sqrt(Var("x")),
+				expr1: Sqrt(Pow(Var("x"), Const(2))),
 			},
 			expectedOutput: false,
 		},

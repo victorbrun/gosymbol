@@ -549,6 +549,8 @@ func Operand(expr Expr, n int) Expr {
 		return v.Arg
 	case log:
 		return v.Arg
+	case sqrt:
+		return v.Arg
 	default:
 		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
 		panic(errMsg)
@@ -750,7 +752,8 @@ func Expand(expr Expr) Expr {
 /*
 Checks whether the ordering e1 < e2 is true.
 The function returns true if e1 "comes before" e2 and false otherwis false.
-"comes before" is defined using the order relation defined in [1].
+"comes before" is defined using the order relation defined in [1] (with some 
+extensions to include functions like exp, sin, etc).
 E.g.:
 O-1: if e1 and e2 are constants then compare(e1, e2) -> e1 < e2
 O-2: if e1 and e2 are variables compare(e1, e2) is defined by the
@@ -758,6 +761,13 @@ lexographical order of the symbols.
 O-3: etc.
 
 NOTE: the function assumes that e1 and e2 are automatically simplified algebraic expressions (ASAEs)
+
+NOTE: When TypeOf(e1) != TypeOf(e2) the recursive evaluation pattern creates a new expression 
+of the same type as either e1 or e2. For TypeOf(e1) = add, TypeOf(e2) = mul this looks like
+	return compare(Mul(e1), e2)
+What this mean in practice is that the type of e2 is prioritised higher than the type of e1.
+When extending this function you utilise this to specifiy, e.g. that a < x^3 and not the other 
+way around.
 
 [1] COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003. Figure 3.9.
 */
@@ -833,11 +843,11 @@ func compare(e1, e2 Expr) bool {
 		case pow:
 			return compare(Pow(e1, Const(1)), e2)
 		case exp:
-			return compare(Exp(e1), e2)
+			return compare(e1, Add(e2))
 		case log:
-			return compare(Log(e1), e2)
+			return compare(e1, Add(e2))
 		case sqrt:
-			return compare(Sqrt(e1), e2)
+			return compare(e1, Add(e2))
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
@@ -857,11 +867,11 @@ func compare(e1, e2 Expr) bool {
 		case pow:
 			return compare(e1, Mul(e2))
 		case exp:
-			return compare(Exp(e1), e2)
+			return compare(e1, Mul(e2))
 		case log:
-			return compare(Log(e1), e2)
+			return compare(e1, Mul(e2))
 		case sqrt:
-			return compare(Sqrt(e1), e2)
+			return compare(e1, Mul(e2))
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
@@ -881,11 +891,11 @@ func compare(e1, e2 Expr) bool {
 		case pow:
 			return orderRule4(e1Typed, e2Typed)
 		case exp:
-			return compare(Exp(e1), e2)
+			return compare(e1, Pow(e2, Const(1)))
 		case log:
-			return compare(Log(e1), e2)
+			return compare(e1, Pow(e2, Const(1)))
 		case sqrt:
-			return compare(Sqrt(e1), e2)
+			return compare(e1, Pow(e2, Const(1)))
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
@@ -894,6 +904,28 @@ func compare(e1, e2 Expr) bool {
 		switch e2.(type) {
 		case constant:
 			return false
+		case variable:
+			return compare(e1, Exp(e2))
+		case constrainedVariable:
+			return compare(e1, Exp(e2))
+		case add:
+			return compare(Add(e1), e2)
+		case mul:
+			return compare(Mul(e1), e2)
+		case pow:
+			return compare(Pow(e1, Const(1)), e2)
+		case exp:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
+		case log:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
+		case sqrt:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
@@ -902,6 +934,28 @@ func compare(e1, e2 Expr) bool {
 		switch e2.(type) {
 		case constant:
 			return false
+		case variable:
+			return compare(e1, Exp(e2))
+		case constrainedVariable:
+			return compare(e1, Exp(e2))
+		case add:
+			return compare(Add(e1), e2)
+		case mul:
+			return compare(Mul(e1), e2)
+		case pow:
+			return compare(Pow(e1, Const(1)), e2)
+		case exp:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
+		case log:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
+		case sqrt:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
@@ -910,6 +964,28 @@ func compare(e1, e2 Expr) bool {
 		switch e2.(type) {
 		case constant:
 			return false
+		case variable:
+			return compare(e1, Exp(e2))
+		case constrainedVariable:
+			return compare(e1, Exp(e2))
+		case add:
+			return compare(Add(e1), e2)
+		case mul:
+			return compare(Mul(e1), e2)
+		case pow:
+			return compare(Pow(e1, Const(1)), e2)
+		case exp:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
+		case log:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
+		case sqrt:
+			e1Arg := Operand(e1, 1)
+			e2Arg := Operand(e2, 1)
+			return compare(e1Arg, e2Arg)
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
