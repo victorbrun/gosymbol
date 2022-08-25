@@ -268,3 +268,24 @@ func TestComapre(t *testing.T) {
 		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
+
+func TestTopOperandSort(t *testing.T) {
+	tests := []struct{
+		input Expr
+		expectedOutput Expr
+	} {
+		{
+			input: Mul(Var("d"), Var("c"), Var("b"), Var("a")),
+			expectedOutput: Mul(Var("a"), Var("b"), Var("c"), Var("d")),
+		},
+		{ // Confirms that we only sort the top most operands 
+			input: Add(Pow(Add(Var("b"), Var("a")), Const(2)), Const(1)),
+			expectedOutput: Add(Const(1), Pow(Add(Var("b"), Var("a")), Const(2))),
+		},
+	}
+
+	for ix, test := range tests {
+		result := topOperandSort(test.input)
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
+	}
+}

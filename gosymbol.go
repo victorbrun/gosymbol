@@ -298,6 +298,17 @@ func replaceOperand(t Expr, n int, u Expr) Expr {
 	}
 }
 
+/*
+Swaps operand number n1 with operand number n2 in expr.
+*/
+func swapOperands(expr Expr, n1, n2 int) Expr {
+	op1 := Operand(expr, n1)
+	op2 := Operand(expr, n2)
+	expr = replaceOperand(expr, n1, op2)
+	expr = replaceOperand(expr, n2, op1)
+	return expr
+}
+
 /* 
 Recursively checks exact syntactical equality between t and u,
 i.e. it does not simplify any expression nor does it 
@@ -1093,12 +1104,39 @@ func mergeProducts(p1, p2 mul) mul {
 }
 
 /*
-Sorts the expression by changing the order of depth 0 operands
-in commutative operators to lexographical. The operands
-of depth > 0 will be sorted after depth.
+Sorts the operands of expr in increasing order in accordance
+with the order relation defined by compare(e1,e2 Expr). It does
+not recursively sort the operands operands etc. 
+
+To make a complete sort using this it needs to be recursive
+called on the operands.
+
+NOTE: Using insertion sort so worst case time complexity is O(n^2).
 */
-func Sort(expr Expr) Expr {
- panic("Not implemented yet")
+func topOperandSort(expr Expr) Expr {
+	for ix := 1; ix <= NumberOfOperands(expr)-1; ix++ {
+		op1 := Operand(expr, ix)
+		op2 := Operand(expr, ix+1)
+		
+		n := ix
+		for !compare(op1, op2) {
+			expr = swapOperands(expr, n, n+1)
+			
+			// As long as n > 1 we are not at the
+			// first operand and there is no risk of 
+			// index out of bounds error. If we are at 
+			// the last operand we need to break since 
+			// compare will continue to return false if 
+			// op1 == op2.
+			if n > 1 {
+				op1 = Operand(expr, n-1)
+				n--
+			} else {
+				break
+			}
+		}
+	}
+	return expr
 }
 
 
