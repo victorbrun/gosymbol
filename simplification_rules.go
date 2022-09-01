@@ -21,13 +21,6 @@ func negOrZeroConstant(expr Expr) bool {
 
 
 var sumSimplificationRules []transformationRule = []transformationRule{
-	{ // (Undefined) + ... = Undefined 
-		patternFunction: func(expr Expr) bool {
-			_, ok := expr.(add)
-			return  ok && Contains(expr, Undefined())
-		},
-		transform: func(expr Expr) Expr {return Undefined()},
-	},
 	{ // Addition with only one operand simplify to the operand
 		pattern: Add(Var("x")),
 		transform: func(expr Expr) Expr {
@@ -43,13 +36,6 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 }
 
 var productSimplificationRules []transformationRule = []transformationRule{
-	{ // (Undefined) * ... = Undefined 
-		patternFunction: func(expr Expr) bool {
-			_, ok := expr.(mul)
-			return  ok && Contains(expr, Undefined())
-		},
-		transform: func(expr Expr) Expr {return Undefined()},
-	},
 	{ // 0 * ... = 0
 		patternFunction: func(expr Expr) bool {
 			// Ensures expr is of type mul
@@ -109,7 +95,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Pow(base, Const(2))
 		},
 	},
-	{ // x*x^n = x^(n+1)
+	{ // x*x^n = x^(n+1) this applies to positive n due to the ordering of an expression
 		pattern: Mul(Var("x"), Pow(Var("x"), Var("y"))),
 		transform: func(expr Expr) Expr {
 			newBase := Operand(expr, 1)
@@ -118,21 +104,27 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Pow(newBase, newExponent)
 		},
 	},
+	/*{ // x^n * x = x^(n+1) this applies to negative n due to the ordering of an expression
+		pattern: Mul(Pow(Var("x"), Var("y")), Var("x")),
+		transform: func(expr Expr) Expr {
+			newBase := Operand(expr, 2)
+			oldExponent := Operand(Operand(expr, 1), 2)
+			newExponent := Add(oldExponent, Const(1))
+			return Pow(newBase, newExponent)
+		},
+	},*/
+	{ // x^(n) * x^(m) = x^(n+m)
+		pattern: Mul(Pow(Var("x"), Var("n")), Pow(Var("x"), Var("m"))),
+		transform: func(expr Expr) Expr {
+			base := Operand(Operand(expr, 1), 1)
+			exponent1 := Operand(Operand(expr, 1), 2)
+			exponent2 := Operand(Operand(expr, 2), 2)
+			return Pow(base, Add(exponent1, exponent2))
+		},
+	},
 }
 
 var powerSimplificationRules []transformationRule = []transformationRule{
-	{ // (Undefined)^x = Undefined
-		pattern: Pow(Undefined(), Var("x")),
-		transform: func(expr Expr) Expr {
-			return Undefined()
-		},
-	},
-	{ // x^(Undefined) = Undefined
-		pattern: Pow(Var("x"), Undefined()),
-		transform: func(expr Expr) Expr {
-			return Undefined()
-		},
-	},
 	{ // 0^x = 0 for x in R_+
 		pattern: Pow(Const(0), ConstrVar("x", positiveConstant)),
 		transform: func(expr Expr) Expr {

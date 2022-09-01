@@ -607,6 +607,26 @@ func DepthConcurrent(expr Expr) int {
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
+	// Having this here makes it possible
+	// to remove all rules in simplification_rules.go 
+	// that basically just checks if the expression contains 
+	// undefined.
+	if Contains(expr, Undefined()) {
+		return Undefined()
+	}
+
+	// Only sorting the top operands is sufficient
+	// to sort the whole expression since in the next
+	// step we recursively simplify all the operands.
+	// Note that the operator must be commutative for 
+	// this not to fuck shit up!
+	switch expr.(type) {
+	case add:
+		expr = topOperandSort(expr)
+	case mul:
+		expr = topOperandSort(expr)
+	}
+
 	// Recusively simplify all operands.
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
@@ -615,8 +635,15 @@ func Simplify(expr Expr) Expr {
 	
 	// Application of all Simplification rules follow this same pattern
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) Expr {
-		for _, rule := range ruleSlice {
-			expr = rule.apply(expr)
+		atLeastOneApplied := true
+		for atLeastOneApplied {
+		atLeastOneApplied = false
+			var applied bool
+			for ix, rule := range ruleSlice {
+				fmt.Printf("RULE: %v\n", ix)
+				expr, applied = rule.apply(expr)
+				atLeastOneApplied = atLeastOneApplied || applied 
+			}
 		}
 		return expr
 	}
@@ -625,8 +652,6 @@ func Simplify(expr Expr) Expr {
 	// This will extend as more rules gets added! The base cases
 	// are fully simplified so we just return them.
 	switch expr.(type) {
-	case undefined:
-		return expr
 	case constant:
 		return expr
 	case variable:
@@ -642,17 +667,16 @@ func Simplify(expr Expr) Expr {
 	default:
 		return expr
 	}
-
 }
 
 // Applies rule to expr and returns the transformed expression.
 // If expression does not match rule the ingoing expression 
 // will just be returned.
-func (rule transformationRule) apply(expr Expr) Expr {
+func (rule transformationRule) apply(expr Expr) (Expr, bool) {
 	if rule.match(expr) {
-		return rule.transform(expr)
+		return rule.transform(expr), true
 	}
-	return expr
+	return expr, false
 }
 
 func (rule transformationRule) match(expr Expr) bool {
@@ -690,7 +714,15 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 		// we have not come accross the variable name 
 		// we cache the current expression.
 		if e, ok := varCache[v.Name]; ok {
-			return patternMatch(e, expr, varCache) // Should this be patternMatch or Equal??
+			// When the pattern matches the expr the
+			// variable will be cached as itself, which
+			// the first if is accounting for. Otherwise we 
+			// would end up in bottomless recursion :)
+			if Equal(e, expr) {
+				return true
+			} else {
+				return patternMatch(e, expr, varCache)
+			}
 		} else {
 			varCache[v.Name] = expr
 			return true
@@ -1106,7 +1138,8 @@ func mergeProducts(p1, p2 mul) mul {
 /*
 Sorts the operands of expr in increasing order in accordance
 with the order relation defined by compare(e1,e2 Expr). It does
-not recursively sort the operands operands etc. 
+not recursively sort the operands operands etc. This should only 
+be applied when the operator is commutative!
 
 To make a complete sort using this it needs to be recursive
 called on the operands.
