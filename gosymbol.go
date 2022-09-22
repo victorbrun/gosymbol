@@ -599,11 +599,6 @@ func Depth(expr Expr) int {
 	}
 }
 
-// A concurrent implementation of Depth 
-func DepthConcurrent(expr Expr) int {
-	panic("ERROR: Not implemented yet")
-}
-
 /* Automatic Simplification */
 
 func Simplify(expr Expr) Expr {
