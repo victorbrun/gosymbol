@@ -33,6 +33,43 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Const(0)		
 		},
 	},
+	{ // x - x = 0. Due to the ordering the negative term will always be first.
+	  // Note that this will not work for constants since Const(-c) is a float
+	  // while -x = -1*x. 
+		pattern: Add(Neg(Var("x")), Var("x")),
+		transform: func(expr Expr) Expr {
+			return Const(0)
+		},
+	},
+	{ // Sum of constants is replaced with the constant that the sum evaluates to.
+	  // Note that sum of some constants will replace the constants with their sum. 
+		patternFunction: func(expr Expr) bool {
+			// Ensures expr is of type add 
+			exprTyped, ok := expr.(add)
+			if !ok {return false}
+			return len(exprTyped.Operands) > 1
+		},
+		transform: func(expr Expr) Expr {
+			// We sum all the constants in the sum
+			sum := 0.0
+			nonConsts := make([]Expr, 0)
+			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+				op := Operand(expr, ix)
+				opTyped, ok := op.(constant)
+				if ok {
+					sum += opTyped.Value
+				} else {
+					nonConsts = append(nonConsts, op)
+				}
+			}
+			
+			// Replaces the constants with their sum. Note that we 
+			// know that the expression is sorted, i.e. the constants 
+			// are at the front of the sum.
+			newTerms := append([]Expr{Const(sum)}, nonConsts...)
+			return Add(newTerms...)
+		},
+	},
 }
 
 var productSimplificationRules []transformationRule = []transformationRule{
@@ -104,7 +141,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Pow(newBase, newExponent)
 		},
 	},
-	/*{ // x^n * x = x^(n+1) this applies to negative n due to the ordering of an expression
+	{ // x^n * x = x^(n+1) this applies to negative n due to the ordering of an expression
 		pattern: Mul(Pow(Var("x"), Var("y")), Var("x")),
 		transform: func(expr Expr) Expr {
 			newBase := Operand(expr, 2)
@@ -112,7 +149,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			newExponent := Add(oldExponent, Const(1))
 			return Pow(newBase, newExponent)
 		},
-	},*/
+	},
 	{ // x^(n) * x^(m) = x^(n+m)
 		pattern: Mul(Pow(Var("x"), Var("n")), Pow(Var("x"), Var("m"))),
 		transform: func(expr Expr) Expr {

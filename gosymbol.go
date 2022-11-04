@@ -628,40 +628,45 @@ func Simplify(expr Expr) Expr {
 		expr = replaceOperand(expr, ix, Simplify(op)) 
 	}
 	
-	// Application of all Simplification rules follow this same pattern
-	rulesApplication := func(expr Expr, ruleSlice []transformationRule) Expr {
-		atLeastOneApplied := true
-		for atLeastOneApplied {
-		atLeastOneApplied = false
+	// Application of all Simplification rules follow this same pattern.
+	// Returns the simplified expression and a boolean describing whether any
+	// simplification rule has actually been applied.
+	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
+		atLeastOneapplied := false
+		for ix, rule := range ruleSlice {
 			var applied bool
-			for ix, rule := range ruleSlice {
-				fmt.Printf("RULE: %v\n", ix)
-				expr, applied = rule.apply(expr)
-				atLeastOneApplied = atLeastOneApplied || applied 
-			}
+			expr, applied = rule.apply(expr)
+			if applied { fmt.Println("Applied rule ", ix) }
+			atLeastOneapplied = atLeastOneapplied || applied
 		}
-		return expr
+		return expr, atLeastOneapplied
 	}
 
 	// Applies simplification rules depending on the operator type
 	// This will extend as more rules gets added! The base cases
 	// are fully simplified so we just return them.
+	expressionAltered := false
 	switch expr.(type) {
 	case constant:
-		return expr
+		// Fully simplified
 	case variable:
-		return expr
+		// Fully simplified 
 	case constrainedVariable:
-		return expr
+		// Fully simplified 
 	case add:
-		return rulesApplication(expr, sumSimplificationRules)
+		expr, expressionAltered = rulesApplication(expr, sumSimplificationRules)
 	case mul:
-		return rulesApplication(expr, productSimplificationRules)	
+		expr, expressionAltered = rulesApplication(expr, productSimplificationRules)	
 	case pow:
-		return rulesApplication(expr, powerSimplificationRules)
-	default:
-		return expr
+		expr, expressionAltered = rulesApplication(expr, powerSimplificationRules)
 	}
+
+	// If the expression has been altered it might be possible to apply some other rule 
+	// we thus recursively sort until the expression is not altered any more.
+	if expressionAltered {
+		return Simplify(expr)
+	}
+	return expr
 }
 
 // Applies rule to expr and returns the transformed expression.
@@ -1167,6 +1172,4 @@ func topOperandSort(expr Expr) Expr {
 	return expr
 }
 
-
-
-
+func TopOperandSort(expr Expr) Expr { return topOperandSort(expr) }
