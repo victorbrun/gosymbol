@@ -633,10 +633,10 @@ func Simplify(expr Expr) Expr {
 	// simplification rule has actually been applied.
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
 		atLeastOneapplied := false
-		for ix, rule := range ruleSlice {
+		for _, rule := range ruleSlice {
 			var applied bool
 			expr, applied = rule.apply(expr)
-			if applied { fmt.Println("Applied rule ", ix) }
+			//if applied { fmt.Println("Applied rule ", ix) }
 			atLeastOneapplied = atLeastOneapplied || applied
 		}
 		return expr, atLeastOneapplied
@@ -708,21 +708,16 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 		exprTyped, ok := expr.(constant)
 		return ok && v.Value == exprTyped.Value 
 	case variable:
-		// If we have come accross the variable name
-		// before it have an assigned expression, so 
-		// we check if current expression matches. If
-		// we have not come accross the variable name 
-		// we cache the current expression.
-		if e, ok := varCache[v.Name]; ok {
-			// When the pattern matches the expr the
-			// variable will be cached as itself, which
-			// the first if is accounting for. Otherwise we 
-			// would end up in bottomless recursion :)
-			if Equal(e, expr) {
-				return true
-			} else {
-				return patternMatch(e, expr, varCache)
-			}
+		e, cacheOk := varCache[v.Name]
+		eTyped, varOk := e.(variable)
+		if cacheOk && Equal(e, expr) {
+			return true
+		} else if cacheOk && varOk && Equal(v, eTyped) {
+			return false
+		} else if cacheOk && varOk {
+			return patternMatch(e, expr, varCache)	
+		} else if cacheOk {
+			return patternMatch(e, expr, varCache)
 		} else {
 			varCache[v.Name] = expr
 			return true

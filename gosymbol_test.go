@@ -499,7 +499,7 @@ func TestSimplify(t *testing.T) {
 		},
 		{ // x*x^n = x^(n+1)
 			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2))),
-			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Add(gosymbol.Const(2), gosymbol.Const(1))),
+			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(3)),
 		},
 		{ // x * (1/x) = 1
 			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x"))),
@@ -510,10 +510,13 @@ func TestSimplify(t *testing.T) {
 			expectedOutput: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Add(gosymbol.Var("m"), gosymbol.Var("n"))),
 		},
 	}
-	
+
 	for ix, test := range tests {
-		result := gosymbol.Simplify(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			//fmt.Println("Simplifying: ", test.input)
+			result := gosymbol.Simplify(test.input)
+			correctnesCheck(t, result, test.expectedOutput, ix+1)
+		})
 	}
 }
 
@@ -573,5 +576,5 @@ func TestTemp(t *testing.T) {
 	//e := gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Const(3)), gosymbol.Var("x"))
 	e1 := gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x")))
 	fmt.Println("unsorted: ", e1)
-	fmt.Println("sorted: ", gosymbol.TopOperandSort(e1))
+	fmt.Println("sorted: ", gosymbol.TopOperandSort(gosymbol.Add(gosymbol.Var("m"), gosymbol.Const(-1), gosymbol.Const(9), gosymbol.Neg(gosymbol.Var("m")))))
 }

@@ -45,9 +45,21 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 	  // Note that sum of some constants will replace the constants with their sum. 
 		patternFunction: func(expr Expr) bool {
 			// Ensures expr is of type add 
-			exprTyped, ok := expr.(add)
+			_, ok := expr.(add)
 			if !ok {return false}
-			return len(exprTyped.Operands) > 1
+
+			// Makes sure that there is at lest
+			// two terms which are constants to avoid
+			// getting stuck in infinite loop
+			if NumberOfOperands(expr) > 1 {
+				op1 := Operand(expr, 1)
+				op2 := Operand(expr, 2)
+				_, ok1 := op1.(constant)
+				_, ok2 := op2.(constant)
+				return ok1 && ok2
+			} else {
+				return false
+			}
 		},
 		transform: func(expr Expr) Expr {
 			// We sum all the constants in the sum
