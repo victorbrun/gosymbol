@@ -509,11 +509,18 @@ func TestSimplify(t *testing.T) {
 			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("n")), gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("m"))),
 			expectedOutput: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Add(gosymbol.Var("m"), gosymbol.Var("n"))),
 		},
+		{
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("j")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Add(gosymbol.Var("i"), gosymbol.Var("j"))),
+		},
+		{
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Mul(gosymbol.Const(2), gosymbol.Var("i"))),
+		},
 	}
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
-			//fmt.Println("Simplifying: ", test.input)
 			result := gosymbol.Simplify(test.input)
 			correctnesCheck(t, result, test.expectedOutput, ix+1)
 		})

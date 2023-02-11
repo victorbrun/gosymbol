@@ -633,10 +633,10 @@ func Simplify(expr Expr) Expr {
 	// simplification rule has actually been applied.
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
 		atLeastOneapplied := false
-		for _, rule := range ruleSlice {
+		for ix, rule := range ruleSlice {
 			var applied bool
 			expr, applied = rule.apply(expr)
-			//if applied { fmt.Println("Applied rule ", ix) }
+			if applied { fmt.Println("Applied rule ", ix) }
 			atLeastOneapplied = atLeastOneapplied || applied
 		}
 		return expr, atLeastOneapplied
@@ -715,7 +715,8 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 		} else if cacheOk && varOk && Equal(v, eTyped) {
 			return false
 		} else if cacheOk && varOk {
-			return patternMatch(e, expr, varCache)	
+			return false
+			//return patternMatch(e, expr, varCache)	
 		} else if cacheOk {
 			return patternMatch(e, expr, varCache)
 		} else {
