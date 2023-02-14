@@ -509,11 +509,18 @@ func TestSimplify(t *testing.T) {
 			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("n")), gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("m"))),
 			expectedOutput: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Add(gosymbol.Var("m"), gosymbol.Var("n"))),
 		},
+		{
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("j")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Add(gosymbol.Var("i"), gosymbol.Var("j"))),
+		},
+		{
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Mul(gosymbol.Const(2), gosymbol.Var("i"))),
+		},
 	}
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
-			//fmt.Println("Simplifying: ", test.input)
 			result := gosymbol.Simplify(test.input)
 			correctnesCheck(t, result, test.expectedOutput, ix+1)
 		})
@@ -538,10 +545,6 @@ func TestDepth(t *testing.T) {
 			expectedOutput: 0,
 		},
 		{
-			input: gosymbol.ConstrVar("x", func(expr gosymbol.Expr) bool {return true}),
-			expectedOutput: 0,
-		},
-		{
 			input: gosymbol.Add(gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x")),
 			expectedOutput: 1,
 		},
@@ -557,24 +560,3 @@ func TestDepth(t *testing.T) {
 	}
 }
 
-func TestTemp(t *testing.T) {
-	tests := []struct{
-		input gosymbol.Expr
-		expectedOutput gosymbol.Expr
-	}{ 
-		{	// x * (1/x) = 1
-			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x"))),
-			expectedOutput: gosymbol.Const(1),
-		},
-	}
-
-	for ix, test := range tests {
-		result := gosymbol.Simplify(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
-	}
-
-	//e := gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Const(3)), gosymbol.Var("x"))
-	e1 := gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x")))
-	fmt.Println("unsorted: ", e1)
-	fmt.Println("sorted: ", gosymbol.TopOperandSort(gosymbol.Add(gosymbol.Var("m"), gosymbol.Const(-1), gosymbol.Const(9), gosymbol.Neg(gosymbol.Var("m")))))
-}

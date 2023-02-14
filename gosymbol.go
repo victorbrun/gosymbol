@@ -17,12 +17,16 @@ func Const(val float64) constant {
 	return constant{Value: val}
 }
 
+func CacheVar(name VarName) cacheVariable {
+	return cacheVariable{Name: name}
+}
+
 func Var(name VarName) variable {
 	return variable{Name: name}
 }
 
-func ConstrVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
-	return constrainedVariable{Name: name, Constraint: constrFunc}
+func ConstrCacheVar(name VarName, constrFunc func(Expr) bool) cacheVariable {
+	return cacheVariable{Name: name, Constraint: constrFunc}
 }
 
 func Neg(arg Expr) mul {
@@ -187,10 +191,6 @@ func (e variable) String() string {
 	return string(e.Name)
 }
 
-func (e constrainedVariable) String() string {
-	return fmt.Sprintf("%v_CONSTRAINED", e.Name)
-}
-
 func (e add) String() string {
 	str := fmt.Sprintf("( %v", e.Operands[0])
 	for ix := 1; ix < len(e.Operands); ix++ {
@@ -268,8 +268,6 @@ func replaceOperand(t Expr, n int, u Expr) Expr {
 		return v
 	case variable:
 		return v
-	case constrainedVariable:
-		return v
 	case add:
 		v.Operands[n-1] = u
 		return v
@@ -325,9 +323,6 @@ func Equal(t, u Expr) bool {
 	case variable:
 		uTyped, ok := u.(variable)
 		return ok && v.Name == uTyped.Name
-	case constrainedVariable:
-		// TODO: how do we check equality of constrain??
-		return false
 	case add:
 		_, ok := u.(add)
 		if !ok {
@@ -435,9 +430,6 @@ func Contains(expr, u Expr) bool {
 	case variable:
 		uTyped, ok := u.(variable)
 		return ok && v.Name == uTyped.Name
-	case constrainedVariable:
-		// TODO: how do we check equality of constrain??
-		return false
 	default:
 		if Equal(v,u) {return true}
 		for ix := 1; ix <= NumberOfOperands(v); ix++ {
@@ -487,8 +479,6 @@ func variableNames(expr Expr, targetSlice *[]string) {
 		return
 	case variable:
 		*targetSlice = append(*targetSlice, string(v.Name))
-	case constrainedVariable:
-		*targetSlice = append(*targetSlice, string(v.Name))
 	default:
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			op := Operand(expr, ix)
@@ -505,8 +495,6 @@ func NumberOfOperands(expr Expr) int {
 	case constant:
 		return 0
 	case variable:
-		return 0
-	case constrainedVariable:
 		return 0
 	case add:
 		return len(v.Operands)
@@ -542,8 +530,6 @@ func Operand(expr Expr, n int) Expr {
 	case constant:
 		return nil
 	case variable:
-		return nil
-	case constrainedVariable:
 		return nil
 	case add:
 		return v.Operands[n-1]
@@ -583,8 +569,6 @@ func Depth(expr Expr) int {
 	case constant:
 		return 0
 	case variable:
-		return 0
-	case constrainedVariable:
 		return 0
 	default:
 		maxDepth := 0
@@ -633,10 +617,10 @@ func Simplify(expr Expr) Expr {
 	// simplification rule has actually been applied.
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
 		atLeastOneapplied := false
-		for _, rule := range ruleSlice {
+		for ix, rule := range ruleSlice {
 			var applied bool
 			expr, applied = rule.apply(expr)
-			//if applied { fmt.Println("Applied rule ", ix) }
+			if applied { fmt.Println("Applied rule ", ix) }
 			atLeastOneapplied = atLeastOneapplied || applied
 		}
 		return expr, atLeastOneapplied
@@ -650,8 +634,6 @@ func Simplify(expr Expr) Expr {
 	case constant:
 		// Fully simplified
 	case variable:
-		// Fully simplified 
-	case constrainedVariable:
 		// Fully simplified 
 	case add:
 		expr, expressionAltered = rulesApplication(expr, sumSimplificationRules)
@@ -684,7 +666,9 @@ func (rule transformationRule) match(expr Expr) bool {
 	// we execute patternFunction if it exists. 
 	// If no pattern or patternFunction exists we return false 
 	if rule.pattern != nil {
-		varCache := make(map[VarName]Expr)
+		// TODO: Below two lines is ugly, cant you initialise in same row?
+		varCache := variableCache{}
+		varCache.cache = make(map[VarName]Expr)
 		return patternMatch(rule.pattern, expr, varCache)
 	} else if rule.patternFunction != nil {
 		return rule.patternFunction(expr)
@@ -699,7 +683,7 @@ map internally used to keep track of what the variables in pattern
 corresponds to in expr. The function expects that no variable has the 
 same name as a constrained variable.
 */
-func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
+func patternMatch(pattern, expr Expr, varCache variableCache) bool {
 	switch v := pattern.(type) {
 	case undefined:
 		_, ok := expr.(undefined)
@@ -707,32 +691,29 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 	case constant:
 		exprTyped, ok := expr.(constant)
 		return ok && v.Value == exprTyped.Value 
-	case variable:
-		e, cacheOk := varCache[v.Name]
-		eTyped, varOk := e.(variable)
-		if cacheOk && Equal(e, expr) {
+	case cacheVariable:
+		// If the cached variable as an expression assigned to it we pattern 
+		// match it with `expr`. If it does not and there is no constraint 
+		// on the variable defined in the pattern we cache current expression,
+		// otherwise we just check if the constraint is satisfied and then cache.
+		if !varCache.isUnassigned(v.Name) {
+			cachedExpr := varCache.get(v.Name)
+			return patternMatch(cachedExpr, expr, varCache)
+		} else if v.Constraint == nil {
+			varCache.add(v.Name, expr)	
 			return true
-		} else if cacheOk && varOk && Equal(v, eTyped) {
-			return false
-		} else if cacheOk && varOk {
-			return patternMatch(e, expr, varCache)	
-		} else if cacheOk {
-			return patternMatch(e, expr, varCache)
-		} else {
-			varCache[v.Name] = expr
-			return true
-		}
-	case constrainedVariable:
-		// Does just as above but before assigning an expression
-		// to a variable the constraint function is checked as well
-		if e, ok := varCache[v.Name]; ok {
-			return patternMatch(e, expr, varCache)
 		} else if v.Constraint(expr) {
-			varCache[v.Name] = expr
+			varCache.add(v.Name, expr)
 			return true
-		} else {
+		}
+		return false
+	case variable:
+		// TODO: we want this case to only happen when above case pattern matches against cached stuff
+		exprTyped, ok := expr.(variable)
+		if !ok {
 			return false
 		}
+		return v.Name == exprTyped.Name 
 	case add:
 		_, ok := expr.(add)
 		if !ok {
@@ -772,7 +753,7 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 // Checks if the operands of pattern and expr match.
 // This function does not check if the main operator
 // of pattern and expr match.
-func patternMatchOperands(pattern, expr Expr, varCache map[VarName]Expr) bool {
+func patternMatchOperands(pattern, expr Expr, varCache variableCache) bool {
 	if NumberOfOperands(pattern) != NumberOfOperands(expr) {
 		return false
 	}
@@ -830,32 +811,6 @@ func compare(e1, e2 Expr) bool {
 			return false
 		case variable:
 			return orderRule2(e1Typed, e2Typed)
-		case constrainedVariable:
-			return e1Typed.Name < e2Typed.Name // This is very ugly :(
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, Const(1)), e2)
-		case exp:
-			return compare(Exp(e1), e2)
-		case log:
-			return compare(Log(e1), e2)
-		case sqrt:
-			return compare(Sqrt(e1), e2)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case constrainedVariable:
-		switch e2Typed := e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return e1Typed.Name < e2Typed.Name // This is very ugly :(
-		case constrainedVariable:
-			return orderRule2_1(e1Typed, e2Typed)
 		case add:
 			return compare(Add(e1), e2)
 		case mul:
@@ -877,8 +832,6 @@ func compare(e1, e2 Expr) bool {
 		case constant:
 			return false
 		case variable:
-			return compare(e1, Add(e2))
-		case constrainedVariable:
 			return compare(e1, Add(e2))
 		case add:
 			return orderRule3(e1Typed, e2Typed)
@@ -902,8 +855,6 @@ func compare(e1, e2 Expr) bool {
 			return false
 		case variable:
 			return compare(e1, Mul(e2))
-		case constrainedVariable:
-			return compare(e1, Mul(e2))
 		case add: 
 			return compare(e1, Mul(e2))
 		case mul:
@@ -926,8 +877,6 @@ func compare(e1, e2 Expr) bool {
 			return false
 		case variable:
 			return compare(e1, Pow(e2, Const(1)))
-		case constrainedVariable:
-			return compare(e1, Pow(e2, Const(1)))
 		case add: 
 			return compare(e1, Pow(e2, Const(1)))
 		case mul:
@@ -949,8 +898,6 @@ func compare(e1, e2 Expr) bool {
 		case constant:
 			return false
 		case variable:
-			return compare(e1, Exp(e2))
-		case constrainedVariable:
 			return compare(e1, Exp(e2))
 		case add:
 			return compare(Add(e1), e2)
@@ -980,8 +927,6 @@ func compare(e1, e2 Expr) bool {
 			return false
 		case variable:
 			return compare(e1, Exp(e2))
-		case constrainedVariable:
-			return compare(e1, Exp(e2))
 		case add:
 			return compare(Add(e1), e2)
 		case mul:
@@ -1009,8 +954,6 @@ func compare(e1, e2 Expr) bool {
 		case constant:
 			return false
 		case variable:
-			return compare(e1, Exp(e2))
-		case constrainedVariable:
 			return compare(e1, Exp(e2))
 		case add:
 			return compare(Add(e1), e2)
@@ -1042,7 +985,6 @@ func compare(e1, e2 Expr) bool {
 
 func orderRule1(e1, e2 constant) bool {return e1.Value < e2.Value}
 func orderRule2(e1, e2 variable) bool {return e1.Name < e2.Name}
-func orderRule2_1(e1, e2 constrainedVariable) bool {return e1.Name < e2.Name}
 func orderRule3(e1, e2 add) bool {
 	e1NumOp := NumberOfOperands(e1)
 	e2NumOp := NumberOfOperands(e2)
@@ -1168,3 +1110,35 @@ func topOperandSort(expr Expr) Expr {
 }
 
 func TopOperandSort(expr Expr) Expr { return topOperandSort(expr) }
+
+/* Variable Cacheing */
+
+/*
+Addes `expr` to cache as `key`. Note that if `key` is already in vc it will be 
+over-written.
+*/
+func (vc variableCache) add(key VarName, expr Expr) {
+	vc.cache[key] = expr	
+}
+
+// TODO
+func (vc variableCache) remove(key string, expr Expr) {}
+
+/*
+Returns the exression cached as `key`. Note that this method 
+assumes that `key` exists in the underlying map.
+*/
+func (vc variableCache) get(key VarName) Expr {
+	return vc.cache[key]
+}
+
+// TODO
+func (vc variableCache) isCached(expr Expr) bool {
+	return false
+}
+
+func (vc variableCache) isUnassigned(key VarName) bool {
+	_, ok := vc.cache[key]
+	return !ok
+}
+

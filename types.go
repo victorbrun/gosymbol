@@ -11,27 +11,30 @@ type Expr interface {
 	D(VarName) Expr
 }
 
-// A constrainedVariable is just like the data type
-// variable but it has a constraint function. When trying
-// to replace the variable with another expression, this
-// function is run, testing whether the new expression satisfy
-// the constrain, if yes it returns true and false otherwise.
-// Note that you yourself need to define this function to fit your
-// needs. TODO: replace this with some sort of logic DSL :)
-type constrainedVariable struct {
+/**
+Type used for storing expressions to enable advanced pattern matching.
+Without constrain this is a different type from `variable` to remove problems of 
+cacheing a variable as itself, and thus creating infinite recursion fuck ups.
+
+If the Constraint field is set it ought to be checked before caching. This featrues make 
+it possible to define patterns like 0^n = undefined if n < 0.
+*/
+type cacheVariable struct {
 	Expr
 	Name VarName
 	Constraint func(expr Expr) bool
 }
 
-// Used to define transformations from an expression
-// into another. The transformation can happen in two ways:
-// TODO: continue documentation and mention that a variable with
-// the same name as an constrained variable is considered to the same
-// variable by mathPattern.
-//
-//This structure is, for example, used in the simplifation
-// of expressions. 
+/** 
+Used to define transformations from an expression
+into another. The transformation can happen in two ways:
+TODO: continue documentation and mention that a variable with
+the same name as an constrained variable is considered to the same
+variable by mathPattern.
+
+This structure is, for example, used in the simplifation
+of expressions. 
+*/
 type transformationRule struct {
 	// One of pattern and patternFunction must be defined.
 	// pattern is prioritised, i.e. if pattern is matched 
@@ -42,6 +45,10 @@ type transformationRule struct {
 
 	// The mapping from pattern to whatever you define
 	transform func(Expr) Expr 
+}
+
+type variableCache struct {
+	cache map[VarName]Expr
 }
 
 /* Basic operators */
