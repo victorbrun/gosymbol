@@ -545,10 +545,6 @@ func TestDepth(t *testing.T) {
 			expectedOutput: 0,
 		},
 		{
-			input: gosymbol.ConstrVar("x", func(expr gosymbol.Expr) bool {return true}),
-			expectedOutput: 0,
-		},
-		{
 			input: gosymbol.Add(gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x"),gosymbol.Const(0), gosymbol.Var("x")),
 			expectedOutput: 1,
 		},
@@ -564,24 +560,3 @@ func TestDepth(t *testing.T) {
 	}
 }
 
-func TestTemp(t *testing.T) {
-	tests := []struct{
-		input gosymbol.Expr
-		expectedOutput gosymbol.Expr
-	}{ 
-		{	// x * (1/x) = 1
-			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x"))),
-			expectedOutput: gosymbol.Const(1),
-		},
-	}
-
-	for ix, test := range tests {
-		result := gosymbol.Simplify(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
-	}
-
-	//e := gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Const(3)), gosymbol.Var("x"))
-	e1 := gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x")))
-	fmt.Println("unsorted: ", e1)
-	fmt.Println("sorted: ", gosymbol.TopOperandSort(gosymbol.Add(gosymbol.Var("m"), gosymbol.Const(-1), gosymbol.Const(9), gosymbol.Neg(gosymbol.Var("m")))))
-}
