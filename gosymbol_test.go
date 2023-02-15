@@ -165,6 +165,7 @@ func TestD(t *testing.T) {
 		diffVar gosymbol.VarName
 	}
 
+	x := gosymbol.Var("X")
 	tests := []struct{
 		input inputArgs
 		expectedOutput gosymbol.Expr
@@ -178,14 +179,14 @@ func TestD(t *testing.T) {
 		},
 		{ // Test 2
 			input: inputArgs{
-				expr: gosymbol.Var("X"),
+				expr: x,
 				diffVar: "X",
 			},
 			expectedOutput: gosymbol.Const(1),
 		},
 		{ // Test 3
 			input: inputArgs{
-				expr: gosymbol.Var("X"),
+				expr: x,
 				diffVar: "Y",
 			},
 			expectedOutput: gosymbol.Const(0),
@@ -211,10 +212,17 @@ func TestD(t *testing.T) {
 			},
 			expectedOutput: gosymbol.Mul(gosymbol.Const(2), gosymbol.Pow(gosymbol.Var("X"), gosymbol.Const(1))),
 		},*/
+		{ // Test 7: D(x*x) = 2*x
+			input: inputArgs{
+				expr: gosymbol.Mul(x, x),
+				diffVar: "X",
+			},
+			expectedOutput: gosymbol.Mul(gosymbol.Const(2), x),
+		},
 	}
 
 	for ix, test := range tests {
-		result := test.input.expr.D(test.input.diffVar)
+		result := gosymbol.D(test.input.expr, test.input.diffVar)
 		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
@@ -516,6 +524,54 @@ func TestSimplify(t *testing.T) {
 		{
 			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
 			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Mul(gosymbol.Const(2), gosymbol.Var("i"))),
+		},
+		{ // undefined + ... = undefined
+			input: gosymbol.Add(gosymbol.Undefined(), gosymbol.Var("x"), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // x - x = 0 
+			input: gosymbol.Sub(gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // -x + x = 0 
+			input: gosymbol.Add(gosymbol.Neg(gosymbol.Var("x")), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // Add with one operand simplifies to operand 
+			input: gosymbol.Add(gosymbol.Var("x")),
+			expectedOutput: gosymbol.Var("x"),
+		},
+		{ // Add with no operand simplifies to 0
+			input: gosymbol.Add(),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // x + x = 2*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Const(2), gosymbol.Var("x")),
+		},
+		{ // x + x + x + x + x = 5*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Const(5), gosymbol.Var("x")),
+		},
+		{ // n*x + x = (n+1)*x
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x")), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("n"), gosymbol.Const(1)), gosymbol.Var("x")),
+		},
+		{ // x*n + x = (n+1)*x
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("x"), gosymbol.Var("n")), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("n"), gosymbol.Const(1)), gosymbol.Var("x")),
+		},
+		{ // x + n*x = (n+1)*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("n"), gosymbol.Const(1)), gosymbol.Var("x")),
+		},
+		{ // x + x*n = (n+1)*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Mul(gosymbol.Var("x"), gosymbol.Var("n"))),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("n"), gosymbol.Const(1)), gosymbol.Var("x")),
+		},
+		{ // n*x + m*x = (n+m)*x
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x")), gosymbol.Mul(gosymbol.Var("m"), gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("n"), gosymbol.Var("m")), gosymbol.Var("x")),
 		},
 	}
 

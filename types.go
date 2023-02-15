@@ -8,7 +8,7 @@ type Expr interface {
 	// Public functions
 	String() string
 	Eval() Func
-	D(VarName) Expr
+	d(VarName) Expr // Differentiation function
 }
 
 /**

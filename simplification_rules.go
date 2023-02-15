@@ -82,6 +82,43 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Add(newTerms...)
 		},
 	},
+	{ // x + x = 2*x
+		pattern: Add(CacheVar("x"), CacheVar("x")),
+		transform: func(expr Expr) Expr { 
+			x := Operand(expr, 1)
+			return Mul(Const(2), x)
+		},	
+	},
+	{ // x*x^n = x^(n+1) this applies to positive n due to the ordering of an expression
+		pattern: Add(Mul(CacheVar("n"), CacheVar("x")), CacheVar("x")),
+		transform: func(expr Expr) Expr {
+			multiplication := Operand(expr, 1)
+			commonVar := Operand(expr, 2)
+			oldFactor := Operand(multiplication, 1)
+			newFactor := Add(oldFactor, Const(1))
+			return Mul(newFactor, commonVar)
+		},
+	},
+	/*
+	{ // x^n * x = x^(n+1) this applies to negative n due to the ordering of an expression
+		pattern: Mul(Pow(CacheVar("x"), CacheVar("y")), CacheVar("x")),
+		transform: func(expr Expr) Expr {
+			newBase := Operand(expr, 2)
+			oldExponent := Operand(Operand(expr, 1), 2)
+			newExponent := Add(oldExponent, Const(1))
+			return Pow(newBase, newExponent)
+		},
+	},
+	*/
+	{ // x^(n) * x^(m) = x^(n+m)
+		pattern: Mul(Pow(CacheVar("x"), CacheVar("n")), Pow(CacheVar("x"), CacheVar("m"))),
+		transform: func(expr Expr) Expr {
+			base := Operand(Operand(expr, 1), 1)
+			exponent1 := Operand(Operand(expr, 1), 2)
+			exponent2 := Operand(Operand(expr, 2), 2)
+			return Pow(base, Add(exponent1, exponent2))
+		},
+	},
 }
 
 var productSimplificationRules []transformationRule = []transformationRule{
