@@ -528,7 +528,7 @@ func NumberOfOperands(expr Expr) int {
 /*
 Returns the n:th (starting at 1) operand (left to right) of expr.
 If expr has no operands it returns nil.
-If n is larger than NumberOfOperands(expr)-1 it will panic.
+If n is larger than NumberOfOperands(expr) it will panic.
 */
 func Operand(expr Expr, n int) Expr {
 	nop := NumberOfOperands(expr)
