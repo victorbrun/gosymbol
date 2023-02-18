@@ -89,7 +89,7 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Mul(Const(2), x)
 		},	
 	},
-	{ // x*x^n = x^(n+1) this applies to positive n due to the ordering of an expression
+	{ // n*x + x = (1+n)*x this applies to positive n due to the ordering of an expression
 		pattern: Add(Mul(CacheVar("n"), CacheVar("x")), CacheVar("x")),
 		transform: func(expr Expr) Expr {
 			multiplication := Operand(expr, 1)
@@ -99,24 +99,25 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Mul(newFactor, commonVar)
 		},
 	},
-	/*
-	{ // x^n * x = x^(n+1) this applies to negative n due to the ordering of an expression
-		pattern: Mul(Pow(CacheVar("x"), CacheVar("y")), CacheVar("x")),
+	{ // x + n*x = (1+n)*x this applies to negative n due to the ordering of an expression
+		pattern: Add(CacheVar("x"), Mul(CacheVar("n"), CacheVar("x"))),
 		transform: func(expr Expr) Expr {
-			newBase := Operand(expr, 2)
-			oldExponent := Operand(Operand(expr, 1), 2)
-			newExponent := Add(oldExponent, Const(1))
-			return Pow(newBase, newExponent)
+			multiplication := Operand(expr, 2)
+			commonVar := Operand(expr, 1)
+			oldFactor := Operand(multiplication, 1)
+			newFactor := Add(oldFactor, Const(1))
+			return Mul(newFactor, commonVar)
 		},
 	},
-	*/
-	{ // x^(n) * x^(m) = x^(n+m)
-		pattern: Mul(Pow(CacheVar("x"), CacheVar("n")), Pow(CacheVar("x"), CacheVar("m"))),
+	{ // n*x + m*x = (n+m)*x
+		pattern: Add(Mul(CacheVar("n"), CacheVar("x")), Mul(CacheVar("m"), CacheVar("x"))),
 		transform: func(expr Expr) Expr {
-			base := Operand(Operand(expr, 1), 1)
-			exponent1 := Operand(Operand(expr, 1), 2)
-			exponent2 := Operand(Operand(expr, 2), 2)
-			return Pow(base, Add(exponent1, exponent2))
+			term1 := Operand(expr, 1)
+			factor1 := Operand(term1, 1)
+			term2 := Operand(expr, 2)
+			factor2 := Operand(term2, 1)
+			commonVar := Operand(term1, 2)
+			return Mul(Add(factor1, factor2), commonVar)
 		},
 	},
 }
@@ -154,8 +155,16 @@ var productSimplificationRules []transformationRule = []transformationRule{
 	},
 	{ // 1 * x_1 * ... * x_n = x_1 * ... * x_n 
 		patternFunction: func(expr Expr) bool {
-			_, ok := expr.(mul)
-			return ok && Contains(expr, Const(1))
+			// Ensures that the operator is multiplication 
+			if _, ok := expr.(mul); !ok { return false }
+			
+			// Checks if any of the top level operands are 
+			// Const(1), if so we have a match
+			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+				op := Operand(expr, ix)
+				if Equal(op, Const(1)) { return true }
+			}
+			return false
 		},
 		transform: func(expr Expr) Expr {
 			if NumberOfOperands(expr) == 1 {

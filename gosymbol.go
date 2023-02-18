@@ -381,12 +381,13 @@ func Equal(t, u Expr) bool {
 	}
 }
 
-
-// Returns true if t and u are equal up to type 
-// for every element in resp. syntax tree, otherwise 
-// false. This means that two constants of different 
-// value, or variables with different names, would
-// return true.
+/*
+Returns true if t and u are equal up to type 
+for every element in resp. syntax tree, otherwise 
+false. This means that two constants of different 
+value, or variables with different names, would
+return true.
+*/
 func TypeEqual(t, u Expr) bool {
 	if !isSameType(t, u) {
 		return false
@@ -450,8 +451,10 @@ func Contains(expr, u Expr) bool {
 	}
 }
 
-// Returns the different variable names 
-// present in the given expression.
+/*
+Returns the different variable names 
+present in the given expression.
+*/
 func VariableNames(expr Expr) []VarName {
 	var stringSlice []string
 	variableNames(expr, &stringSlice)
@@ -522,9 +525,11 @@ func NumberOfOperands(expr Expr) int {
 	}
 }
 
-// Returns the n:th (starting at 1) operand (left to right) of expr.
-// If expr has no operands it returns nil.
-// If n is larger than NumberOfOperands(expr)-1 it will panic.
+/*
+Returns the n:th (starting at 1) operand (left to right) of expr.
+If expr has no operands it returns nil.
+If n is larger than NumberOfOperands(expr)-1 it will panic.
+*/
 func Operand(expr Expr, n int) Expr {
 	nop := NumberOfOperands(expr)
 	if n > nop {
@@ -625,9 +630,10 @@ func Simplify(expr Expr) Expr {
 	// simplification rule has actually been applied.
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
 		atLeastOneapplied := false
-		for _, rule := range ruleSlice {
+		for ix, rule := range ruleSlice {
 			var applied bool
 			expr, applied = rule.apply(expr)
+			if applied {fmt.Printf("rule %v applied\n", ix)}
 			atLeastOneapplied = atLeastOneapplied || applied
 		}
 		return expr, atLeastOneapplied
@@ -715,41 +721,25 @@ func patternMatch(pattern, expr Expr, varCache variableCache) bool {
 		}
 		return false
 	case variable:
-		// TODO: we want this case to only happen when above case pattern matches against cached stuff
 		exprTyped, ok := expr.(variable)
 		if !ok {
 			return false
 		}
 		return v.Name == exprTyped.Name 
 	case add:
-		_, ok := expr.(add)
-		if !ok {
-			return false
-		}
+		if _, ok := expr.(add); !ok { return false }
 		return patternMatchOperands(v, expr, varCache) 
 	case mul:
-		_, ok := expr.(mul)
-		if !ok {
-			return false
-		}
+		if _, ok := expr.(mul); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	case pow:
-		_, ok := expr.(pow)
-		if !ok {
-			return false
-		}
+		if _, ok := expr.(pow); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	case exp:
-		_, ok := expr.(pow)
-		if !ok {
-			return false
-		}
+		if _, ok := expr.(pow); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	case log:
-		_, ok := expr.(pow)
-		if !ok {
-			return false
-		}
+		if _, ok := expr.(pow); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	default:
 		errMsg := fmt.Errorf("ERROR: expression of type: %v have no matchPattern case implemented", reflect.TypeOf(v))
@@ -757,9 +747,11 @@ func patternMatch(pattern, expr Expr, varCache variableCache) bool {
 	}
 }
 
-// Checks if the operands of pattern and expr match.
-// This function does not check if the main operator
-// of pattern and expr match.
+/*
+Checks if the operands of pattern and expr match.
+This function does not check if the main operator 
+of pattern and expr match.
+*/
 func patternMatchOperands(pattern, expr Expr, varCache variableCache) bool {
 	if NumberOfOperands(pattern) != NumberOfOperands(expr) {
 		return false
