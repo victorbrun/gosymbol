@@ -289,3 +289,22 @@ func TestTopOperandSort(t *testing.T) {
 		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
+
+func TestFlattenTopLevel(t *testing.T) {
+	tests := []struct{
+		input Expr 
+		expectedOutput Expr
+	} {
+		{
+			input: Add(Add(Add(Var("x"), Var("y")), Var("z")), Add(Add(Var("i"), Var("j")), Add(Var("k"), Var("l")))),
+			expectedOutput: Add(Add(Var("i"), Var("j")), Add(Var("k"), Var("l")), Add(Var("x"), Var("y")), Var("z")),
+		},
+	}
+
+	for ix, test := range tests {
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			result := flattenTopLevel(test.input)
+			correctnesCheck(t, result, test.expectedOutput, ix+1)
+		})
+	}
+}

@@ -120,8 +120,35 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Mul(Add(factor1, factor2), commonVar)
 		},
 	},
-}
+	{ //  When applied recursively, this turns a flat sum into a binary tree sum. 
+	  // This is needed for other rules to do the simplification: \sum_{i=1}^{n} x = n*x.
+		patternFunction: func(expr Expr) bool {
+			if _, ok := expr.(add); !ok {
+				return false 
+			} else if NumberOfOperands(expr) <= 2 {
+				return false
+			}
+			return true
+		},
+		transform: func(expr Expr) Expr {
+			newOperands := make([]Expr, 0)
+			// Groups the operands into pairs and creates add of them
+			for ix := 1; ix < NumberOfOperands(expr); ix+=2 {
+				op1 := Operand(expr, ix)
+				op2 := Operand(expr, ix+1)
+				newOperands = append(newOperands, Add(op1, op2))
+			}
 
+			// If number of operands is odd there will be one
+			// trailing operand so we add it here
+			if NumberOfOperands(expr) % 2 != 0 {
+				op := Operand(expr, NumberOfOperands(expr))
+				newOperands = append(newOperands, op)
+			}
+			return Add(newOperands...)
+		},
+	},
+}
 var productSimplificationRules []transformationRule = []transformationRule{
 	{ // 0 * ... = 0
 		patternFunction: func(expr Expr) bool {
@@ -215,6 +242,34 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			exponent1 := Operand(Operand(expr, 1), 2)
 			exponent2 := Operand(Operand(expr, 2), 2)
 			return Pow(base, Add(exponent1, exponent2))
+		},
+	},
+	{ //  When applied recursively, this turna a flat product into a binary tree product. 
+	  // This is needed for other rules to do the simplification: \prod_{i=1}^{n} x = x^n.
+		patternFunction: func(expr Expr) bool {
+			if _, ok := expr.(mul); !ok {
+				return false 
+			} else if NumberOfOperands(expr) <= 2 {
+				return false
+			}
+			return true
+		},
+		transform: func(expr Expr) Expr {
+			newOperands := make([]Expr, 0)
+			// Groups the operands into pairs and creates mul of them
+			for ix := 1; ix < NumberOfOperands(expr); ix+=2 {
+				op1 := Operand(expr, ix)
+				op2 := Operand(expr, ix+1)
+				newOperands = append(newOperands, Mul(op1, op2))
+			}
+
+			// If number of operands is odd there will be one
+			// trailing operand so we add it here
+			if NumberOfOperands(expr) % 2 != 0 {
+				op := Operand(expr, NumberOfOperands(expr))
+				newOperands = append(newOperands, op)
+			}
+			return Mul(newOperands...)
 		},
 	},
 }

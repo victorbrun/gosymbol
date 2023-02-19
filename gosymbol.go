@@ -661,12 +661,55 @@ func Simplify(expr Expr) Expr {
 	if expressionAltered {
 		return Simplify(expr)
 	}
-	return expr
+	return flattenTopLevel(expr)
 }
 
-// Applies rule to expr and returns the transformed expression.
-// If expression does not match rule the ingoing expression 
-// will just be returned.
+/*
+Flattens and sorts the top level of a binary tree sum or product, i.e. 
+doing the transofmration:
+	( (x + y) + z ) + ( (i + j) + (k + l) ) -> (i + j) + (k + l) + (x + y) + z 
+*/
+func flattenTopLevel(expr Expr) Expr {
+	// If expr is add or mul we check if any of its operands 
+	// are of the same type. If so we "bring it up one level"
+	// otherwise we do nothing.
+	switch expr.(type) {
+	case add:
+		newTerms := make([]Expr, 0)
+		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+			op := Operand(expr, ix)
+			if opTyped, ok := op.(add); ok {
+				// Here we "bring it up one level" by appending the 
+				// operand's operands to the new set of operands
+				newTerms = append(newTerms, opTyped.Operands...)
+			} else {
+				newTerms = append(newTerms, op)	
+			}
+		}
+		return topOperandSort(Add(newTerms...))
+	case mul: 
+		newFactors := make([]Expr, 0)
+		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+			op := Operand(expr, ix)
+			if opTyped, ok := op.(mul); ok {
+				// Here we "bring it up one level" by appending the 
+				// operand's operands to the new set of operands
+				newFactors = append(newFactors, opTyped.Operands...)
+			} else {
+				newFactors = append(newFactors, op)
+			}
+		}
+		return topOperandSort(Mul(newFactors...))
+	default:
+		return expr
+	}
+}
+
+/*
+Applies rule to expr and returns the transformed expression.
+If expression does not match rule the ingoing expression 
+will just be returned.
+*/
 func (rule transformationRule) apply(expr Expr) (Expr, bool) {
 	if rule.match(expr) {
 		return rule.transform(expr), true
