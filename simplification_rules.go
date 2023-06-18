@@ -120,7 +120,7 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Mul(Add(factor1, factor2), commonVar)
 		},
 	},
-	{ //  When applied recursively, this turns a flat sum into a binary tree sum. 
+	/*{ //  When applied recursively, this turns a flat sum into a binary tree sum. 
 	  // This is needed for other rules to do the simplification: \sum_{i=1}^{n} x = n*x.
 		patternFunction: func(expr Expr) bool {
 			if _, ok := expr.(add); !ok {
@@ -147,7 +147,7 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			}
 			return Add(newOperands...)
 		},
-	},
+	},*/
 }
 var productSimplificationRules []transformationRule = []transformationRule{
 	{ // 0 * ... = 0
@@ -244,7 +244,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Pow(base, Add(exponent1, exponent2))
 		},
 	},
-	{ //  When applied recursively, this turna a flat product into a binary tree product. 
+	/*{ //  When applied recursively, this turna a flat product into a binary tree product. 
 	  // This is needed for other rules to do the simplification: \prod_{i=1}^{n} x = x^n.
 		patternFunction: func(expr Expr) bool {
 			if _, ok := expr.(mul); !ok {
@@ -271,7 +271,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			}
 			return Mul(newOperands...)
 		},
-	},
+	},*/
 }
 
 var powerSimplificationRules []transformationRule = []transformationRule{

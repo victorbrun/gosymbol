@@ -630,10 +630,9 @@ func Simplify(expr Expr) Expr {
 	// simplification rule has actually been applied.
 	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
 		atLeastOneapplied := false
-		for ix, rule := range ruleSlice {
+		for _, rule := range ruleSlice {
 			var applied bool
 			expr, applied = rule.apply(expr)
-			if applied {fmt.Printf("rule %v applied\n", ix)}
 			atLeastOneapplied = atLeastOneapplied || applied
 		}
 		return expr, atLeastOneapplied
@@ -659,9 +658,14 @@ func Simplify(expr Expr) Expr {
 	// If the expression has been altered it might be possible to apply some other rule 
 	// we thus recursively sort until the expression is not altered any more.
 	if expressionAltered {
+		// TODO: this will get stuck since we flatten the 
+		// expr, then when simplifying it we will turn it into a 
+		// binary tree and then it has been altered so we will get in here again 
+		// and flatten it and then start all over. We will have inifinite loop :(
+		expr = flattenTopLevel(expr)
 		return Simplify(expr)
 	}
-	return flattenTopLevel(expr)
+	return expr
 }
 
 /*

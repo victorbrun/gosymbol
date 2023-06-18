@@ -577,6 +577,10 @@ func TestSimplify(t *testing.T) {
 			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x")), gosymbol.Mul(gosymbol.Var("m"), gosymbol.Var("x"))),
 			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("m"), gosymbol.Var("n")), gosymbol.Var("x")),
 		},
+		{
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Mul(gosymbol.Var("x"), gosymbol.Const(5)), gosymbol.Var("y"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Add(gosymbol.Mul(gosymbol.Const(7), gosymbol.Var("x")), gosymbol.Var("y")),
+		},
 	}
 
 	for ix, test := range tests {	
