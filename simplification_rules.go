@@ -4,8 +4,6 @@ import (
 	"reflect"
 )
 
-/* Constrain functions */
-
 // TODO: would be useful with a bool function negator,
 // it takes a function with any input and with bool input
 // and returns a function with the same input but with negated bool output
@@ -328,4 +326,44 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 } 
+
+var logSimplificationRules []transformationRule = []transformationRule{
+	{ // Log(0) = Undefined
+		pattern: Log(Const(0)),
+		transform: func(expr Expr) Expr {
+			return Undefined()
+		},
+	},
+	{ // Log(x_1 * x_2 * ... * x_n) = Log(x_1) + Log(x_2) + ... + Log(x_n)
+		patternFunction: func(expr Expr) bool {
+			if _, ok := expr.(log); ok {
+				base := Operand(expr, 1)
+				_, ok := base.(mul)
+				return ok
+			}
+			return false
+		},
+		transform: func(expr Expr) Expr {
+			factors := Operand(expr, 1)
+			terms := make([]Expr, NumberOfOperands(factors))
+			for ix := 1; ix <= NumberOfOperands(factors); ix++ {
+				factor := Operand(factors, ix)
+				terms[ix-1] = Log(factor)
+			}
+			return Add(terms...)
+		},
+	},
+	{ // Log(x/y) = Log(x) - Log(y)
+		pattern: Log( Div(CacheVar("x"), CacheVar("y")) ),
+		transform: func(expr Expr) Expr {
+			return Sub( Log(CacheVar("x")), Log(CacheVar("y")) )
+		},
+	},
+}
+
+var expSimplificationRules []transformationRule = []transformationRule{
+}
+
+var sqrtSimplifiactionRules []transformationRule = []transformationRule{
+}
 

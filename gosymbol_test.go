@@ -591,6 +591,75 @@ func TestSimplify(t *testing.T) {
 	}
 }
 
+func TestLogSimplificationRules(t *testing.T) {
+	tests := []struct {
+		input gosymbol.Expr
+		expectedOutput gosymbol.Expr
+	} {
+		{ // Log(0) = Undefined
+			input: gosymbol.Log(gosymbol.Const(0)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // Log(xy) = Log(x) + Log(y)
+			input: gosymbol.Log(
+				gosymbol.Mul(
+					gosymbol.Var("x"),
+					gosymbol.Var("y"),
+				),
+			),
+			expectedOutput: gosymbol.Add(
+				gosymbol.Log(gosymbol.Var("x")),
+				gosymbol.Log(gosymbol.Var("y")),
+			),
+		},
+		{ // Log(5x * y) = Log(5) + Log(x) + Log(y)
+			input: gosymbol.Log(
+				gosymbol.Mul(
+					gosymbol.Mul(gosymbol.Const(5), gosymbol.Var("x")),
+					gosymbol.Var("y"),
+				),
+			),
+			expectedOutput: gosymbol.Add(
+				gosymbol.Log(gosymbol.Const(5)),
+				gosymbol.Log(gosymbol.Var("x")), 
+				gosymbol.Log(gosymbol.Var("y")),
+			),
+		},
+		{ // Log(5x * 4) = Log(20) + Log(x)
+			input: gosymbol.Log(
+				gosymbol.Mul(
+					gosymbol.Mul(gosymbol.Const(5), gosymbol.Var("x")),
+					gosymbol.Const(4),
+				),
+			),
+			expectedOutput: gosymbol.Add(
+				gosymbol.Log(gosymbol.Const(20)),
+				gosymbol.Log(gosymbol.Var("x")), 
+			),
+		},
+		{ // Log(x/y) = Log(x) - Log(y)
+			input: gosymbol.Log(
+				gosymbol.Div(
+					gosymbol.Var("x"),
+					gosymbol.Var("z"),
+				),
+			),
+			expectedOutput: gosymbol.Sub(
+				gosymbol.Log(gosymbol.Var("x")),
+				gosymbol.Log(gosymbol.Var("z")),
+			),
+		},
+		
+	}
+
+	for ix, test := range tests {	
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			result := gosymbol.Simplify(test.input)
+			correctnesCheck(t, result, test.expectedOutput, ix+1)
+		})
+	}
+}
+
 func TestDepth(t *testing.T) {
 	tests := []struct {
 		input gosymbol.Expr

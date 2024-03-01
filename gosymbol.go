@@ -663,10 +663,13 @@ func patternMatch(pattern, expr Expr, varCache variableCache) bool {
 		if _, ok := expr.(pow); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	case exp:
-		if _, ok := expr.(pow); !ok { return false }
+		if _, ok := expr.(exp); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	case log:
-		if _, ok := expr.(pow); !ok { return false }
+		if _, ok := expr.(log); !ok { return false }
+		return patternMatchOperands(v, expr, varCache)
+	case sqrt:
+		if _, ok := expr.(sqrt); !ok { return false }
 		return patternMatchOperands(v, expr, varCache)
 	default:
 		errMsg := fmt.Errorf("ERROR: expression of type: %v have no matchPattern case implemented", reflect.TypeOf(v))
