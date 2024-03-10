@@ -8,7 +8,11 @@ type Expr interface {
 	// Public functions
 	String() string
 	Eval() Func
+
+	// Private function
 	d(VarName) Expr // Differentiation function
+	compare(Expr) bool
+	simplify() Expr
 }
 
 /**
@@ -47,8 +51,16 @@ type transformationRule struct {
 	transform func(Expr) Expr 
 }
 
-type variableCache struct {
-	cache map[VarName]Expr
+type _variableCache struct {
+	cache map[string]Expr
+}
+
+/**
+Stuct to store the result from `applySimplificationRules()`.
+**/
+type transformationRuleApplicationResult struct {
+	expr Expr
+	exprAltered bool
 }
 
 /* Basic operators */

@@ -5,9 +5,8 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 )
-
-
 
 /* Evaluation */
 
@@ -105,6 +104,51 @@ func (e pow) String() string {
 
 /* Helper Functionality */
 
+// Match case function. Performs the specified action when the top operand of `expr` 
+// macthes a case.
+//
+// Note: this function ought to be used for in every place which would require modificaton
+// uppon adding new operands / functions to the package. Reason being that it will force 
+// a compilation error if you have not added a case handling the new operator everywhere 
+// it is needed, instead of having unexpected behaviour during runtime.
+func MatchTransform[T any] (
+	expr Expr,
+	undefAction func(undefined) T,
+	constAction func(constant) T,
+	varAction func(variable) T,
+	addAction func(add) T,
+	mulAction func(mul) T,
+	powAction func(pow) T,
+	expAction func(exp) T,
+	logAction func(log) T,
+	sqrtAction func(sqrt) T,
+
+) T {
+	switch expr := expr.(type) {
+	case undefined:
+		return undefAction(expr)
+	case constant:
+		return constAction(expr)
+	case variable:
+		return varAction(expr)
+	case add:
+		return addAction(expr)
+	case mul:
+		return mulAction(expr)
+	case pow:
+		return powAction(expr)
+	case exp:
+		return expAction(expr)
+	case log:
+		return logAction(expr)
+	case sqrt:
+		return sqrtAction(expr)
+	default:
+		errMsg := fmt.Sprintf("ERROR: argument of type %v has no implemented match case", reflect.TypeOf(expr))
+		panic(errMsg)
+	}
+}
+
 // Substitutes u for t in expr.
 func Substitute(expr, u, t Expr) Expr {
 	if Equal(u, t) {
@@ -140,42 +184,83 @@ func replaceOperand(t Expr, n int, u Expr) Expr {
 		panic(errMsg)
 	}
 
+	return MatchTransform[Expr](
+		t,
+		func (expr undefined) Expr {
+			return expr
+		},
+		func(expr constant) Expr {
+			return expr
+		},
+		func(expr variable) Expr {
+			return expr
+		},
+		func(expr add) Expr {
+			expr.Operands[n-1] = u
+			return expr
+		},
+		func(expr mul) Expr {
+			expr.Operands[n-1] = u
+			return expr
+		},
+		func(expr pow) Expr {
+			if n == 1 {
+				expr.Base = u
+			} else {
+				expr.Exponent = u
+			} 
+			return expr
+		},
+		func(expr exp) Expr {
+			expr.Arg = u
+			return expr 
+		},
+		func(expr log) Expr {
+			expr.Arg = u
+			return expr
+		},
+		func(expr sqrt) Expr {
+			expr.Arg = u
+			return expr
+		},
+	)
+
 	// Since the first cases has no operands
 	// we consider replacing one as just returning
 	// the original expression
-	switch v := t.(type) {
-	case undefined:
-		return v
-	case constant:
-		return v
-	case variable:
-		return v
-	case add:
-		v.Operands[n-1] = u
-		return v
-	case mul:
-		v.Operands[n-1] = u
-		return v
-	case pow:
-		if n == 1 {
-			v.Base = u
-		} else {
-			v.Exponent = u
-		}
-		return v
-	case exp:
-		v.Arg = u
-		return v
-	case log:
-		v.Arg = u
-		return v
-	case sqrt:
-		v.Arg = u
-		return v
-	default:
-		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
-		panic(errMsg)
-	}
+	//switch v := t.(type) {
+	//case undefined:
+	//	return v
+	//case constant:
+	//	return v
+	//case variable:
+	//	return v
+	//case add:
+	//	v.Operands[n-1] = u
+	//	return v
+	//case mul:
+	//	v.Operands[n-1] = u
+	//	return v
+	//case pow:
+	//	if n == 1 {
+	//		v.Base = u
+	//	} else {
+	//		v.Exponent = u
+	//	}
+	//	return v
+	//case exp:
+	//	v.Arg = u
+	//	return v
+	//case log:
+	//	v.Arg = u
+	//	return v
+	//case sqrt:
+	//	v.Arg = u
+	//	return v
+	//default:
+	//	errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
+	//	panic(errMsg)
+	//}
 }
 
 /*
@@ -195,64 +280,71 @@ i.e. it does not simplify any expression nor does it
 take any properties, e.g. commutativity, into account.
 */
 func Equal(t, u Expr) bool {
-	switch v := t.(type) {
-	case undefined:
-		_, ok := u.(undefined)
-		return ok
-	case constant:
-		uTyped, ok := u.(constant)
-		return ok && v.Value == uTyped.Value
-	case variable:
-		uTyped, ok := u.(variable)
-		return ok && v.Name == uTyped.Name
-	case add:
-		_, ok := u.(add)
-		if !ok {
-			return false
-		} else if NumberOfOperands(v) != NumberOfOperands(u) {
-			return false
-		}
-
-		for ix := 1; ix <= NumberOfOperands(v); ix++ {
-			exprOp := Operand(v, ix)
-			uOp := Operand(u, ix)
-			if !Equal(exprOp, uOp) {
+	return MatchTransform[bool](
+		t,
+		func (expr undefined) bool {
+			_, ok := u.(undefined)
+			return ok
+		},
+		func(expr constant) bool {
+			uTyped, ok := u.(constant)
+			return ok && expr.Value == uTyped.Value
+		},
+		func(expr variable) bool {
+			uTyped, ok := u.(variable)
+			return ok && expr.Name == uTyped.Name
+		},
+		func(expr add) bool {
+			_, ok := u.(add)
+			if !ok {
+				return false
+			} else if NumberOfOperands(expr) != NumberOfOperands(u) {
 				return false
 			}
-		}
-		return true
-	case mul:
-		_, ok := u.(mul)
-		if !ok {
-			return false
-		} else if NumberOfOperands(v) != NumberOfOperands(u) {
-			return false
-		}
 
-		for ix := 1; ix <= NumberOfOperands(v); ix++ {
-			exprOp := Operand(v, ix)
-			uOp := Operand(u, ix)
-			if !Equal(exprOp, uOp) {
+			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+				exprOp := Operand(expr, ix)
+				uOp := Operand(u, ix)
+				if !Equal(exprOp, uOp) {
+					return false
+				}
+			}
+			return true
+		},
+		func(expr mul) bool {
+			_, ok := u.(mul)
+			if !ok {
+				return false
+			} else if NumberOfOperands(expr) != NumberOfOperands(u) {
 				return false
 			}
-		}
-		return true
-	case pow:
-		_, ok := u.(pow)
-		return ok && Equal(Operand(v, 1), Operand(u, 1)) && Equal(Operand(v, 2), Operand(u, 2))
-	case exp:
-		_, ok := u.(exp)
-		return ok && Equal(Operand(v, 1), Operand(u, 1))
-	case log:
-		_, ok := u.(log)
-		return ok && Equal(Operand(v, 1), Operand(u, 1))
-	case sqrt:
-		_, ok := u.(sqrt)
-		return ok && Equal(Operand(v, 1), Operand(u, 1))
-	default:
-		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
-		panic(errMsg)
-	}
+
+			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+				exprOp := Operand(expr, ix)
+				uOp := Operand(u, ix)
+				if !Equal(exprOp, uOp) {
+					return false
+				}
+			}
+			return true
+		},
+		func(expr pow) bool {
+			_, ok := u.(pow)
+			return ok && Equal(Operand(expr, 1), Operand(u, 1)) && Equal(Operand(expr, 2), Operand(u, 2))
+		},
+		func(expr exp) bool {
+			_, ok := u.(exp)
+			return ok && Equal(Operand(expr, 1), Operand(u, 1))
+		},
+		func(expr log) bool {
+			_, ok := u.(log)
+			return ok && Equal(Operand(expr, 1), Operand(u, 1))
+		},
+		func(expr sqrt) bool {
+			_, ok := u.(sqrt)
+			return ok && Equal(Operand(expr, 1), Operand(u, 1))
+		},
+	)
 }
 
 /*
@@ -374,29 +466,18 @@ func variableNames(expr Expr, targetSlice *[]string) {
 
 // Returns the number of operands for top level operation.
 func NumberOfOperands(expr Expr) int {
-	switch v := expr.(type) {
-	case undefined:
-		return 0 
-	case constant:
-		return 0
-	case variable:
-		return 0
-	case add:
-		return len(v.Operands)
-	case mul:
-		return len(v.Operands)
-	case pow:
-		return 2
-	case exp:
-		return 1
-	case log:
-		return 1
-	case sqrt:
-		return 1
-	default:
-		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
-		panic(errMsg)
-	}
+	return MatchTransform[int](
+		expr, 
+		func(expr undefined) int { return 0 }, 
+		func(expr constant) int { return 0 }, 
+		func(expr variable) int { return 0 }, 
+		func(expr add) int { return len(expr.Operands) }, 
+		func(expr mul) int { return len(expr.Operands) }, 
+		func(expr pow) int { return 2 }, 
+		func(expr exp) int { return 1 },
+		func(expr log) int { return 1 },
+		func(expr sqrt) int { return 1 },
+	)
 }
 
 /*
@@ -411,33 +492,24 @@ func Operand(expr Expr, n int) Expr {
 		panic(errMsg)
 	}
 
-	switch v := expr.(type) {
-	case undefined:
-		return nil
-	case constant:
-		return nil
-	case variable:
-		return nil
-	case add:
-		return v.Operands[n-1]
-	case mul:
-		return v.Operands[n-1]
-	case pow:
-		if n == 1 {
-			return v.Base
-		} else {
-			return v.Exponent
-		}
-	case exp:
-		return v.Arg
-	case log:
-		return v.Arg
-	case sqrt:
-		return v.Arg
-	default:
-		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(v))
-		panic(errMsg)
-	}
+	return MatchTransform[Expr](
+		expr, 
+		func(expr undefined) Expr { return nil }, 
+		func(expr constant) Expr { return nil }, 
+		func(expr variable) Expr { return nil }, 
+		func(expr add) Expr { return expr.Operands[n-1] }, 
+		func(expr mul) Expr { return expr.Operands[n-1] }, 
+		func(expr pow) Expr { 
+			if n == 1 {
+				return expr.Base
+			} else {
+				return expr.Exponent
+			}
+		}, 
+		func(expr exp) Expr { return expr.Arg },
+		func(expr log) Expr { return expr.Arg },
+		func(expr sqrt) Expr { return expr.Arg },
+	)
 }
 
 // TODO: see Computer Algebra and Symbolic Computation page 10 to understand this shit
@@ -472,81 +544,6 @@ func Depth(expr Expr) int {
 
 /* Automatic Simplification */
 
-func Simplify(expr Expr) Expr {
-	// Having this here makes it possible
-	// to remove all rules in simplification_rules.go 
-	// that basically just checks if the expression contains 
-	// undefined.
-	if Contains(expr, Undefined()) {
-		return Undefined()
-	}
-
-	// Only sorting the top operands is sufficient
-	// to sort the whole expression since in the next
-	// step we recursively simplify all the operands.
-	// Note that the operator must be commutative for 
-	// this not to fuck shit up!
-	switch expr.(type) {
-	case add:
-		expr = topOperandSort(expr)
-	case mul:
-		expr = topOperandSort(expr)
-	}
-
-	// Recursively simplify all operands.
-	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
-		op := Operand(expr, ix)
-		expr = replaceOperand(expr, ix, Simplify(op)) 
-	}
-	
-	// Application of all Simplification rules follow this same pattern.
-	// Returns the simplified expression and a boolean describing whether any
-	// simplification rule has actually been applied.
-	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
-		atLeastOneapplied := false
-		for _, rule := range ruleSlice {
-			var applied bool
-			expr, applied = rule.apply(expr)
-			atLeastOneapplied = atLeastOneapplied || applied
-		}
-		return expr, atLeastOneapplied
-	}
-
-	// Applies simplification rules depending on the operator type
-	// This will extend as more rules gets added! The base cases
-	// are fully simplified so we just return them.
-	expressionAltered := false
-	switch expr.(type) {
-	case constant:
-		// Fully simplified
-	case variable:
-		// Fully simplified 
-	case add:
-		expr, expressionAltered = rulesApplication(expr, sumSimplificationRules)
-	case mul:
-		expr, expressionAltered = rulesApplication(expr, productSimplificationRules)	
-	case pow:
-		expr, expressionAltered = rulesApplication(expr, powerSimplificationRules)
-	case log:
-		expr, expressionAltered = rulesApplication(expr, logSimplificationRules)
-	case exp:
-		expr, expressionAltered = rulesApplication(expr, expSimplificationRules)
-	case sqrt:
-		expr, expressionAltered = rulesApplication(expr, sqrtSimplifiactionRules)
-	}
-
-	// If the expression has been altered it might be possible to apply some other rule 
-	// we thus recursively sort until the expression is not altered any more.
-	if expressionAltered {
-		// TODO: this will get stuck since we flatten the 
-		// expr, then when simplifying it we will turn it into a 
-		// binary tree and then it has been altered so we will get in here again 
-		// and flatten it and then start all over. We will have inifinite loop :(
-		expr = flattenTopLevel(expr)
-		return Simplify(expr)
-	}
-	return expr
-}
 
 /*
 Flattens and sorts the top level of a tree sum or product, i.e. 
@@ -606,9 +603,7 @@ func (rule transformationRule) match(expr Expr) bool {
 	// we execute patternFunction if it exists. 
 	// If no pattern or patternFunction exists we return false 
 	if rule.pattern != nil {
-		// TODO: Below two lines is ugly, cant you initialise in same row?
-		varCache := variableCache{}
-		varCache.cache = make(map[VarName]Expr)
+		varCache := variableCache()
 		return patternMatch(rule.pattern, expr, varCache)
 	} else if rule.patternFunction != nil {
 		return rule.patternFunction(expr)
@@ -623,7 +618,51 @@ map internally used to keep track of what the variables in pattern
 corresponds to in expr. The function expects that no variable has the 
 same name as a constrained variable.
 */
-func patternMatch(pattern, expr Expr, varCache variableCache) bool {
+func patternMatch(pattern, expr Expr, varCache _variableCache) bool {
+	if patternTyped, ok := pattern.(cacheVariable); ok {
+			
+	}
+
+	return MatchTransform[bool](
+		expr, 
+		func(expr undefined) bool { // Base case 
+			// Trying to match with undefined is alwasy false
+			return false 
+		},
+		func(expr constant) bool { // Base case 
+			patternTyped, ok := pattern.(constant)
+			return ok && patternTyped.Value == expr.Value
+		},
+		func(expr variable) bool { // Base case 
+			patternTyped, ok := pattern.(variable)
+			return ok && patternTyped.Name == expr.Name
+		},
+		func(expr add) bool { 
+			if _, ok := pattern.(add); !ok { return false }
+			return patternMatchOperands(pattern, expr, varCache) 
+		},
+		func(expr mul) bool { 
+			if _, ok := pattern.(mul); !ok { return false }
+			return patternMatchOperands(pattern, expr, varCache) 
+		},
+		func(expr pow) bool { 
+			if _, ok := pattern.(pow); !ok { return false }
+			return patternMatchOperands(pattern, expr, varCache) 
+		},
+		func(expr exp) bool { 
+			if _, ok := pattern.(exp); !ok { return false }
+			return patternMatchOperands(pattern, expr, varCache) 
+		},
+		func(expr log) bool { 
+			if _, ok := pattern.(log); !ok { return false }
+			return patternMatchOperands(pattern, expr, varCache) 
+		},
+		func(expr sqrt) bool { 
+			if _, ok := pattern.(sqrt); !ok { return false }
+			return patternMatchOperands(pattern, expr, varCache) 
+		},
+	)
+
 	switch v := pattern.(type) {
 	case undefined:
 		_, ok := expr.(undefined)
@@ -704,284 +743,6 @@ func Expand(expr Expr) Expr {
 }
 
 /*
-Checks whether the ordering e1 < e2 is true.
-The function returns true if e1 "comes before" e2 and false otherwis false.
-"comes before" is defined using the order relation defined in [1] (with some 
-extensions to include functions like exp, sin, etc).
-E.g.:
-O-1: if e1 and e2 are constants then compare(e1, e2) -> e1 < e2
-O-2: if e1 and e2 are variables compare(e1, e2) is defined by the
-lexographical order of the symbols.
-O-3: etc.
-
-NOTE: the function assumes that e1 and e2 are automatically simplified algebraic expressions (ASAEs)
-
-NOTE: When TypeOf(e1) != TypeOf(e2) the recursive evaluation pattern creates a new expression 
-of the same type as either e1 or e2. For TypeOf(e1) = add, TypeOf(e2) = mul this looks like
-	return compare(Mul(e1), e2)
-What this mean in practice is that the type of e2 is prioritised higher than the type of e1.
-When extending this function you utilise this to specifiy, e.g. that a < x^3 and not the other 
-way around.
-
-[1] COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003. Figure 3.9.
-*/
-func compare(e1, e2 Expr) bool {
-	switch e1Typed := e1.(type) {
-	case constant:
-		switch e2Typed := e2.(type) {
-		case constant:
-			return orderRule1(e1Typed, e2Typed) 
-		default:
-			return true
-		}
-	case variable:
-		switch e2Typed := e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return orderRule2(e1Typed, e2Typed)
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, Const(1)), e2)
-		case exp:
-			return compare(Exp(e1), e2)
-		case log:
-			return compare(Log(e1), e2)
-		case sqrt:
-			return compare(Sqrt(e1), e2)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case add:
-		switch e2Typed := e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return compare(e1, Add(e2))
-		case add:
-			return orderRule3(e1Typed, e2Typed)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, Const(1)), e2)
-		case exp:
-			return compare(e1, Add(e2))
-		case log:
-			return compare(e1, Add(e2))
-		case sqrt:
-			return compare(e1, Add(e2))
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case mul:
-		switch e2Typed := e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return compare(e1, Mul(e2))
-		case add: 
-			return compare(e1, Mul(e2))
-		case mul:
-			return orderRule3_1(e1Typed, e2Typed)
-		case pow:
-			return compare(e1, Mul(e2))
-		case exp:
-			return compare(e1, Mul(e2))
-		case log:
-			return compare(e1, Mul(e2))
-		case sqrt:
-			return compare(e1, Mul(e2))
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case pow:
-		switch e2Typed := e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return compare(e1, Pow(e2, Const(1)))
-		case add: 
-			return compare(e1, Pow(e2, Const(1)))
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return orderRule4(e1Typed, e2Typed)
-		case exp:
-			return compare(e1, Pow(e2, Const(1)))
-		case log:
-			return compare(e1, Pow(e2, Const(1)))
-		case sqrt:
-			return compare(e1, Pow(e2, Const(1)))
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case exp:
-		switch e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return compare(e1, Exp(e2))
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, Const(1)), e2)
-		case exp:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case log:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case sqrt:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case log:
-		switch e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return compare(e1, Exp(e2))
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, Const(1)), e2)
-		case exp:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case log:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case sqrt:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case sqrt:
-		switch e2.(type) {
-		case constant:
-			return false
-		case variable:
-			return compare(e1, Exp(e2))
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, Const(1)), e2)
-		case exp:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case log:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case sqrt:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	default:
-		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-		panic(errMsg)
-	}
-}
-
-func orderRule1(e1, e2 constant) bool {return e1.Value < e2.Value}
-func orderRule2(e1, e2 variable) bool {return e1.Name < e2.Name}
-func orderRule3(e1, e2 add) bool {
-	e1NumOp := NumberOfOperands(e1)
-	e2NumOp := NumberOfOperands(e2)
-	e1LastOp := Operand(e1, e1NumOp)
-	e2LastOp := Operand(e2, e2NumOp)
-	
-	if !Equal(e1LastOp, e2LastOp) {
-		return compare(e1LastOp, e2LastOp)
-	}
-
-	bnd := 0
-	if e1NumOp < e2NumOp {
-		bnd = e1NumOp
-	} else {
-		bnd = e2NumOp
-	}
-
-	for ix := 1; ix < bnd; ix++ {
-		e1Op := Operand(e1, e1NumOp - ix)
-		e2Op := Operand(e2, e2NumOp - ix)
-		if !Equal(e1Op, e2Op) {
-			return compare(e1Op, e2Op)
-		}
-	}
-	return e1NumOp < e2NumOp
-}
-func orderRule3_1(e1, e2 mul) bool {
-	e1NumOp := NumberOfOperands(e1)
-	e2NumOp := NumberOfOperands(e2)
-	e1LastOp := Operand(e1, e1NumOp)
-	e2LastOp := Operand(e2, e2NumOp)
-	
-	if !Equal(e1LastOp, e2LastOp) {
-		return compare(e1LastOp, e2LastOp)
-	}
-
-	bnd := 0
-	if e1NumOp < e2NumOp {
-		bnd = e1NumOp
-	} else {
-		bnd = e2NumOp
-	}
-
-	for ix := 1; ix < bnd; ix++ {
-		e1Op := Operand(e1, e1NumOp - ix)
-		e2Op := Operand(e2, e2NumOp - ix)
-		if !Equal(e1Op, e2Op) {
-			return compare(e1Op, e2Op)
-		}
-	}
-	return e1NumOp < e2NumOp
-}
-func orderRule4(e1, e2 pow) bool {
-	e1Base := Operand(e1, 1)
-	e2Base := Operand(e2, 1)
-	if !Equal(e1Base, e2Base) {
-		return compare(e1Base, e2Base)
-	} else {
-		e1Exponent := Operand(e1, 2)
-		e2Exponent := Operand(e2, 2)
-		return compare(e1Exponent, e2Exponent)
-	}
-}
-func orderRule5(e1, e2 Expr) bool {
-	panic("rule dedicated to factorial which is not implemented")
-}
-
-/*
 Returns a new expression where the
 terms in in s1 has been prepended
 to the terms in s2, i.e. the order 
@@ -1018,7 +779,7 @@ func topOperandSort(expr Expr) Expr {
 		op2 := Operand(expr, ix+1)
 		
 		n := ix
-		for !compare(op1, op2) {
+		for !op1.compare(op2) {
 			expr = swapOperands(expr, n, n+1)
 			
 			// As long as n > 1 we are not at the
@@ -1042,32 +803,53 @@ func TopOperandSort(expr Expr) Expr { return topOperandSort(expr) }
 
 /* Variable Cacheing */
 
+func variableCache() _variableCache {
+	varCache := _variableCache{}
+	varCache.cache = make(map[string]Expr)
+	return varCache
+}
+
+/*
+Converts the key used in the API to the internally used hashmap key.
+*/
+func toInternalKey(externalKey VarName) string { 
+	return string(externalKey) + "_INTERVAL" 
+}
+
+/*
+Converts the internally used hashmap key to the key used in the API.
+*/
+func toExternalKey(internalKey string) VarName {
+	trimmedKey := strings.TrimSuffix(internalKey, "_INTERVAL")
+	return VarName(trimmedKey)
+}
+
 /*
 Adds `expr` to cache as `key`. Note that if `key` is already in vc it will be 
 over-written.
 */
-func (vc variableCache) add(key VarName, expr Expr) {
-	vc.cache[key] = expr	
+func (vc _variableCache) add(key VarName, expr Expr) {
+	vc.cache[toInternalKey(key)] = expr	
 }
 
 // TODO
-func (vc variableCache) remove(key string, expr Expr) {}
+func (vc _variableCache) remove(key string, expr Expr) {}
 
 /*
 Returns the exression cached as `key`. Note that this method 
 assumes that `key` exists in the underlying map.
 */
-func (vc variableCache) get(key VarName) Expr {
-	return vc.cache[key]
+func (vc _variableCache) get(key VarName) Expr {
+	return vc.cache[toInternalKey(key)]
 }
 
 // TODO
-func (vc variableCache) isCached(expr Expr) bool {
-	return false
+func (vc _variableCache) isCached(expr Expr) bool {
+	panic("not implemented!")
 }
 
-func (vc variableCache) isUnassigned(key VarName) bool {
-	_, ok := vc.cache[key]
+func (vc _variableCache) isUnassigned(key VarName) bool {
+	_, ok := vc.cache[toInternalKey(key)]
 	return !ok
 }
 

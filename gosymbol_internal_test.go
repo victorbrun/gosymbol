@@ -264,7 +264,7 @@ func TestComapre(t *testing.T) {
 	}
 
 	for ix, test := range tests {
-		result := compare(test.input.expr1, test.input.expr2)
+		result := test.input.expr1.compare(test.input.expr2)
 		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }

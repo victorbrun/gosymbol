@@ -591,6 +591,163 @@ func TestSimplify(t *testing.T) {
 	}
 }
 
+/*
+func TestSimplifyV2(t *testing.T) {
+	tests := []struct {
+		input gosymbol.Expr
+		expectedOutput gosymbol.Expr
+	} {
+		{ // undefined^y = undefined
+			input: gosymbol.Pow(gosymbol.Undefined(), gosymbol.Var("y")),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // x^undefined = undefined
+			input: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Undefined()),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // 0^x = 0
+			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // 0^0 = undefined
+			input: gosymbol.Pow(gosymbol.Const(0), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // 1^x = undefined
+			input: gosymbol.Pow(gosymbol.Const(1), gosymbol.Exp(gosymbol.Const(7))),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{ // x^0 = 1
+			input: gosymbol.Pow(gosymbol.Var("kuk"), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{ // (v_1 * ... * v_n)^m = v_1^m * .. * v_n^m (note that the result is also sorted)
+			input: gosymbol.Pow(gosymbol.Mul(gosymbol.Var("x"), gosymbol.Const(3), gosymbol.Var("y")), gosymbol.Var("elle")),
+			expectedOutput: gosymbol.Mul(gosymbol.Pow(gosymbol.Const(3), gosymbol.Var("elle")), gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("elle")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("elle"))),
+		},
+		{ // (i^j)^k = i^(j*k)
+			input: gosymbol.Pow(gosymbol.Pow(gosymbol.Var("i"), gosymbol.Var("j")), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k")))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("i"), gosymbol.Mul(gosymbol.Var("j"), gosymbol.Exp(gosymbol.Mul(gosymbol.Const(10), gosymbol.Var("k"))))),
+		},
+		{ // undefined * ... = undefined
+			input: gosymbol.Mul(gosymbol.Undefined(), gosymbol.Var("x"), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // 0 * ... = 0
+			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Const(-9), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // undefined * 0 = undefined 
+			input: gosymbol.Mul(gosymbol.Undefined(), gosymbol.Const(0)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // 0 * undefined = undefined
+			input: gosymbol.Mul(gosymbol.Const(0), gosymbol.Undefined()),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // Mult with only one operand simplifies to the operand
+			input: gosymbol.Mul(gosymbol.Exp(gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Exp(gosymbol.Var("x")),
+		},
+		{ // Mult with no operands simplify to 1 
+			input: gosymbol.Mul(),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{ // 1 * x = x 
+			input: gosymbol.Mul(gosymbol.Const(1), gosymbol.Exp(gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Exp(gosymbol.Var("x")),
+		},
+		{ // x*x = x^2
+			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2)),
+		},
+		{
+			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Const(5)),
+		},
+		{ // x*x^n = x^(n+1)
+			input: gosymbol.Mul(gosymbol.Const(10), gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(2))),
+			expectedOutput: gosymbol.Pow(gosymbol.Const(10), gosymbol.Const(3)),
+		},
+		{ // x * (1/x) = 1
+			input: gosymbol.Mul(gosymbol.Var("x"), gosymbol.Div(gosymbol.Const(1), gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Const(1),
+		},
+		{ // x^m * x^n = x^(m+n)
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("n")), gosymbol.Pow(gosymbol.Var("x"), gosymbol.Var("m"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("x"), gosymbol.Add(gosymbol.Var("m"), gosymbol.Var("n"))),
+		},
+		{
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("j")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Add(gosymbol.Var("i"), gosymbol.Var("j"))),
+		},
+		{
+			input: gosymbol.Mul(gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i")), gosymbol.Pow(gosymbol.Var("y"), gosymbol.Var("i"))),
+			expectedOutput: gosymbol.Pow(gosymbol.Var("y"), gosymbol.Mul(gosymbol.Const(2), gosymbol.Var("i"))),
+		},
+		{ // undefined + ... = undefined
+			input: gosymbol.Add(gosymbol.Undefined(), gosymbol.Var("x"), gosymbol.Const(10)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // x - x = 0 
+			input: gosymbol.Sub(gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // -x + x = 0 
+			input: gosymbol.Add(gosymbol.Neg(gosymbol.Var("x")), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // Add with one operand simplifies to operand 
+			input: gosymbol.Add(gosymbol.Var("x")),
+			expectedOutput: gosymbol.Var("x"),
+		},
+		{ // Add with no operand simplifies to 0
+			input: gosymbol.Add(),
+			expectedOutput: gosymbol.Const(0),
+		},
+		{ // x + x = 2*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Const(2), gosymbol.Var("x")),
+		},
+		{ // x + x + x + x + x = 5*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Const(5), gosymbol.Var("x")),
+		},
+		{ // n*x + x = (1+n)*x
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x")), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Const(1), gosymbol.Var("n")), gosymbol.Var("x")),
+		},
+		{ // x*n + x = (1+n)*x
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("x"), gosymbol.Var("n")), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Const(1), gosymbol.Var("n")), gosymbol.Var("x")),
+		},
+		{ // x + n*x = (n+1)*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Const(1), gosymbol.Var("n")), gosymbol.Var("x")),
+		},
+		{ // x + x*n = (n+1)*x
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Mul(gosymbol.Var("x"), gosymbol.Var("n"))),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Const(1), gosymbol.Var("n")), gosymbol.Var("x")),
+		},
+		{ // n*x + m*x = (n+m)*x
+			input: gosymbol.Add(gosymbol.Mul(gosymbol.Var("n"), gosymbol.Var("x")), gosymbol.Mul(gosymbol.Var("m"), gosymbol.Var("x"))),
+			expectedOutput: gosymbol.Mul(gosymbol.Add(gosymbol.Var("m"), gosymbol.Var("n")), gosymbol.Var("x")),
+		},
+		{
+			input: gosymbol.Add(gosymbol.Var("x"), gosymbol.Mul(gosymbol.Var("x"), gosymbol.Const(5)), gosymbol.Var("y"), gosymbol.Var("x")),
+			expectedOutput: gosymbol.Add(gosymbol.Mul(gosymbol.Const(7), gosymbol.Var("x")), gosymbol.Var("y")),
+		},
+	}
+
+	for ix, test := range tests {	
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			result := gosymbol.SimplifyV2(test.input)
+			correctnesCheck(t, result, test.expectedOutput, ix+1)
+		})
+	}
+}
+*/
+
 func TestLogSimplificationRules(t *testing.T) {
 	tests := []struct {
 		input gosymbol.Expr
@@ -659,6 +816,77 @@ func TestLogSimplificationRules(t *testing.T) {
 		})
 	}
 }
+
+/*
+func TestLogSimplificationRulesV2(t *testing.T) {
+	tests := []struct {
+		input gosymbol.Expr
+		expectedOutput gosymbol.Expr
+	} {
+		{ // Log(0) = Undefined
+			input: gosymbol.Log(gosymbol.Const(0)),
+			expectedOutput: gosymbol.Undefined(),
+		},
+		{ // Log(xy) = Log(x) + Log(y)
+			input: gosymbol.Log(
+				gosymbol.Mul(
+					gosymbol.Var("x"),
+					gosymbol.Var("y"),
+				),
+			),
+			expectedOutput: gosymbol.Add(
+				gosymbol.Log(gosymbol.Var("x")),
+				gosymbol.Log(gosymbol.Var("y")),
+			),
+		},
+		{ // Log(5x * y) = Log(5) + Log(x) + Log(y)
+			input: gosymbol.Log(
+				gosymbol.Mul(
+					gosymbol.Mul(gosymbol.Const(5), gosymbol.Var("x")),
+					gosymbol.Var("y"),
+				),
+			),
+			expectedOutput: gosymbol.Add(
+				gosymbol.Log(gosymbol.Const(5)),
+				gosymbol.Log(gosymbol.Var("x")), 
+				gosymbol.Log(gosymbol.Var("y")),
+			),
+		},
+		{ // Log(5x * 4) = Log(20) + Log(x)
+			input: gosymbol.Log(
+				gosymbol.Mul(
+					gosymbol.Mul(gosymbol.Const(5), gosymbol.Var("x")),
+					gosymbol.Const(4),
+				),
+			),
+			expectedOutput: gosymbol.Add(
+				gosymbol.Log(gosymbol.Const(20)),
+				gosymbol.Log(gosymbol.Var("x")), 
+			),
+		},
+		{ // Log(x/y) = Log(x) - Log(y)
+			input: gosymbol.Log(
+				gosymbol.Div(
+					gosymbol.Var("x"),
+					gosymbol.Var("z"),
+				),
+			),
+			expectedOutput: gosymbol.Sub(
+				gosymbol.Log(gosymbol.Var("x")),
+				gosymbol.Log(gosymbol.Var("z")),
+			),
+		},
+		
+	}
+
+	for ix, test := range tests {	
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			result := gosymbol.SimplifyV2(test.input)
+			correctnesCheck(t, result, test.expectedOutput, ix+1)
+		})
+	}
+}
+*/
 
 func TestDepth(t *testing.T) {
 	tests := []struct {
