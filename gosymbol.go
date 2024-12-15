@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-/* Factories */
+/* Factories test */
 
 func Undefined() undefined {
 	return undefined{}
@@ -29,7 +29,7 @@ func Neg(arg Expr) mul {
 	return Mul(Const(-1), arg)
 }
 
-func Add(ops...Expr) add {
+func Add(ops ...Expr) add {
 	return add{Operands: ops}
 }
 
@@ -82,7 +82,7 @@ func (e variable) D(varName VarName) Expr {
 func (e add) D(varName VarName) Expr {
 	differentiatedOps := make([]Expr, len(e.Operands))
 	for ix, op := range e.Operands {
-		differentiatedOps[ix] = op.D(varName)	
+		differentiatedOps[ix] = op.D(varName)
 	}
 	return Add(differentiatedOps...)
 }
@@ -126,15 +126,15 @@ func (e sqrt) D(varName VarName) Expr {
 /* Evaluation */
 
 func (e undefined) Eval() Func {
-	return func(args Arguments) float64 {return math.NaN()}
+	return func(args Arguments) float64 { return math.NaN() }
 }
 
 func (e constant) Eval() Func {
-	return func(args Arguments) float64 {return e.Value}
+	return func(args Arguments) float64 { return e.Value }
 }
 
 func (e variable) Eval() Func {
-	return func(args Arguments) float64 {return args[e.Name]}
+	return func(args Arguments) float64 { return args[e.Name] }
 }
 
 func (e add) Eval() Func {
@@ -158,15 +158,15 @@ func (e mul) Eval() Func {
 }
 
 func (e exp) Eval() Func {
-	return func(args Arguments) float64 {return math.Exp(e.Arg.Eval()(args))}
+	return func(args Arguments) float64 { return math.Exp(e.Arg.Eval()(args)) }
 }
 
 func (e log) Eval() Func {
-	return func(args Arguments) float64 {return math.Log(e.Arg.Eval()(args))}
+	return func(args Arguments) float64 { return math.Log(e.Arg.Eval()(args)) }
 }
 
 func (e pow) Eval() Func {
-	return func(args Arguments) float64 {return math.Pow(e.Base.Eval()(args), e.Exponent.Eval()(args))}
+	return func(args Arguments) float64 { return math.Pow(e.Base.Eval()(args), e.Exponent.Eval()(args)) }
 }
 
 /* Evaluation to string */
@@ -177,7 +177,7 @@ func (e undefined) String() string {
 
 func (e constant) String() string {
 	if e.Value < 0 {
-		return fmt.Sprintf("( %v )", e.Value)	
+		return fmt.Sprintf("( %v )", e.Value)
 	} else {
 		return fmt.Sprint(e.Value)
 	}
@@ -229,7 +229,7 @@ func Substitute(expr, u, t Expr) Expr {
 		return u
 	} else if Equal(expr, u) {
 		return t
-	} else if Contains(expr, u) {	
+	} else if Contains(expr, u) {
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			processedOp := Substitute(Operand(expr, ix), u, t)
 			expr = replaceOperand(expr, ix, processedOp)
@@ -245,7 +245,7 @@ func Substitute(expr, u, t Expr) Expr {
 
 /*
 Replaces operand number n in t with u and returns the resulting
-expression. The function panics if n is larger than 
+expression. The function panics if n is larger than
 the NumberOfOperands(t).
 */
 func replaceOperand(t Expr, n int, u Expr) Expr {
@@ -309,9 +309,9 @@ func swapOperands(expr Expr, n1, n2 int) Expr {
 	return expr
 }
 
-/* 
+/*
 Recursively checks exact syntactical equality between t and u,
-i.e. it does not simplify any expression nor does it 
+i.e. it does not simplify any expression nor does it
 take any properties, e.g. commutativity, into account.
 */
 func Equal(t, u Expr) bool {
@@ -378,10 +378,9 @@ func Equal(t, u Expr) bool {
 	}
 }
 
-
-// Returns true if t and u are equal up to type 
-// for every element in resp. syntax tree, otherwise 
-// false. This means that two constants of different 
+// Returns true if t and u are equal up to type
+// for every element in resp. syntax tree, otherwise
+// false. This means that two constants of different
 // value, or variables with different names, would
 // return true.
 func TypeEqual(t, u Expr) bool {
@@ -399,12 +398,12 @@ func TypeEqual(t, u Expr) bool {
 	case constant:
 		_, ok := u.(constant)
 		return ok
-	case variable: 
-	_, ok := u.(variable)
+	case variable:
+		_, ok := u.(variable)
 		return ok
 	}
 
-	// Recusively checks if every operand is type equal 
+	// Recusively checks if every operand is type equal
 	// as well. Breaks and returns false if any of the
 	// operands are not equal.
 	// TODO: this does not take associativty of e.g. add and mul into account.
@@ -419,9 +418,9 @@ func TypeEqual(t, u Expr) bool {
 	return true
 }
 
-/* 
+/*
 Recursively checks exact equality between expr and u,
-i.e. it does not simplify any expression nor does it 
+i.e. it does not simplify any expression nor does it
 take any properties, e.g. commutativity, into account.
 */
 func Contains(expr, u Expr) bool {
@@ -439,7 +438,9 @@ func Contains(expr, u Expr) bool {
 		// TODO: how do we check equality of constrain??
 		return false
 	default:
-		if Equal(v,u) {return true}
+		if Equal(v, u) {
+			return true
+		}
 		for ix := 1; ix <= NumberOfOperands(v); ix++ {
 			vOp := Operand(v, ix)
 			if Contains(vOp, u) {
@@ -450,7 +451,7 @@ func Contains(expr, u Expr) bool {
 	}
 }
 
-// Returns the different variable names 
+// Returns the different variable names
 // present in the given expression.
 func VariableNames(expr Expr) []VarName {
 	var stringSlice []string
@@ -475,14 +476,14 @@ func VariableNames(expr Expr) []VarName {
 	return variableNamesSlice
 }
 
-/* 
+/*
 Recursively travesrses the whole AST and appends
-the variable names to targetSlice. 
+the variable names to targetSlice.
 */
 func variableNames(expr Expr, targetSlice *[]string) {
 	switch v := expr.(type) {
 	case undefined:
-		return 
+		return
 	case constant:
 		return
 	case variable:
@@ -501,7 +502,7 @@ func variableNames(expr Expr, targetSlice *[]string) {
 func NumberOfOperands(expr Expr) int {
 	switch v := expr.(type) {
 	case undefined:
-		return 0 
+		return 0
 	case constant:
 		return 0
 	case variable:
@@ -568,8 +569,7 @@ func Operand(expr Expr, n int) Expr {
 }
 
 // TODO: see Computer Algebra and Symbolic Computation page 10 to understand this shit
-func Map(F Expr, u ...Expr) Expr {panic("Not implemented yet")}
-
+func Map(F Expr, u ...Expr) Expr { panic("Not implemented yet") }
 
 func isSameType(a, b any) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)
@@ -603,8 +603,8 @@ func Depth(expr Expr) int {
 
 func Simplify(expr Expr) Expr {
 	// Having this here makes it possible
-	// to remove all rules in simplification_rules.go 
-	// that basically just checks if the expression contains 
+	// to remove all rules in simplification_rules.go
+	// that basically just checks if the expression contains
 	// undefined.
 	if Contains(expr, Undefined()) {
 		return Undefined()
@@ -613,7 +613,7 @@ func Simplify(expr Expr) Expr {
 	// Only sorting the top operands is sufficient
 	// to sort the whole expression since in the next
 	// step we recursively simplify all the operands.
-	// Note that the operator must be commutative for 
+	// Note that the operator must be commutative for
 	// this not to fuck shit up!
 	switch expr.(type) {
 	case add:
@@ -625,9 +625,9 @@ func Simplify(expr Expr) Expr {
 	// Recusively simplify all operands.
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
-		expr = replaceOperand(expr, ix, Simplify(op)) 
+		expr = replaceOperand(expr, ix, Simplify(op))
 	}
-	
+
 	// Application of all Simplification rules follow this same pattern.
 	// Returns the simplified expression and a boolean describing whether any
 	// simplification rule has actually been applied.
@@ -650,18 +650,18 @@ func Simplify(expr Expr) Expr {
 	case constant:
 		// Fully simplified
 	case variable:
-		// Fully simplified 
+		// Fully simplified
 	case constrainedVariable:
-		// Fully simplified 
+		// Fully simplified
 	case add:
 		expr, expressionAltered = rulesApplication(expr, sumSimplificationRules)
 	case mul:
-		expr, expressionAltered = rulesApplication(expr, productSimplificationRules)	
+		expr, expressionAltered = rulesApplication(expr, productSimplificationRules)
 	case pow:
 		expr, expressionAltered = rulesApplication(expr, powerSimplificationRules)
 	}
 
-	// If the expression has been altered it might be possible to apply some other rule 
+	// If the expression has been altered it might be possible to apply some other rule
 	// we thus recursively sort until the expression is not altered any more.
 	if expressionAltered {
 		return Simplify(expr)
@@ -670,7 +670,7 @@ func Simplify(expr Expr) Expr {
 }
 
 // Applies rule to expr and returns the transformed expression.
-// If expression does not match rule the ingoing expression 
+// If expression does not match rule the ingoing expression
 // will just be returned.
 func (rule transformationRule) apply(expr Expr) (Expr, bool) {
 	if rule.match(expr) {
@@ -681,8 +681,8 @@ func (rule transformationRule) apply(expr Expr) (Expr, bool) {
 
 func (rule transformationRule) match(expr Expr) bool {
 	// Fisrt check if pattern is defined. If not
-	// we execute patternFunction if it exists. 
-	// If no pattern or patternFunction exists we return false 
+	// we execute patternFunction if it exists.
+	// If no pattern or patternFunction exists we return false
 	if rule.pattern != nil {
 		varCache := make(map[VarName]Expr)
 		return patternMatch(rule.pattern, expr, varCache)
@@ -695,8 +695,8 @@ func (rule transformationRule) match(expr Expr) bool {
 
 /*
 Recursively checks if expr matches pattern. varCache is an empty
-map internally used to keep track of what the variables in pattern 
-corresponds to in expr. The function expects that no variable has the 
+map internally used to keep track of what the variables in pattern
+corresponds to in expr. The function expects that no variable has the
 same name as a constrained variable.
 */
 func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
@@ -706,7 +706,7 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 		return ok
 	case constant:
 		exprTyped, ok := expr.(constant)
-		return ok && v.Value == exprTyped.Value 
+		return ok && v.Value == exprTyped.Value
 	case variable:
 		e, cacheOk := varCache[v.Name]
 		eTyped, varOk := e.(variable)
@@ -715,7 +715,7 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 		} else if cacheOk && varOk && Equal(v, eTyped) {
 			return false
 		} else if cacheOk && varOk {
-			return patternMatch(e, expr, varCache)	
+			return patternMatch(e, expr, varCache)
 		} else if cacheOk {
 			return patternMatch(e, expr, varCache)
 		} else {
@@ -738,7 +738,7 @@ func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
 		if !ok {
 			return false
 		}
-		return patternMatchOperands(v, expr, varCache) 
+		return patternMatchOperands(v, expr, varCache)
 	case mul:
 		_, ok := expr.(mul)
 		if !ok {
@@ -796,7 +796,7 @@ func Expand(expr Expr) Expr {
 /*
 Checks whether the ordering e1 < e2 is true.
 The function returns true if e1 "comes before" e2 and false otherwis false.
-"comes before" is defined using the order relation defined in [1] (with some 
+"comes before" is defined using the order relation defined in [1] (with some
 extensions to include functions like exp, sin, etc).
 E.g.:
 O-1: if e1 and e2 are constants then compare(e1, e2) -> e1 < e2
@@ -806,11 +806,13 @@ O-3: etc.
 
 NOTE: the function assumes that e1 and e2 are automatically simplified algebraic expressions (ASAEs)
 
-NOTE: When TypeOf(e1) != TypeOf(e2) the recursive evaluation pattern creates a new expression 
+NOTE: When TypeOf(e1) != TypeOf(e2) the recursive evaluation pattern creates a new expression
 of the same type as either e1 or e2. For TypeOf(e1) = add, TypeOf(e2) = mul this looks like
+
 	return compare(Mul(e1), e2)
+
 What this mean in practice is that the type of e2 is prioritised higher than the type of e1.
-When extending this function you utilise this to specifiy, e.g. that a < x^3 and not the other 
+When extending this function you utilise this to specifiy, e.g. that a < x^3 and not the other
 way around.
 
 [1] COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003. Figure 3.9.
@@ -820,7 +822,7 @@ func compare(e1, e2 Expr) bool {
 	case constant:
 		switch e2Typed := e2.(type) {
 		case constant:
-			return orderRule1(e1Typed, e2Typed) 
+			return orderRule1(e1Typed, e2Typed)
 		default:
 			return true
 		}
@@ -904,7 +906,7 @@ func compare(e1, e2 Expr) bool {
 			return compare(e1, Mul(e2))
 		case constrainedVariable:
 			return compare(e1, Mul(e2))
-		case add: 
+		case add:
 			return compare(e1, Mul(e2))
 		case mul:
 			return orderRule3_1(e1Typed, e2Typed)
@@ -928,7 +930,7 @@ func compare(e1, e2 Expr) bool {
 			return compare(e1, Pow(e2, Const(1)))
 		case constrainedVariable:
 			return compare(e1, Pow(e2, Const(1)))
-		case add: 
+		case add:
 			return compare(e1, Pow(e2, Const(1)))
 		case mul:
 			return compare(Mul(e1), e2)
@@ -1040,15 +1042,15 @@ func compare(e1, e2 Expr) bool {
 	}
 }
 
-func orderRule1(e1, e2 constant) bool {return e1.Value < e2.Value}
-func orderRule2(e1, e2 variable) bool {return e1.Name < e2.Name}
-func orderRule2_1(e1, e2 constrainedVariable) bool {return e1.Name < e2.Name}
+func orderRule1(e1, e2 constant) bool              { return e1.Value < e2.Value }
+func orderRule2(e1, e2 variable) bool              { return e1.Name < e2.Name }
+func orderRule2_1(e1, e2 constrainedVariable) bool { return e1.Name < e2.Name }
 func orderRule3(e1, e2 add) bool {
 	e1NumOp := NumberOfOperands(e1)
 	e2NumOp := NumberOfOperands(e2)
 	e1LastOp := Operand(e1, e1NumOp)
 	e2LastOp := Operand(e2, e2NumOp)
-	
+
 	if !Equal(e1LastOp, e2LastOp) {
 		return compare(e1LastOp, e2LastOp)
 	}
@@ -1061,8 +1063,8 @@ func orderRule3(e1, e2 add) bool {
 	}
 
 	for ix := 1; ix < bnd; ix++ {
-		e1Op := Operand(e1, e1NumOp - ix)
-		e2Op := Operand(e2, e2NumOp - ix)
+		e1Op := Operand(e1, e1NumOp-ix)
+		e2Op := Operand(e2, e2NumOp-ix)
 		if !Equal(e1Op, e2Op) {
 			return compare(e1Op, e2Op)
 		}
@@ -1074,7 +1076,7 @@ func orderRule3_1(e1, e2 mul) bool {
 	e2NumOp := NumberOfOperands(e2)
 	e1LastOp := Operand(e1, e1NumOp)
 	e2LastOp := Operand(e2, e2NumOp)
-	
+
 	if !Equal(e1LastOp, e2LastOp) {
 		return compare(e1LastOp, e2LastOp)
 	}
@@ -1087,8 +1089,8 @@ func orderRule3_1(e1, e2 mul) bool {
 	}
 
 	for ix := 1; ix < bnd; ix++ {
-		e1Op := Operand(e1, e1NumOp - ix)
-		e2Op := Operand(e2, e2NumOp - ix)
+		e1Op := Operand(e1, e1NumOp-ix)
+		e2Op := Operand(e2, e2NumOp-ix)
 		if !Equal(e1Op, e2Op) {
 			return compare(e1Op, e2Op)
 		}
@@ -1113,7 +1115,7 @@ func orderRule5(e1, e2 Expr) bool {
 /*
 Returns a new expression where the
 terms in in s1 has been prepended
-to the terms in s2, i.e. the order 
+to the terms in s2, i.e. the order
 of terms is not changed.
 */
 func mergeSums(s1, s2 add) add {
@@ -1123,7 +1125,7 @@ func mergeSums(s1, s2 add) add {
 /*
 Returns a new expression where the
 factors in in p1 has been prepended
-to the factors in p2, i.e. the order 
+to the factors in p2, i.e. the order
 of factors is not changed.
 */
 func mergeProducts(p1, p2 mul) mul {
@@ -1133,7 +1135,7 @@ func mergeProducts(p1, p2 mul) mul {
 /*
 Sorts the operands of expr in increasing order in accordance
 with the order relation defined by compare(e1,e2 Expr). It does
-not recursively sort the operands operands etc. This should only 
+not recursively sort the operands operands etc. This should only
 be applied when the operator is commutative!
 
 To make a complete sort using this it needs to be recursive
@@ -1145,16 +1147,16 @@ func topOperandSort(expr Expr) Expr {
 	for ix := 1; ix <= NumberOfOperands(expr)-1; ix++ {
 		op1 := Operand(expr, ix)
 		op2 := Operand(expr, ix+1)
-		
+
 		n := ix
 		for !compare(op1, op2) {
 			expr = swapOperands(expr, n, n+1)
-			
+
 			// As long as n > 1 we are not at the
-			// first operand and there is no risk of 
-			// index out of bounds error. If we are at 
-			// the last operand we need to break since 
-			// compare will continue to return false if 
+			// first operand and there is no risk of
+			// index out of bounds error. If we are at
+			// the last operand we need to break since
+			// compare will continue to return false if
 			// op1 == op2.
 			if n > 1 {
 				op1 = Operand(expr, n-1)
