@@ -1,5 +1,7 @@
 package gosymbol
 
+import "fmt"
+
 func Simplify(expr Expr) Expr {
 	// Having this here makes it possible
 	// to remove all rules in simplification_rules.go
@@ -27,24 +29,10 @@ func Simplify(expr Expr) Expr {
 		expr = replaceOperand(expr, ix, Simplify(op))
 	}
 
-	// Application of all Simplification rules follow this same pattern.
-	// Returns the simplified expression and a boolean describing whether any
-	// simplification rule has actually been applied.
-	rulesApplication := func(expr Expr, ruleSlice []transformationRule) (Expr, bool) {
-		atLeastOneapplied := false
-		for _, rule := range ruleSlice {
-			var applied bool
-			expr, applied = rule.apply(expr)
-			//if applied { fmt.Println("Applied rule ", ix) }
-			atLeastOneapplied = atLeastOneapplied || applied
-		}
-		return expr, atLeastOneapplied
-	}
-
 	// Applies simplification rules depending on the operator type
 	// This will extend as more rules gets added! The base cases
 	// are fully simplified so we just return them.
-	expressionAltered := false
+	appliedRuleIdx := -1
 	switch expr.(type) {
 	case constant:
 		// Fully simplified
@@ -53,19 +41,44 @@ func Simplify(expr Expr) Expr {
 	case constrainedVariable:
 		// Fully simplified
 	case add:
-		expr, expressionAltered = rulesApplication(expr, sumSimplificationRules)
+		expr, appliedRuleIdx = rulesApplicator(expr, sumSimplificationRules)
 	case mul:
-		expr, expressionAltered = rulesApplication(expr, productSimplificationRules)
+		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
-		expr, expressionAltered = rulesApplication(expr, powerSimplificationRules)
+		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
 	}
 
 	// If the expression has been altered it might be possible to apply some other rule
-	// we thus recursively sort until the expression is not altered any more.
-	if expressionAltered {
+	// we thus recursively simplify until the expression is not altered any more.
+	if appliedRuleIdx > -1 {
 		return Simplify(expr)
 	}
 	return expr
+}
+
+/*
+Tries to apply the transformation rules in ruleSlice to expr. If expr matches
+the pattern of the transformation rule, the transformed expression is returned
+together with the index of the rule that was applied.
+
+Note: the function returns after application of the first matching rule,
+or after all rules in ruleSlice have been tried. In the latter case,
+-1 is returned instead of a rule index.
+*/
+func rulesApplicator(expr Expr, ruleSlice []transformationRule) (Expr, int) {
+	for ix, rule := range ruleSlice {
+		// Tries to apply rule
+		transformedExpr, applied := rule.apply(expr)
+
+		if applied {
+			fmt.Println(expr, "--", ix, "-->", transformedExpr)
+			return transformedExpr, ix
+		}
+
+	}
+
+	// If function did not return above no rule was applied
+	return expr, -1
 }
 
 // TODO: figure this out
