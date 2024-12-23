@@ -1,16 +1,28 @@
 package gosymbol
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
 )
 
-func correctnesCheck(t *testing.T, result, expectedOutput any, testNumber int) {
-		if !reflect.DeepEqual(result, expectedOutput) {
-			errMsg := fmt.Sprintf("Failed test: %v. Expected: %v, Got: %v", testNumber, expectedOutput, result)
-			t.Error(errMsg)
-		}
+func TestTopOperandSort(t *testing.T) {
+	tests := []struct {
+		input          Expr
+		expectedOutput Expr
+	}{
+		{
+			input:          Mul(Var("d"), Var("c"), Var("b"), Var("a")),
+			expectedOutput: Mul(Var("a"), Var("b"), Var("c"), Var("d")),
+		},
+		{ // Confirms that we only sort the top most operands
+			input:          Add(Pow(Add(Var("b"), Var("a")), Const(2)), Const(1)),
+			expectedOutput: Add(Const(1), Pow(Add(Var("b"), Var("a")), Const(2))),
+		},
+	}
+
+	for ix, test := range tests {
+		result := TopOperandSort(test.input)
+		correctnesCheck(t, result, test.expectedOutput, ix+1)
+	}
 }
 
 func TestComapre(t *testing.T) {
@@ -19,10 +31,10 @@ func TestComapre(t *testing.T) {
 		expr2 Expr
 	}
 
-	tests := []struct{
-		input inputArgs
+	tests := []struct {
+		input          inputArgs
 		expectedOutput bool
-	} { // Below I denote the generalised order relation with <
+	}{ // Below I denote the generalised order relation with <
 		{ // Test 1: a + b < a + c
 			input: inputArgs{
 				expr1: Add(Var("a"), Var("b")),
@@ -265,27 +277,6 @@ func TestComapre(t *testing.T) {
 
 	for ix, test := range tests {
 		result := compare(test.input.expr1, test.input.expr2)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
-	}
-}
-
-func TestTopOperandSort(t *testing.T) {
-	tests := []struct{
-		input Expr
-		expectedOutput Expr
-	} {
-		{
-			input: Mul(Var("d"), Var("c"), Var("b"), Var("a")),
-			expectedOutput: Mul(Var("a"), Var("b"), Var("c"), Var("d")),
-		},
-		{ // Confirms that we only sort the top most operands 
-			input: Add(Pow(Add(Var("b"), Var("a")), Const(2)), Const(1)),
-			expectedOutput: Add(Const(1), Pow(Add(Var("b"), Var("a")), Const(2))),
-		},
-	}
-
-	for ix, test := range tests {
-		result := topOperandSort(test.input)
 		correctnesCheck(t, result, test.expectedOutput, ix+1)
 	}
 }
