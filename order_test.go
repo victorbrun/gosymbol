@@ -1,6 +1,7 @@
 package gosymbol
 
 import (
+	"strconv"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestTopOperandSort(t *testing.T) {
 
 	for ix, test := range tests {
 		result := TopOperandSort(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
 }
 
@@ -277,6 +278,7 @@ func TestComapre(t *testing.T) {
 
 	for ix, test := range tests {
 		result := compare(test.input.expr1, test.input.expr2)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
+
 	}
 }

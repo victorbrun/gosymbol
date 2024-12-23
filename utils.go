@@ -7,10 +7,9 @@ import (
 	"testing"
 )
 
-func correctnesCheck(t *testing.T, result, expectedOutput any, testNumber int) {
-	if !reflect.DeepEqual(result, expectedOutput) {
-		errMsg := fmt.Sprintf("Failed test: %v. Expected: %v, Got: %v", testNumber, expectedOutput, result)
-		t.Error(errMsg)
+func correctnesCheck(t *testing.T, testName string, testInput, testExpectedOutput, result any) {
+	if !reflect.DeepEqual(result, testExpectedOutput) {
+		t.Errorf("Test %s failed.\nInput: %v\nExpected: %v\nGot: %v", testName, testInput, testExpectedOutput, result)
 	}
 }
 

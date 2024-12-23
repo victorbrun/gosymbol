@@ -2,6 +2,7 @@ package gosymbol
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 )
 
@@ -172,7 +173,7 @@ func TestSubstitute(t *testing.T) {
 
 	for ix, test := range tests {
 		result := Substitute(test.input.expr, test.input.u, test.input.t)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
 }
 
@@ -209,7 +210,7 @@ func TestVariableNames(t *testing.T) {
 
 	for ix, test := range tests {
 		result := VariableNames(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
 }
 
@@ -246,6 +247,6 @@ func TestDepth(t *testing.T) {
 
 	for ix, test := range tests {
 		result := Depth(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
 }
