@@ -8,8 +8,8 @@ import (
 
 func main() {
 	x := gosymbol.Var("x")
-	f := gosymbol.Pow(x, gosymbol.Const(2))
+	f := gosymbol.Mul(x, gosymbol.Exp(x))
 
 	fmt.Println("f(x) = ", f)
-	fmt.Println("f'(x) = ", f.D("x"))
+	fmt.Println("f'(x) = ", f.D(x))
 }
