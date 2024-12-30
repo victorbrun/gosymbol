@@ -87,8 +87,8 @@ func (rule transformationRule) match(expr Expr) bool {
 	// we execute patternFunction if it exists.
 	// If no pattern or patternFunction exists we return false
 	if rule.pattern != nil {
-		varCache := make(map[VarName]Expr)
-		return patternMatch(rule.pattern, expr, varCache)
+		bindings := make(Binding)
+		return patternMatch(rule.pattern, expr, bindings)
 	} else if rule.patternFunction != nil {
 		return rule.patternFunction(expr)
 	} else {

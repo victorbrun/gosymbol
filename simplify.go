@@ -41,10 +41,16 @@ func Simplify(expr Expr) Expr {
 	case constrainedVariable:
 		// Fully simplified
 	case add:
+		fmt.Println("")
+		fmt.Println("Addition simplification rules:")
 		expr, appliedRuleIdx = rulesApplicator(expr, sumSimplificationRules)
 	case mul:
+		fmt.Println("")
+		fmt.Println("Multiplication simplification rules:")
 		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
+		fmt.Println("")
+		fmt.Println("Power simplification rules:")
 		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
 	}
 

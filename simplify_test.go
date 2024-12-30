@@ -2,6 +2,7 @@ package gosymbol
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -112,6 +113,10 @@ func TestSimplify(t *testing.T) {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
 			//fmt.Println("Simplifying: ", test.input)
 			result := Simplify(test.input)
+
+			if !reflect.DeepEqual(result, test.expectedOutput) {
+				t.Errorf("Following test failed: %s\nInput: %v\nExpected: %v\nGot: %v", test.name, test.input, test.expectedOutput, result)
+			}
 			correctnesCheck(t, test.name, test.input, test.expectedOutput, result)
 
 		})

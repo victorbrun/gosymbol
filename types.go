@@ -11,6 +11,8 @@ type Expr interface {
 	D(variable) Expr
 }
 
+type Binding map[string]Expr
+
 // A constrainedVariable is just like the data type
 // variable but it has a constraint function. When trying
 // to replace the variable with another expression, this
