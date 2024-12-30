@@ -8,7 +8,7 @@ import (
 func TestD(t *testing.T) {
 	type inputArgs struct {
 		expr    Expr
-		diffVar VarName
+		diffVar variable
 	}
 
 	tests := []struct {
@@ -18,21 +18,21 @@ func TestD(t *testing.T) {
 		{ // Test 1
 			input: inputArgs{
 				expr:    Const(10),
-				diffVar: "X",
+				diffVar: Var("X"),
 			},
 			expectedOutput: Const(0),
 		},
 		{ // Test 2
 			input: inputArgs{
 				expr:    Var("X"),
-				diffVar: "X",
+				diffVar: Var("X"),
 			},
 			expectedOutput: Const(1),
 		},
 		{ // Test 3
 			input: inputArgs{
 				expr:    Var("X"),
-				diffVar: "Y",
+				diffVar: Var("Y"),
 			},
 			expectedOutput: Const(0),
 		},

@@ -1,5 +1,9 @@
 package gosymbol
 
+import (
+	"errors"
+)
+
 /* Factories */
 
 func Undefined() undefined {
@@ -56,6 +60,16 @@ func Sqrt(arg Expr) sqrt {
 
 func TransformationRule(pattern Expr, transform func(Expr) Expr) transformationRule {
 	return transformationRule{pattern: pattern, transform: transform}
+}
+
+func (args Arguments) AddArgument(v variable, value float64) error {
+	for arg := range args {
+		if arg.Name == v.Name {
+			return errors.New("multiple variables have the same name")
+		}
+	}
+	args[v] = value
+	return nil
 }
 
 // Applies rule to expr and returns the transformed expression.

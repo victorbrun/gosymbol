@@ -20,70 +20,70 @@ func TestExprEval(t *testing.T) {
 		{
 			input: inputArgs{
 				expr: Const(0),
-				args: Arguments{"X": 10},
+				args: Arguments{Var("X"): 10},
 			},
 			expectedOutput: 0,
 		},
 		{
 			input: inputArgs{
 				expr: Var("X"),
-				args: Arguments{"X": 1.0},
+				args: Arguments{Var("X"): 1.0},
 			},
 			expectedOutput: 1.0,
 		},
 		{
 			input: inputArgs{
 				expr: Neg(Const(10)),
-				args: Arguments{"X": 0},
+				args: Arguments{Var("X"): 0},
 			},
 			expectedOutput: -10,
 		},
 		{
 			input: inputArgs{
 				expr: Add(Var("X"), Var("Y")),
-				args: Arguments{"X": 1.0, "Y": 2.0},
+				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
 			},
 			expectedOutput: 3.0,
 		},
 		{
 			input: inputArgs{
 				expr: Sub(Var("X"), Var("Y")),
-				args: Arguments{"X": 1.0, "Y": 2.0},
+				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
 			},
 			expectedOutput: -1.0,
 		},
 		{
 			input: inputArgs{
 				expr: Mul(Var("X"), Var("Y")),
-				args: Arguments{"X": 1.0, "Y": 2.0},
+				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
 			},
 			expectedOutput: 2.0,
 		},
 		{
 			input: inputArgs{
 				expr: Div(Var("X"), Var("Y")),
-				args: Arguments{"X": 1.0, "Y": 2.0},
+				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
 			},
 			expectedOutput: 0.5,
 		},
 		{
 			input: inputArgs{
 				expr: Exp(Var("X")),
-				args: Arguments{"X": 0},
+				args: Arguments{Var("X"): 0},
 			},
 			expectedOutput: 1,
 		},
 		{
 			input: inputArgs{
 				expr: Log(Var("X")),
-				args: Arguments{"X": 1},
+				args: Arguments{Var("X"): 1},
 			},
 			expectedOutput: math.Log(1),
 		},
 		{
 			input: inputArgs{
 				expr: Pow(Var("X"), Const(-1)),
-				args: Arguments{"X": 10},
+				args: Arguments{Var("X"): 10},
 			},
 			expectedOutput: 1 / 10.0,
 		},
