@@ -15,11 +15,19 @@ func Const(val float64) constant {
 }
 
 func Var(name VarName) variable {
-	return variable{Name: name}
+	return variable{Name: name, isPattern: false}
+}
+
+func PatternVar(name VarName) variable {
+	return variable{Name: name, isPattern: true}
 }
 
 func ConstrVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
-	return constrainedVariable{Name: name, Constraint: constrFunc}
+	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: false}
+}
+
+func ConstrPatternVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
+	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: true}
 }
 
 func Neg(arg Expr) mul {

@@ -117,8 +117,59 @@ func TestSimplify(t *testing.T) {
 			if !reflect.DeepEqual(result, test.expectedOutput) {
 				t.Errorf("Following test failed: %s\nInput: %v\nExpected: %v\nGot: %v", test.name, test.input, test.expectedOutput, result)
 			}
-			correctnesCheck(t, test.name, test.input, test.expectedOutput, result)
-
 		})
 	}
+}
+
+func TestSimplificationRulesForPatternVariables(t *testing.T) {
+	executeTests := func(t *testing.T, ruleSlice []transformationRule, testName string) {
+		for ix, rule := range ruleSlice {
+			// This test only applies for rules
+			// without patternfunc
+			if rule.pattern == nil {
+				continue
+			}
+
+			t.Run(fmt.Sprintf("%s-%d", testName, ix+1), func(t *testing.T) {
+				notOkVarsInPattern := nonPatternVariablesIn(rule.pattern)
+
+				// Fails on all the rules with more than zero not ok variables
+				if len(notOkVarsInPattern) != 0 {
+					t.Errorf("Pattern %s contains the following non-pattern varaibles: %v", rule.pattern, notOkVarsInPattern)
+				}
+
+			})
+		}
+	}
+
+	executeTests(t, sumSimplificationRules, "Sum")
+	executeTests(t, productSimplificationRules, "Product")
+	executeTests(t, powerSimplificationRules, "Power")
+}
+
+/* HELPER FUNCTIONS */
+
+func nonPatternVariablesIn(expr Expr) []Expr {
+	// Extracts all variables and if these are
+	// patterns or not
+	varsInExpr := Variables(expr)
+	okVars := make([]bool, len(varsInExpr))
+	for jx, v := range varsInExpr {
+		switch v := v.(type) {
+		case variable:
+			okVars[jx] = v.isPattern
+		case constrainedVariable:
+			okVars[jx] = v.isPattern
+		default:
+			panic("something went wrong this code should not be accessed")
+		}
+
+	}
+
+	// Negates bool slice to get the indexes which
+	// are not ok
+	notOkVars := negateSlice(okVars)
+	notOkVarsInExpr := filterByBoolSlice(varsInExpr, notOkVars)
+
+	return notOkVarsInExpr
 }

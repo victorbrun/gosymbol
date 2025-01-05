@@ -244,10 +244,24 @@ func Contains(expr, u Expr) bool {
 // Returns the different variable names
 // present in the given expression.
 func VariableNames(expr Expr) []VarName {
-	var stringSlice []string
-	variableNames(expr, &stringSlice)
-	if len(stringSlice) == 0 {
+	exprSlice := Variables(expr)
+	if len(exprSlice) == 0 {
 		return []VarName{}
+	}
+
+	// Extracting variable names from the list of expressions
+	stringSlice := make([]string, len(exprSlice))
+	for ix, e := range exprSlice {
+		// Typing expression
+		switch v := e.(type) {
+		case variable:
+			stringSlice[ix] = string(v.Name)
+		case constrainedVariable:
+			stringSlice[ix] = string(v.Name)
+		default:
+			err := fmt.Errorf("somthing went wrong: %#v is expected to be of type variable or constrainedVariable", v)
+			panic(err)
+		}
 	}
 
 	// Checks for and deletes duplicates of variable names
@@ -267,23 +281,34 @@ func VariableNames(expr Expr) []VarName {
 }
 
 /*
-Recursively travesrses the whole AST and appends
-the variable names to targetSlice.
+Returns the list of variables (and contrained variables) in expr
+as a list without duplicates
 */
-func variableNames(expr Expr, targetSlice *[]string) {
+func Variables(expr Expr) []Expr {
+	var exprSlice []Expr
+	variables(expr, &exprSlice)
+
+	return exprSlice
+}
+
+/*
+Recursively travesrses the whole AST and appends
+the variables to targetSlice.
+*/
+func variables(expr Expr, targetSlice *[]Expr) {
 	switch v := expr.(type) {
 	case undefined:
 		return
 	case constant:
 		return
 	case variable:
-		*targetSlice = append(*targetSlice, string(v.Name))
+		*targetSlice = append(*targetSlice, v)
 	case constrainedVariable:
-		*targetSlice = append(*targetSlice, string(v.Name))
+		*targetSlice = append(*targetSlice, v)
 	default:
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			op := Operand(expr, ix)
-			variableNames(op, targetSlice)
+			variables(op, targetSlice)
 		}
 	}
 }
@@ -407,4 +432,32 @@ of factors is not changed.
 */
 func mergeProducts(p1, p2 mul) mul {
 	panic("not implemented yet")
+}
+
+/*
+Returns all elements at indexes `vals` which has true
+in `selectors`.
+*/
+func filterByBoolSlice[T any](vals []T, selectors []bool) []T {
+	if len(vals) != len(selectors) {
+		panic("vals and selectors must be slices of the same length")
+	}
+
+	var result []T
+	for ix, selected := range selectors {
+		if selected {
+			result = append(result, vals[ix])
+		}
+	}
+	return result
+}
+
+/*
+Negates slice of bool
+*/
+func negateSlice(boolSlice []bool) []bool {
+	for ix, val := range boolSlice {
+		boolSlice[ix] = !val
+	}
+	return boolSlice
 }

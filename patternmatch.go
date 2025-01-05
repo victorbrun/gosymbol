@@ -130,14 +130,14 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 	case variable:
 		// Extracts binding to pattern variable if it exists
 		// and gets if expression is a variable
-		boundExpr, bindingExists := bindings[string(p.Name)]
+		boundExpr, bindingExists := bindings[p.Name]
 		exprAsVar, exprIsVar := expr.(variable)
 
 		// If no expression is bound to this variable
 		// we bound the current expression to it and return
 		// true
 		if !bindingExists {
-			bindings[string(p.Name)] = expr
+			bindings[p.Name] = expr
 			return true
 		}
 
@@ -155,13 +155,13 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 
 	case constrainedVariable:
 		// Extracts binding to pattern variable if it exists
-		boundExpr, exists := bindings[string(p.Name)]
+		boundExpr, exists := bindings[p.Name]
 
 		if !exists && p.Constraint(expr) {
 			// If no expression is bound to this variable
 			// we bound the current expression to it if
 			// it conforms with the constraint
-			bindings[string(p.Name)] = expr
+			bindings[p.Name] = expr
 			return true
 		} else if v, ok := expr.(variable); exists && ok {
 			// If expression is also a variable, we return if they are
