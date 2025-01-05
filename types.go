@@ -9,6 +9,7 @@ type Expr interface {
 	String() string
 	Eval() Func
 	D(variable) Expr
+	Simplify() Expr
 }
 
 // The Binding type is used in patternmatching.go

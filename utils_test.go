@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestContains(t *testing.T) {
+func TestRecContains(t *testing.T) {
 	type inputArgs struct {
 		expr Expr
 		u    Expr
@@ -51,7 +51,7 @@ func TestContains(t *testing.T) {
 	}
 
 	for ix, test := range tests {
-		result := Contains(test.input.expr, test.input.u)
+		result := RecContains(test.input.expr, test.input.u)
 		if result != test.expectedOutput {
 			errMsg := fmt.Sprintf(
 				"Failed test: %v: Expected: %v, Got: %v. expr = %v, u = %v",

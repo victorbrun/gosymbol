@@ -107,12 +107,22 @@ func TestSimplify(t *testing.T) {
 			input:          Mul(Pow(Var("x"), Var("n")), Pow(Var("x"), Var("m"))),
 			expectedOutput: Pow(Var("x"), Add(Var("m"), Var("n"))),
 		},
+		{
+			name:           "2 * 1",
+			input:          Mul(Const(2), Const(1)),
+			expectedOutput: Const(2),
+		},
+		{
+			name:           "2 * x^1 * 1",
+			input:          Mul(Const(2), Pow(Var("x"), Const(1)), Const(1)),
+			expectedOutput: Mul(Const(2), Var("x")),
+		},
 	}
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
 			//fmt.Println("Simplifying: ", test.input)
-			result := Simplify(test.input)
+			result := test.input.Simplify()
 
 			if !reflect.DeepEqual(result, test.expectedOutput) {
 				t.Errorf("Following test failed: %s\nInput: %v\nExpected: %v\nGot: %v", test.name, test.input, test.expectedOutput, result)

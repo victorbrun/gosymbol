@@ -120,8 +120,23 @@ var productSimplificationRules []transformationRule = []transformationRule{
 	},
 	{ // 1 * x_1 * ... * x_n = x_1 * ... * x_n
 		patternFunction: func(expr Expr) bool {
-			_, ok := expr.(mul)
-			return ok && Contains(expr, Const(1))
+			// If expr is not mul, we can directly
+			// return false
+			exprTyped, ok := expr.(mul)
+			if !ok {
+				return false
+			}
+
+			// Checks if the arguments of expr contains Const(1)
+			// Note: we cannot use RecContains as it would return true
+			// on any 1, e.g, even on x^1.
+			one := Const(1)
+			for _, elem := range exprTyped.Operands {
+				if Equal(elem, one) {
+					return true
+				}
+			}
+			return false
 		},
 		transform: func(expr Expr) Expr {
 			if NumberOfOperands(expr) == 1 {
@@ -193,6 +208,12 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 		pattern: Pow(Const(1), PatternVar("x")),
 		transform: func(expr Expr) Expr {
 			return Const(1)
+		},
+	},
+	{ // x^1 = x
+		pattern: Pow(PatternVar("x"), Const(1)),
+		transform: func(expr Expr) Expr {
+			return Operand(expr, 1)
 		},
 	},
 	{ // x^0 = 1
