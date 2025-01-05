@@ -25,7 +25,7 @@ func TestAddArgument(t *testing.T) {
 				v:     Var("X"),
 				value: 2,
 			},
-			expectedError: errors.New("multiple variables have the same name"),
+			expectedError: &DuplicateArgumentError{},
 			expectedArgs:  Arguments{Var("X"): 1},
 		},
 		{ // Test 2: testing with no duplicate names
@@ -45,9 +45,7 @@ func TestAddArgument(t *testing.T) {
 			if !errors.Is(err, test.expectedError) {
 				errMsg := fmt.Sprintf("Failed test: %v\nExpectedError: %v\nGot: %v", ix+1, test.expectedError, err)
 				t.Error(errMsg)
-			}
-
-			if !reflect.DeepEqual(test.expectedArgs, test.input.args) {
+			} else if !reflect.DeepEqual(test.expectedArgs, test.input.args) {
 				errMsg := fmt.Sprintf("Failed test: %v\nExpectedArgs: %v\nGot: %v", ix+1, test.expectedArgs, test.input.args)
 				t.Error(errMsg)
 			}

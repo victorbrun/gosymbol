@@ -1,8 +1,6 @@
 package gosymbol
 
-import (
-	"errors"
-)
+const ()
 
 /* Factories */
 
@@ -73,7 +71,7 @@ func TransformationRule(pattern Expr, transform func(Expr) Expr) transformationR
 func (args Arguments) AddArgument(v variable, value float64) error {
 	for arg := range args {
 		if arg.Name == v.Name {
-			return errors.New("multiple variables have the same name")
+			return &DuplicateArgumentError{}
 		}
 	}
 	args[v] = value
