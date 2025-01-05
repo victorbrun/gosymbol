@@ -1,7 +1,5 @@
 package gosymbol
 
-import "fmt"
-
 func Simplify(expr Expr) Expr {
 	// Having this here makes it possible
 	// to remove all rules in simplification_rules.go
@@ -41,16 +39,10 @@ func Simplify(expr Expr) Expr {
 	case constrainedVariable:
 		// Fully simplified
 	case add:
-		fmt.Println("")
-		fmt.Println("Addition simplification rules:")
 		expr, appliedRuleIdx = rulesApplicator(expr, sumSimplificationRules)
 	case mul:
-		fmt.Println("")
-		fmt.Println("Multiplication simplification rules:")
 		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
-		fmt.Println("")
-		fmt.Println("Power simplification rules:")
 		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
 	}
 
@@ -77,7 +69,6 @@ func rulesApplicator(expr Expr, ruleSlice []transformationRule) (Expr, int) {
 		transformedExpr, applied := rule.apply(expr)
 
 		if applied {
-			fmt.Println(expr, "--", ix, "-->", transformedExpr)
 			return transformedExpr, ix
 		}
 

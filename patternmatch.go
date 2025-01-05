@@ -128,10 +128,17 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 		return false
 
 	case variable:
+		// If the varaible in the pattern is not
+		// a pattern variable, it means that we are
+		// matching expr against a binding. This is a
+		// base case and we check for equality
+		if !p.isPattern {
+			return Equal(p, expr)
+		}
+
 		// Extracts binding to pattern variable if it exists
 		// and gets if expression is a variable
 		boundExpr, bindingExists := bindings[p.Name]
-		exprAsVar, exprIsVar := expr.(variable)
 
 		// If no expression is bound to this variable
 		// we bound the current expression to it and return
@@ -141,42 +148,36 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 			return true
 		}
 
-		boundExprAsVar, boundExprIsVar := boundExpr.(variable)
-		if boundExprIsVar && exprIsVar {
-			// If both the bound expression and expr
-			// are variables we compare their names
-			return boundExprAsVar.Name == exprAsVar.Name
-		} else {
-			// If bound expression and expr are not
-			// variables we recursively patternmatch
-			// expr against the bound expression
-			return patternMatch(expr, boundExpr, bindings)
-		}
+		// If bound expression exist, we recursively
+		// match expr against it
+		return patternMatch(expr, boundExpr, bindings)
 
 	case constrainedVariable:
-		// Extracts binding to pattern variable if it exists
-		boundExpr, exists := bindings[p.Name]
+		// If the varaible in the pattern is not
+		// a pattern variable, it means that we are
+		// matching expr against a binding. This is a
+		// base case and we check for equality
+		if !p.isPattern {
+			return Equal(p, expr)
+		}
 
-		if !exists && p.Constraint(expr) {
-			// If no expression is bound to this variable
-			// we bound the current expression to it if
-			// it conforms with the constraint
+		// Extracts binding to pattern variable if it exists
+		// and gets if expression is a variable
+		boundExpr, bindingExists := bindings[p.Name]
+
+		// If no expression is bound to this variable
+		// we bound the current expression to it and return
+		// true
+		if !bindingExists && p.Constraint(expr) {
 			bindings[p.Name] = expr
 			return true
-		} else if v, ok := expr.(variable); exists && ok {
-			// If expression is also a variable, we return if they are
-			// equal. This is needed to avoiud bottomless recursion.
-			return Equal(v, boundExpr)
-		} else if exists {
-			// If the current pattern variable has a binding
-			// we recursively compare it to the expression
-			return patternMatch(expr, boundExpr, bindings)
-		} else {
-			// This code is reached when no binding exists
-			// and the constraint associated with p is
-			// not respected by expr
+		} else if !p.Constraint(expr) {
 			return false
 		}
+
+		// If bound expression exist, we recursively
+		// match expr against it
+		return patternMatch(expr, boundExpr, bindings)
 
 	case add:
 		if a, ok := expr.(add); ok {
@@ -237,7 +238,7 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 		return false
 
 	default:
-		errMsg := fmt.Errorf("ERROR: expression of type: %v have no match pattern case implemented", reflect.TypeOf(p))
+		errMsg := fmt.Errorf("ERROR: expression %#v have no match pattern case implemented", p)
 		panic(errMsg)
 	}
 }

@@ -96,7 +96,7 @@ func (rule transformationRule) match(expr Expr) bool {
 	// If no pattern or patternFunction exists we return false
 	if rule.pattern != nil {
 		bindings := make(Binding)
-		return patternMatch(rule.pattern, expr, bindings)
+		return patternMatch(expr, rule.pattern, bindings)
 	} else if rule.patternFunction != nil {
 		return rule.patternFunction(expr)
 	} else {

@@ -33,7 +33,7 @@ func TestSimplify(t *testing.T) {
 			expectedOutput: Undefined(),
 		},
 		{
-			name:           "1^x = undefined",
+			name:           "1^x = 1",
 			input:          Pow(Const(1), Exp(Const(7))),
 			expectedOutput: Const(1),
 		},
