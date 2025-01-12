@@ -16,7 +16,7 @@ func (e constant) Eval() Func {
 }
 
 func (e variable) Eval() Func {
-	return func(args Arguments) float64 { return args[e.Name] }
+	return func(args Arguments) float64 { return args[e] }
 }
 
 func (e add) Eval() Func {
