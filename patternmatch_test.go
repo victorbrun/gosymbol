@@ -67,6 +67,12 @@ func TestPatternMatch(t *testing.T) {
 			inputExpression: Mul(Pow(Const(2), Var("x")), Exp(Pow(Const(2), Var("x")))),
 			expectedOutput:  true,
 		},
+		{
+			name:            "Advanced test with different variable name in pattern and expression returning false",
+			inputPattern:    Mul(patternVar("y"), Exp(patternVar("y"))),
+			inputExpression: Mul(Pow(Const(2), Var("x")), Exp(Pow(Const(1), Var("x")))),
+			expectedOutput:  false,
+		},
 	}
 
 	for ix, test := range tests {
