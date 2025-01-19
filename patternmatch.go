@@ -76,44 +76,48 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 		return patternMatch(expr, boundExpr, bindings)
 
 	case add:
-		if a, ok := expr.(add); ok {
-			// Checks that expr and pattern contains the
-			// same number of operands
-			nOpPattern := NumberOfOperands(p)
-			nOpExpr := NumberOfOperands(a)
-			if nOpPattern != nOpExpr {
+		if _, ok := expr.(add); !ok {
+			return false
+		}
+
+		// Checks that expr and pattern contains the
+		// same number of operands
+		nOpPattern := NumberOfOperands(pattern)
+		nOpExpr := NumberOfOperands(expr)
+		if nOpPattern != nOpExpr {
+			return false
+		}
+
+		// If any of the operands between expr nd pattern
+		// does not match, we return false directly
+		for ix := 1; ix <= nOpExpr; ix++ {
+			if !patternMatch(Operand(expr, ix), Operand(pattern, ix), bindings) {
 				return false
 			}
-
-			allOperandsMatch := true
-			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
-				patternOp := Operand(p, ix)
-				exprOp := Operand(a, ix)
-				allOperandsMatch = allOperandsMatch && patternMatch(exprOp, patternOp, bindings)
-			}
-			return allOperandsMatch
 		}
-		return false
+		return true
 
 	case mul:
-		if m, ok := expr.(mul); ok {
-			// Checks that expr and pattern contains the
-			// same number of operands
-			nOpPattern := NumberOfOperands(p)
-			nOpExpr := NumberOfOperands(m)
-			if nOpPattern != nOpExpr {
+		if _, ok := expr.(mul); !ok {
+			return false
+		}
+
+		// Checks that expr and pattern contains the
+		// same number of operands
+		nOpPattern := NumberOfOperands(pattern)
+		nOpExpr := NumberOfOperands(expr)
+		if nOpPattern != nOpExpr {
+			return false
+		}
+
+		// If any of the operands between expr nd pattern
+		// does not match, we return false directly
+		for ix := 1; ix <= nOpExpr; ix++ {
+			if !patternMatch(Operand(expr, ix), Operand(pattern, ix), bindings) {
 				return false
 			}
-
-			allOperandsMatch := true
-			for ix := 1; ix <= NumberOfOperands(expr); ix++ {
-				patternOp := Operand(p, ix)
-				exprOp := Operand(m, ix)
-				allOperandsMatch = allOperandsMatch && patternMatch(exprOp, patternOp, bindings)
-			}
-			return allOperandsMatch
 		}
-		return false
+		return true
 
 	case pow:
 		if pw, ok := expr.(pow); ok {
