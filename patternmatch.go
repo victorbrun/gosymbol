@@ -71,7 +71,7 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 			return false
 		}
 
-		// If bound expression exist, we recursively
+		// If bound expression exists, we recursively
 		// match expr against it
 		return patternMatch(expr, boundExpr, bindings)
 

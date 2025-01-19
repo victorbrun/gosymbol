@@ -50,7 +50,7 @@ func TestPatternMatch(t *testing.T) {
 			expectedOutput:  false,
 		},
 		{
-			name:            "Negative variable matched against zero constant",
+			name:            "Non positive variable matched against negative constant",
 			inputPattern:    constraPatternVar("x", negOrZeroConstant),
 			inputExpression: Const(-1),
 			expectedOutput:  true,
