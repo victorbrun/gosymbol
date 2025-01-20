@@ -1,6 +1,7 @@
 package gosymbol
 
 import (
+	"strconv"
 	"testing"
 )
 
@@ -60,6 +61,7 @@ func TestD(t *testing.T) {
 
 	for ix, test := range tests {
 		result := test.input.expr.D(test.input.diffVar)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
+
 	}
 }

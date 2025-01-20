@@ -2,100 +2,143 @@ package gosymbol
 
 import (
 	"fmt"
-	"reflect"
 )
 
 /*
-Recursively checks if expr matches pattern. varCache is an empty
+Recursively checks if expr matches pattern. bindings is an empty
 map internally used to keep track of what the variables in pattern
-corresponds to in expr. The function expects that no variable has the
-same name as a constrained variable.
+corresponds to in expr.
 */
-func patternMatch(pattern, expr Expr, varCache map[VarName]Expr) bool {
-	switch v := pattern.(type) {
+func patternMatch(expr, pattern Expr, bindings Binding) bool {
+	switch p := pattern.(type) {
 	case undefined:
-		_, ok := expr.(undefined)
-		return ok
+		if _, ok := expr.(undefined); ok {
+			return true
+		}
+		return false
+
 	case constant:
-		exprTyped, ok := expr.(constant)
-		return ok && v.Value == exprTyped.Value
+		if c, ok := expr.(constant); ok {
+			return c.Value == p.Value
+		}
+		return false
+
 	case variable:
-		e, cacheOk := varCache[v.Name]
-		eTyped, varOk := e.(variable)
-		if cacheOk && Equal(e, expr) {
-			return true
-		} else if cacheOk && varOk && Equal(v, eTyped) {
-			return false
-		} else if cacheOk && varOk {
-			return patternMatch(e, expr, varCache)
-		} else if cacheOk {
-			return patternMatch(e, expr, varCache)
-		} else {
-			varCache[v.Name] = expr
+		// If the varaible in the pattern is not
+		// a pattern variable, it means that we are
+		// matching expr against a binding. This is a
+		// base case and we check for equality
+		if !p.isPattern {
+			return Equal(p, expr)
+		}
+
+		// Extracts binding to pattern variable if it exists
+		// and gets if expression is a variable
+		boundExpr, bindingExists := bindings[p.Name]
+
+		// If no expression is bound to this variable
+		// we bound the current expression to it and return
+		// true
+		if !bindingExists {
+			bindings[p.Name] = expr
 			return true
 		}
+
+		// If bound expression exist, we recursively
+		// match expr against it
+		return patternMatch(expr, boundExpr, bindings)
+
 	case constrainedVariable:
-		// Does just as above but before assigning an expression
-		// to a variable the constraint function is checked as well
-		if e, ok := varCache[v.Name]; ok {
-			return patternMatch(e, expr, varCache)
-		} else if v.Constraint(expr) {
-			varCache[v.Name] = expr
+		// If the varaible in the pattern is not
+		// a pattern variable, it means that we are
+		// matching expr against a binding. This is a
+		// base case and we check for equality
+		if !p.isPattern {
+			return Equal(p, expr)
+		}
+
+		// Extracts binding to pattern variable if it exists
+		// and gets if expression is a variable
+		boundExpr, bindingExists := bindings[p.Name]
+
+		// If no expression is bound to this variable
+		// we bound the current expression to it and return
+		// true
+		if !bindingExists && p.Constraint(expr) {
+			bindings[p.Name] = expr
 			return true
-		} else {
+		} else if !p.Constraint(expr) {
 			return false
 		}
+
+		// If bound expression exists, we recursively
+		// match expr against it
+		return patternMatch(expr, boundExpr, bindings)
+
 	case add:
-		_, ok := expr.(add)
-		if !ok {
+		if _, ok := expr.(add); !ok {
 			return false
 		}
-		return patternMatchOperands(v, expr, varCache)
+
+		// Checks that expr and pattern contains the
+		// same number of operands
+		nOpPattern := NumberOfOperands(pattern)
+		nOpExpr := NumberOfOperands(expr)
+		if nOpPattern != nOpExpr {
+			return false
+		}
+
+		// If any of the operands between expr nd pattern
+		// does not match, we return false directly
+		for ix := 1; ix <= nOpExpr; ix++ {
+			if !patternMatch(Operand(expr, ix), Operand(pattern, ix), bindings) {
+				return false
+			}
+		}
+		return true
+
 	case mul:
-		_, ok := expr.(mul)
-		if !ok {
+		if _, ok := expr.(mul); !ok {
 			return false
 		}
-		return patternMatchOperands(v, expr, varCache)
+
+		// Checks that expr and pattern contains the
+		// same number of operands
+		nOpPattern := NumberOfOperands(pattern)
+		nOpExpr := NumberOfOperands(expr)
+		if nOpPattern != nOpExpr {
+			return false
+		}
+
+		// If any of the operands between expr nd pattern
+		// does not match, we return false directly
+		for ix := 1; ix <= nOpExpr; ix++ {
+			if !patternMatch(Operand(expr, ix), Operand(pattern, ix), bindings) {
+				return false
+			}
+		}
+		return true
+
 	case pow:
-		_, ok := expr.(pow)
-		if !ok {
-			return false
+		if pw, ok := expr.(pow); ok {
+			return patternMatch(pw.Base, p.Base, bindings) && patternMatch(pw.Exponent, p.Exponent, bindings)
 		}
-		return patternMatchOperands(v, expr, varCache)
+		return false
+
 	case exp:
-		_, ok := expr.(pow)
-		if !ok {
-			return false
+		if e, ok := expr.(exp); ok {
+			return patternMatch(e.Arg, p.Arg, bindings)
 		}
-		return patternMatchOperands(v, expr, varCache)
+		return false
+
 	case log:
-		_, ok := expr.(pow)
-		if !ok {
-			return false
+		if l, ok := expr.(log); ok {
+			return patternMatch(l.Arg, p.Arg, bindings)
 		}
-		return patternMatchOperands(v, expr, varCache)
+		return false
+
 	default:
-		errMsg := fmt.Errorf("ERROR: expression of type: %v have no matchPattern case implemented", reflect.TypeOf(v))
+		errMsg := fmt.Errorf("ERROR: expression %#v have no match pattern case implemented", p)
 		panic(errMsg)
 	}
-}
-
-// Checks if the operands of pattern and expr match.
-// This function does not check if the main operator
-// of pattern and expr match.
-func patternMatchOperands(pattern, expr Expr, varCache map[VarName]Expr) bool {
-	if NumberOfOperands(pattern) != NumberOfOperands(expr) {
-		return false
-	}
-
-	// Recursively checks if each operand matches
-	for ix := 1; ix <= NumberOfOperands(pattern); ix++ {
-		patternOp := Operand(pattern, ix)
-		exprOp := Operand(expr, ix)
-		if !patternMatch(patternOp, exprOp, varCache) {
-			return false
-		}
-	}
-	return true
 }

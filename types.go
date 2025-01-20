@@ -11,6 +11,10 @@ type Expr interface {
 	D(variable) Expr
 }
 
+// The Binding type is used in patternmatching.go
+// to bind pattern variables to expressions
+type Binding map[VarName]Expr
+
 // A constrainedVariable is just like the data type
 // variable but it has a constraint function. When trying
 // to replace the variable with another expression, this
@@ -22,6 +26,9 @@ type constrainedVariable struct {
 	Expr
 	Name       VarName
 	Constraint func(expr Expr) bool
+
+	// Indicating if variable is part of a pattern
+	isPattern bool
 }
 
 // Used to define transformations from an expression
@@ -58,6 +65,9 @@ type constant struct {
 type variable struct {
 	Expr
 	Name VarName
+
+	// Indicating if variable is part of a pattern
+	isPattern bool
 }
 
 type add struct {

@@ -3,6 +3,7 @@ package gosymbol
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"testing"
 )
 
@@ -90,7 +91,7 @@ func TestExprEval(t *testing.T) {
 
 	for ix, test := range tests {
 		result := test.input.expr.Eval()(test.input.args)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
 }
 
@@ -143,6 +144,6 @@ func TestExprString(t *testing.T) {
 
 	for ix, test := range tests {
 		result := fmt.Sprint(test.input)
-		correctnesCheck(t, result, test.expectedOutput, ix+1)
+		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
 }
