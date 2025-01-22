@@ -3,19 +3,15 @@ package gosymbol
 import (
 	"fmt"
 	"reflect"
-	"reflect"
 	"testing"
 )
 
 func TestSimplify(t *testing.T) {
 	tests := []struct {
 		name           string
-		name           string
 		input          Expr
 		expectedOutput Expr
 	}{
-		{
-			name:           "undefined^y = undefined",
 		{
 			name:           "undefined^y = undefined",
 			input:          Pow(Undefined(), Var("y")),
@@ -23,13 +19,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x^undefined = undefined",
-		{
-			name:           "x^undefined = undefined",
 			input:          Pow(Var("x"), Undefined()),
 			expectedOutput: Undefined(),
 		},
-		{
-			name:           "0^x = 0",
 		{
 			name:           "0^x = 0",
 			input:          Pow(Const(0), Const(10)),
@@ -37,13 +29,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "0^0 = undefined",
-		{
-			name:           "0^0 = undefined",
 			input:          Pow(Const(0), Const(0)),
 			expectedOutput: Undefined(),
 		},
-		{
-			name:           "1^x = 1",
 		{
 			name:           "1^x = 1",
 			input:          Pow(Const(1), Exp(Const(7))),
@@ -51,13 +39,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x^0 = 1",
-		{
-			name:           "x^0 = 1",
 			input:          Pow(Var("kuk"), Const(0)),
 			expectedOutput: Const(1),
 		},
-		{
-			name:           "(v_1 * ... * v_n)^m = v_1^m * .. * v_n^m (note that the result is also sorted)",
 		{
 			name:           "(v_1 * ... * v_n)^m = v_1^m * .. * v_n^m (note that the result is also sorted)",
 			input:          Pow(Mul(Var("x"), Const(3), Var("y")), Var("elle")),
@@ -65,13 +49,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "(i^j)^k = i^(j*k)",
-		{
-			name:           "(i^j)^k = i^(j*k)",
 			input:          Pow(Pow(Var("i"), Var("j")), Exp(Mul(Const(10), Var("k")))),
 			expectedOutput: Pow(Var("i"), Mul(Var("j"), Exp(Mul(Const(10), Var("k"))))),
 		},
-		{
-			name:           "undefined * ... = undefined",
 		{
 			name:           "undefined * ... = undefined",
 			input:          Mul(Undefined(), Var("x"), Const(10)),
@@ -79,13 +59,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "0 * ... = 0",
-		{
-			name:           "0 * ... = 0",
 			input:          Mul(Var("x"), Const(-9), Const(0)),
 			expectedOutput: Const(0),
 		},
-		{
-			name:           "undefined * 0 = undefined",
 		{
 			name:           "undefined * 0 = undefined",
 			input:          Mul(Undefined(), Const(0)),
@@ -93,13 +69,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "0 * undefined = undefined",
-		{
-			name:           "0 * undefined = undefined",
 			input:          Mul(Const(0), Undefined()),
 			expectedOutput: Undefined(),
 		},
-		{
-			name:           "Mult with only one operand simplifies to the operand",
 		{
 			name:           "Mult with only one operand simplifies to the operand",
 			input:          Mul(Exp(Var("x"))),
@@ -107,13 +79,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "Mult with no operands simplify to 1",
-		{
-			name:           "Mult with no operands simplify to 1",
 			input:          Mul(),
 			expectedOutput: Const(1),
 		},
-		{
-			name:           "1 * x = x",
 		{
 			name:           "1 * x = x",
 			input:          Mul(Const(1), Exp(Var("x"))),
@@ -121,13 +89,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x * x = x^2",
-		{
-			name:           "x * x = x^2",
 			input:          Mul(Const(10), Const(10)),
 			expectedOutput: Pow(Const(10), Const(2)),
 		},
-		{
-			name:           "x * x^n = x^(n+1)",
 		{
 			name:           "x * x^n = x^(n+1)",
 			input:          Mul(Const(10), Pow(Const(10), Const(2))),
@@ -135,13 +99,9 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x * (1/x) = 1",
-		{
-			name:           "x * (1/x) = 1",
 			input:          Mul(Var("x"), Div(Const(1), Var("x"))),
 			expectedOutput: Const(1),
 		},
-		{
-			name:           "x^m * x^n = x^(m+n)",
 		{
 			name:           "x^m * x^n = x^(m+n)",
 			input:          Mul(Pow(Var("x"), Var("n")), Pow(Var("x"), Var("m"))),

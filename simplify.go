@@ -71,7 +71,6 @@ func simplify(expr Expr) Expr {
 	// This will extend as more rules gets added! The base cases
 	// are fully simplified so we just return them.
 	appliedRuleIdx := -1
-	appliedRuleIdx := -1
 	switch expr.(type) {
 	case constant:
 		// Fully simplified
@@ -81,12 +80,9 @@ func simplify(expr Expr) Expr {
 		// Fully simplified
 	case add:
 		expr, appliedRuleIdx = rulesApplicator(expr, sumSimplificationRules)
-		expr, appliedRuleIdx = rulesApplicator(expr, sumSimplificationRules)
 	case mul:
 		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
-		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
-		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
 		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
 	}
 
@@ -96,30 +92,6 @@ func simplify(expr Expr) Expr {
 		return simplify(expr)
 	}
 	return expr
-}
-
-/*
-Tries to apply the transformation rules in ruleSlice to expr. If expr matches
-the pattern of the transformation rule, the transformed expression is returned
-together with the index of the rule that was applied.
-
-Note: the function returns after application of the first matching rule,
-or after all rules in ruleSlice have been tried. In the latter case,
--1 is returned instead of a rule index.
-*/
-func rulesApplicator(expr Expr, ruleSlice []transformationRule) (Expr, int) {
-	for ix, rule := range ruleSlice {
-		// Tries to apply rule
-		transformedExpr, applied := rule.apply(expr)
-
-		if applied {
-			return transformedExpr, ix
-		}
-
-	}
-
-	// If function did not return above no rule was applied
-	return expr, -1
 }
 
 /*
