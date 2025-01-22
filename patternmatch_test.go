@@ -15,57 +15,63 @@ func TestPatternMatch(t *testing.T) {
 	}{
 		{
 			name:            "Simple variable test 1",
-			inputPattern:    PatternVar("x"),
+			inputPattern:    patternVar("x"),
 			inputExpression: Var("x"),
 			expectedOutput:  true,
 		},
 		{
 			name:            "Simple variable test 2",
-			inputPattern:    PatternVar("x"),
+			inputPattern:    patternVar("x"),
 			inputExpression: Var("y"),
 			expectedOutput:  true,
 		},
 		{
 			name:            "First expression variable with same name as pattern variable",
-			inputPattern:    Add(PatternVar("x"), PatternVar("x")),
+			inputPattern:    Add(patternVar("x"), patternVar("x")),
 			inputExpression: Add(Var("x"), Var("y")),
 			expectedOutput:  false,
 		},
 		{
 			name:            "Second expression variable with same name as pattern variable",
-			inputPattern:    Add(PatternVar("x"), PatternVar("x")),
+			inputPattern:    Add(patternVar("x"), patternVar("x")),
 			inputExpression: Add(Var("y"), Var("x")),
 			expectedOutput:  false,
 		},
 		{
 			name:            "Positive variable matched against positive constant",
-			inputPattern:    ConstrPatternVar("x", positiveConstant),
+			inputPattern:    constraPatternVar("x", positiveConstant),
 			inputExpression: Const(1),
 			expectedOutput:  true,
 		},
 		{
 			name:            "Positive variable matched against zero constant",
-			inputPattern:    ConstrPatternVar("x", positiveConstant),
+			inputPattern:    constraPatternVar("x", positiveConstant),
 			inputExpression: Const(0),
 			expectedOutput:  false,
 		},
 		{
-			name:            "Negative variable matched against zero constant",
-			inputPattern:    ConstrPatternVar("x", negOrZeroConstant),
+			name:            "Non positive variable matched against negative constant",
+			inputPattern:    constraPatternVar("x", negOrZeroConstant),
 			inputExpression: Const(-1),
 			expectedOutput:  true,
 		},
 		{
 			name:            "Advanced test with same variable name in pattern and expression",
-			inputPattern:    Mul(PatternVar("x"), Exp(PatternVar("x"))),
+			inputPattern:    Mul(patternVar("x"), Exp(patternVar("x"))),
 			inputExpression: Mul(Pow(Const(2), Var("x")), Exp(Pow(Const(2), Var("x")))),
 			expectedOutput:  true,
 		},
 		{
 			name:            "Advanced test with different variable name in pattern and expression",
-			inputPattern:    Mul(PatternVar("y"), Exp(PatternVar("y"))),
+			inputPattern:    Mul(patternVar("y"), Exp(patternVar("y"))),
 			inputExpression: Mul(Pow(Const(2), Var("x")), Exp(Pow(Const(2), Var("x")))),
 			expectedOutput:  true,
+		},
+		{
+			name:            "Advanced test with different variable name in pattern and expression returning false",
+			inputPattern:    Mul(patternVar("y"), Exp(patternVar("y"))),
+			inputExpression: Mul(Pow(Const(2), Var("x")), Exp(Pow(Const(1), Var("x")))),
+			expectedOutput:  false,
 		},
 	}
 

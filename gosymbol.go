@@ -16,7 +16,7 @@ func Var(name VarName) variable {
 	return variable{Name: name, isPattern: false}
 }
 
-func PatternVar(name VarName) variable {
+func patternVar(name VarName) variable {
 	return variable{Name: name, isPattern: true}
 }
 
@@ -24,7 +24,7 @@ func ConstrVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
 	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: false}
 }
 
-func ConstrPatternVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
+func constraPatternVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
 	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: true}
 }
 

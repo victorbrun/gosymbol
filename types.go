@@ -2,6 +2,7 @@ package gosymbol
 
 type VarName string
 type Arguments map[variable]float64
+type Arguments map[variable]float64
 type Func func(Arguments) float64
 
 type Expr interface {
@@ -11,6 +12,10 @@ type Expr interface {
 	D(variable) Expr
 	Simplify() Expr
 }
+
+// The Binding type is used in patternmatching.go
+// to bind pattern variables to expressions
+type Binding map[VarName]Expr
 
 // The Binding type is used in patternmatching.go
 // to bind pattern variables to expressions
@@ -26,7 +31,11 @@ type Binding map[VarName]Expr
 type constrainedVariable struct {
 	Expr
 	Name       VarName
+	Name       VarName
 	Constraint func(expr Expr) bool
+
+	// Indicating if variable is part of a pattern
+	isPattern bool
 
 	// Indicating if variable is part of a pattern
 	isPattern bool
@@ -40,15 +49,21 @@ type constrainedVariable struct {
 //
 // This structure is, for example, used in the simplifation
 // of expressions.
+// This structure is, for example, used in the simplifation
+// of expressions.
 type transformationRule struct {
 	// One of pattern and patternFunction must be defined.
 	// pattern is prioritised, i.e. if pattern is matched
 	// then patternFunction will be ignored. To match on
+	// pattern is prioritised, i.e. if pattern is matched
+	// then patternFunction will be ignored. To match on
 	// patternFunciton set pattern = nil.
+	pattern         Expr
 	pattern         Expr
 	patternFunction func(Expr) bool
 
 	// The mapping from pattern to whatever you define
+	transform func(Expr) Expr
 	transform func(Expr) Expr
 }
 
@@ -69,6 +84,9 @@ type variable struct {
 
 	// Indicating if variable is part of a pattern
 	isPattern bool
+
+	// Indicating if variable is part of a pattern
+	isPattern bool
 }
 
 type add struct {
@@ -83,6 +101,7 @@ type mul struct {
 
 type pow struct {
 	Expr
+	Base     Expr
 	Base     Expr
 	Exponent Expr
 }

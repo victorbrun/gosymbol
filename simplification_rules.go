@@ -21,7 +21,7 @@ func negOrZeroConstant(expr Expr) bool {
 
 var sumSimplificationRules []transformationRule = []transformationRule{
 	{ // Addition with only one operand simplify to the operand
-		pattern: Add(PatternVar("x")),
+		pattern: Add(patternVar("x")),
 		transform: func(expr Expr) Expr {
 			return Operand(expr, 1)
 		},
@@ -35,7 +35,7 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 	{ // x - x = 0. Due to the ordering the negative term will always be first.
 		// Note that this will not work for constants since Const(-c) is a float
 		// while -x = -1*x.
-		pattern: Add(Neg(PatternVar("x")), PatternVar("x")),
+		pattern: Add(Neg(patternVar("x")), patternVar("x")),
 		transform: func(expr Expr) Expr {
 			return Const(0)
 		},
@@ -107,7 +107,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		transform: func(expr Expr) Expr { return Const(0) },
 	},
 	{ // Multiplication with only one operand simplify to the operand
-		pattern: Mul(PatternVar("x")),
+		pattern: Mul(patternVar("x")),
 		transform: func(expr Expr) Expr {
 			return Operand(expr, 1)
 		},
@@ -156,14 +156,14 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x*x = x^2
-		pattern: Mul(PatternVar("x"), PatternVar("x")),
+		pattern: Mul(patternVar("x"), patternVar("x")),
 		transform: func(expr Expr) Expr {
 			base := Operand(expr, 1)
 			return Pow(base, Const(2))
 		},
 	},
 	{ // x*x^n = x^(n+1) this applies to positive n due to the ordering of an expression
-		pattern: Mul(PatternVar("x"), Pow(PatternVar("x"), PatternVar("y"))),
+		pattern: Mul(patternVar("x"), Pow(patternVar("x"), patternVar("y"))),
 		transform: func(expr Expr) Expr {
 			newBase := Operand(expr, 1)
 			oldExponent := Operand(Operand(expr, 2), 2)
@@ -172,7 +172,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x^n * x = x^(n+1) this applies to negative n due to the ordering of an expression
-		pattern: Mul(Pow(PatternVar("x"), PatternVar("y")), PatternVar("x")),
+		pattern: Mul(Pow(patternVar("x"), patternVar("y")), patternVar("x")),
 		transform: func(expr Expr) Expr {
 			newBase := Operand(expr, 2)
 			oldExponent := Operand(Operand(expr, 1), 2)
@@ -181,7 +181,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x^(n) * x^(m) = x^(n+m)
-		pattern: Mul(Pow(PatternVar("x"), PatternVar("n")), Pow(PatternVar("x"), PatternVar("m"))),
+		pattern: Mul(Pow(patternVar("x"), patternVar("n")), Pow(patternVar("x"), patternVar("m"))),
 		transform: func(expr Expr) Expr {
 			base := Operand(Operand(expr, 1), 1)
 			exponent1 := Operand(Operand(expr, 1), 2)
@@ -193,19 +193,19 @@ var productSimplificationRules []transformationRule = []transformationRule{
 
 var powerSimplificationRules []transformationRule = []transformationRule{
 	{ // 0^x = 0 for x in R_+
-		pattern: Pow(Const(0), ConstrPatternVar("x", positiveConstant)),
+		pattern: Pow(Const(0), constraPatternVar("x", positiveConstant)),
 		transform: func(expr Expr) Expr {
 			return Const(0)
 		},
 	},
 	{ // 0^x = Undefined for x <= 0
-		pattern: Pow(Const(0), ConstrPatternVar("x", negOrZeroConstant)),
+		pattern: Pow(Const(0), constraPatternVar("x", negOrZeroConstant)),
 		transform: func(expr Expr) Expr {
 			return Undefined()
 		},
 	},
 	{ // 1^x = 1
-		pattern: Pow(Const(1), PatternVar("x")),
+		pattern: Pow(Const(1), patternVar("x")),
 		transform: func(expr Expr) Expr {
 			return Const(1)
 		},
@@ -217,7 +217,7 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x^0 = 1
-		pattern: Pow(PatternVar("x"), Const(0)),
+		pattern: Pow(patternVar("x"), Const(0)),
 		transform: func(expr Expr) Expr {
 			return Const(1)
 		},
@@ -242,7 +242,7 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // (x^y)^z = x^(y*z)
-		pattern: Pow(Pow(PatternVar("x"), PatternVar("y")), PatternVar("z")),
+		pattern: Pow(Pow(patternVar("x"), patternVar("y")), patternVar("z")),
 		transform: func(expr Expr) Expr {
 			x := Operand(Operand(expr, 1), 1)
 			y := Operand(Operand(expr, 1), 2)
