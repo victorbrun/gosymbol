@@ -211,7 +211,7 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 		},
 	},
 	{ // x^1 = x
-		pattern: Pow(PatternVar("x"), Const(1)),
+		pattern: Pow(patternVar("x"), Const(1)),
 		transform: func(expr Expr) Expr {
 			return Operand(expr, 1)
 		},
