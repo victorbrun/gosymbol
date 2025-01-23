@@ -1,5 +1,7 @@
 package gosymbol
 
+const ()
+
 /* Factories */
 
 func Undefined() undefined {
@@ -42,8 +44,19 @@ func Mul(ops ...Expr) mul {
 	return mul{Operands: ops}
 }
 
-func Div(lhs, rhs Expr) mul {
-	return Mul(lhs, Pow(rhs, Const(-1)))
+/*
+Constructs the expression lhs/rhs.
+
+Note: is lhs is one, the function returns a pow type,
+otherwise it returns a mul type. This is to avoid unneccessary
+calls to Simplify.
+*/
+func Div(lhs, rhs Expr) Expr {
+	if Equal(lhs, Const(1)) {
+		return Pow(rhs, Const(-1))
+	} else {
+		return Mul(lhs, Pow(rhs, Const(-1)))
+	}
 }
 
 func Exp(arg Expr) exp {
