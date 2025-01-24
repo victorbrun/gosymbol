@@ -28,6 +28,11 @@ func TestSimplify(t *testing.T) {
 			expectedOutput: Const(0),
 		},
 		{
+			name:           "0^(-1) = undefined",
+			input:          Pow(Const(0), Const(-1)),
+			expectedOutput: Undefined(),
+		},
+		{
 			name:           "0^0 = undefined",
 			input:          Pow(Const(0), Const(0)),
 			expectedOutput: Undefined(),
@@ -38,9 +43,19 @@ func TestSimplify(t *testing.T) {
 			expectedOutput: Const(1),
 		},
 		{
+			name:           "1^x = 1",
+			input:          Pow(Const(1), Var("x")),
+			expectedOutput: Const(1),
+		},
+		{
 			name:           "x^0 = 1",
 			input:          Pow(Var("kuk"), Const(0)),
 			expectedOutput: Const(1),
+		},
+		{
+			name:           "x^1 = x",
+			input:          Pow(Var("x"), Const(1)),
+			expectedOutput: Var("x"),
 		},
 		{
 			name:           "(v_1 * ... * v_n)^m = v_1^m * .. * v_n^m (note that the result is also sorted)",
@@ -117,11 +132,84 @@ func TestSimplify(t *testing.T) {
 			input:          Mul(Const(2), Pow(Var("x"), Const(1)), Const(1)),
 			expectedOutput: Mul(Const(2), Var("x")),
 		},
+		{
+			name:           "x + 0 = x",
+			input:          Add(Var("x"), Const(0)),
+			expectedOutput: Var("x"),
+		},
+
+		// Below tests are taken from pages 64 - 68 in
+		// COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003.
+		{
+			name:           "( a + b ) * c = a * c + b * c",
+			input:          Mul(Add(Var("a"), Var("b")), Var("c")),
+			expectedOutput: Add(Mul(Var("a"), Var("b")), Mul(Var("b"), Var("c"))),
+		},
+		{
+			name:           "2x + y + (3/2)x = (7/2)x + y",
+			input:          Add(Mul(Const(2), Var("x")), Var("y"), Mul(Div(Const(3), Const(2)), Var("x"))),
+			expectedOutput: Add(Mul(Div(Const(7), Const(2))), Var("y")),
+		},
+		{
+			name:           "x + 1 + (-1)(x + 1) = 0",
+			input:          Add(Var("x"), Const(1), Mul(Const(-1), Add(Var("x"), Const(1)))),
+			expectedOutput: Const(0),
+		},
+		{
+			name:           "( ( ( u + v ) * w ) * x + y ) + z = ( u + v ) * w * x + y + z ",
+			input:          Add(Add(Mul(Mul(Add(Var("u"), Var("v")), Var("w")), Var("x")), Var("y")), Var("z")),
+			expectedOutput: Add(Mul(Add(Var("u"), Var("v")), Var("w"), Var("x")), Var("y"), Var("z")),
+		},
+		{
+			name:           "2(xyz) + 3x(yz) + 4(xy)z = 9xyz",
+			input:          Add(Mul(Const(2), Mul(Var("x"), Var("y"), Var("z"))), Mul(Const(3), Var("x"), Mul(Var("y"), Var("z"))), Mul(Const(4), Mul(Var("x"), Var("y")), Var("z"))),
+			expectedOutput: Mul(Const(9), Var("x"), Var("y"), Var("z")),
+		},
+
+		// Below tests are taken from pages 74 - 76 in
+		// COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003.
+		{
+			name:           "( x * y ) * ( x * y )^2 = x^3 * y^3",
+			input:          Mul(Mul(Var("x"), Var("y")), Pow(Mul(Var("x"), Var("y")), Const(2))),
+			expectedOutput: Mul(Pow(Var("x"), Const(3)), Pow(Var("y"), Const(3))),
+		},
+		{
+			name:           "( x * y ) * ( x * y )^(1/2) = x * y * ( x  * y )^(1/2)",
+			input:          Mul(Mul(Var("x"), Var("y")), Pow(Mul(Var("x"), Var("y")), Div(Const(1), Const(2)))),
+			expectedOutput: Mul(Pow(Var("x"), Const(3)), Pow(Var("y"), Const(3))),
+		},
+		{
+			name:           "( a * x^3 ) / x = a * x^2",
+			input:          Div(Mul(Var("a"), Pow(Var("x"), Const(3))), Var("x")),
+			expectedOutput: Mul(Var("a"), Pow(Var("x"), Const(2))),
+		},
+
+		// Below tests are taken from pages 77 in
+		// COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003.
+		{
+			name:           "u / 0 = undefined",
+			input:          Div(Var("u"), Const(0)),
+			expectedOutput: Undefined(),
+		},
+		{
+			name:           "0 / u = 0 (u ~= 0)",
+			input:          Div(Const(0), Const(1)),
+			expectedOutput: Const(0),
+		},
+		{
+			name:           "0 / u = 0 (u ~= 0)",
+			input:          Div(Const(0), Const(-1)),
+			expectedOutput: Const(0),
+		},
+		{
+			name:           "u / 1",
+			input:          Div(Var("u"), Const(1)),
+			expectedOutput: Var("u"),
+		},
 	}
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
-			//fmt.Println("Simplifying: ", test.input)
 			result := test.input.Simplify()
 
 			if !reflect.DeepEqual(result, test.expectedOutput) {

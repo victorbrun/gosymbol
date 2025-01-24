@@ -52,3 +52,63 @@ func TestAddArgument(t *testing.T) {
 		})
 	}
 }
+
+func TestIsBAE(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          Expr
+		expectedOutput bool
+	}{
+		{
+			name:           "2/4 is BAE",
+			input:          Div(Const(2), Const(4)),
+			expectedOutput: true,
+		},
+		{
+			name:           "a * (x + x)",
+			input:          Mul(Var("a"), Add(Var("x"), Var("x"))),
+			expectedOutput: true,
+		},
+		{
+			name:           "a + (b^3 / b)",
+			input:          Add(Var("a"), Div(Pow(Var("b"), Const(3)), Var("b"))),
+			expectedOutput: true,
+		},
+		{
+			name:           "a + ( b + c ) + d",
+			input:          Add(Var("a"), Add(Var("b"), Var("c")), Var("d")),
+			expectedOutput: true,
+		},
+		{
+			name:           "2 * 3 * x * x^2",
+			input:          Mul(Const(2), Const(3), Var("x"), Pow(Var("x"), Const(2))),
+			expectedOutput: true,
+		},
+		{
+			name:           "0^3",
+			input:          Pow(Const(0), Const(3)),
+			expectedOutput: true,
+		},
+		{
+			name:           "2 / (a - a)",
+			input:          Div(Const(2), Add(Var("a"), Neg(Var("a")))),
+			expectedOutput: true,
+		},
+	}
+
+	for ix, test := range tests {
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			output := isBAE(test.input)
+			if output != test.expectedOutput {
+				errMsg := fmt.Sprintf(
+					"Failed test: %v\nInput: %v\nExpected: %v\nGot: %v",
+					test.name,
+					test.input,
+					test.expectedOutput,
+					output,
+				)
+				t.Error(errMsg)
+			}
+		})
+	}
+}
