@@ -137,18 +137,23 @@ func TestSimplify(t *testing.T) {
 			input:          Add(Var("x"), Const(0)),
 			expectedOutput: Var("x"),
 		},
+		{
+			name:           "0 + x = x",
+			input:          Add(Const(0), Var("x")),
+			expectedOutput: Var("x"),
+		},
 
 		// Below tests are taken from pages 64 - 68 in
 		// COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003.
 		{
 			name:           "( a + b ) * c = a * c + b * c",
 			input:          Mul(Add(Var("a"), Var("b")), Var("c")),
-			expectedOutput: Add(Mul(Var("a"), Var("b")), Mul(Var("b"), Var("c"))),
+			expectedOutput: Add(Mul(Var("a"), Var("c")), Mul(Var("b"), Var("c"))),
 		},
 		{
 			name:           "2x + y + (3/2)x = (7/2)x + y",
 			input:          Add(Mul(Const(2), Var("x")), Var("y"), Mul(Div(Const(3), Const(2)), Var("x"))),
-			expectedOutput: Add(Mul(Div(Const(7), Const(2))), Var("y")),
+			expectedOutput: Add(Mul(Div(Const(7), Const(2)), Var("x")), Var("y")),
 		},
 		{
 			name:           "x + 1 + (-1)(x + 1) = 0",

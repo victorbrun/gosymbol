@@ -32,6 +32,13 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Const(0)
 		},
 	},
+	{
+		// 0 + x = x
+		pattern: Add(Const(0), patternVar("x")),
+		transform: func(expr Expr) Expr {
+			return Operand(expr, 2)
+		},
+	},
 	{ // x - x = 0. Due to the ordering the negative term will always be first.
 		// Note that this will not work for constants since Const(-c) is a float
 		// while -x = -1*x.
@@ -153,6 +160,26 @@ var productSimplificationRules []transformationRule = []transformationRule{
 				}
 			}
 			return Mul(newFactors...)
+		},
+	},
+	{ // Left distributive property: u * ( v + w ) = uv + uw
+		pattern: Mul(patternVar("u"), Add(patternVar("v"), patternVar("w"))),
+		transform: func(expr Expr) Expr {
+			u := Operand(expr, 1)
+			v := Operand(Operand(expr, 2), 1)
+			w := Operand(Operand(expr, 2), 2)
+
+			return Add(Mul(u, v), Mul(u, w))
+		},
+	},
+	{ // Right distributive property: u * ( v + w ) = uv + uw
+		pattern: Mul(Add(patternVar("v"), patternVar("w")), patternVar("u")),
+		transform: func(expr Expr) Expr {
+			v := Operand(Operand(expr, 1), 1)
+			w := Operand(Operand(expr, 1), 2)
+			u := Operand(expr, 2)
+
+			return Add(Mul(u, v), Mul(u, w))
 		},
 	},
 	{ // x*x = x^2
