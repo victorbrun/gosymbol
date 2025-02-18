@@ -1,11 +1,51 @@
 package gosymbol
 
-func Simplify(expr Expr) Expr {
+func (expr undefined) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr constant) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr variable) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr constrainedVariable) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr add) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr mul) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr pow) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr exp) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr log) Simplify() Expr {
+	return simplify(expr)
+}
+
+func (expr sqrt) Simplify() Expr {
+	return simplify(expr)
+}
+
+func simplify(expr Expr) Expr {
 	// Having this here makes it possible
 	// to remove all rules in simplification_rules.go
 	// that basically just checks if the expression contains
 	// undefined.
-	if Contains(expr, Undefined()) {
+	if RecContains(expr, Undefined()) {
 		return Undefined()
 	}
 
@@ -24,7 +64,7 @@ func Simplify(expr Expr) Expr {
 	// Recusively simplify all operands.
 	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 		op := Operand(expr, ix)
-		expr = replaceOperand(expr, ix, Simplify(op))
+		expr = replaceOperand(expr, ix, op.Simplify())
 	}
 
 	// Applies simplification rules depending on the operator type
@@ -53,7 +93,7 @@ func Simplify(expr Expr) Expr {
 	// If the expression has been altered it might be possible to apply some other rule
 	// we thus recursively simplify until the expression is not altered any more.
 	if appliedRuleIdx > -1 {
-		return Simplify(expr)
+		return simplify(expr)
 	}
 	return expr
 }

@@ -19,7 +19,7 @@ func Substitute(expr, u, t Expr) Expr {
 		return u
 	} else if Equal(expr, u) {
 		return t
-	} else if Contains(expr, u) {
+	} else if RecContains(expr, u) {
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			processedOp := Substitute(Operand(expr, ix), u, t)
 			expr = replaceOperand(expr, ix, processedOp)
@@ -213,7 +213,7 @@ Recursively checks exact equality between expr and u,
 i.e. it does not simplify any expression nor does it
 take any properties, e.g. commutativity, into account.
 */
-func Contains(expr, u Expr) bool {
+func RecContains(expr, u Expr) bool {
 	switch v := expr.(type) {
 	case undefined:
 		_, ok := u.(undefined)
@@ -233,7 +233,7 @@ func Contains(expr, u Expr) bool {
 		}
 		for ix := 1; ix <= NumberOfOperands(v); ix++ {
 			vOp := Operand(v, ix)
-			if Contains(vOp, u) {
+			if RecContains(vOp, u) {
 				return true
 			}
 		}

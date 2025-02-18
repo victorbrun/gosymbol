@@ -9,6 +9,7 @@ type Expr interface {
 	String() string
 	Eval() Func
 	D(variable) Expr
+	Simplify() Expr
 }
 
 // The Binding type is used in patternmatching.go
@@ -39,11 +40,12 @@ type constrainedVariable struct {
 //
 // This structure is, for example, used in the simplifation
 // of expressions.
+// This structure is, for example, used in the simplifation
+// of expressions.
 type transformationRule struct {
 	// One of pattern and patternFunction must be defined.
 	// pattern is prioritised, i.e. if pattern is matched
 	// then patternFunction will be ignored. To match on
-	// patternFunciton set pattern = nil.
 	pattern         Expr
 	patternFunction func(Expr) bool
 
