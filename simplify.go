@@ -32,7 +32,7 @@ func Simplify(expr Expr) Expr {
 	// are fully simplified so we just return them.
 	appliedRuleIdx := -1
 	switch expr.(type) {
-	case constant:
+	case rational:
 		// Fully simplified
 	case variable:
 		// Fully simplified
@@ -44,6 +44,10 @@ func Simplify(expr Expr) Expr {
 		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
 		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
+	case exp:
+		expr, appliedRuleIdx = rulesApplicator(expr, expSimplificationRules)
+	case log:
+		expr, appliedRuleIdx = rulesApplicator(expr, logSimplificationRules)
 	}
 
 	// If the expression has been altered it might be possible to apply some other rule

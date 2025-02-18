@@ -2,67 +2,70 @@ package gosymbol
 
 import (
 	"fmt"
-	"math"
 )
 
 /* Evaluation */
 
 func (e undefined) Eval() Func {
-	return func(args Arguments) float64 { return math.NaN() }
+	return func(args Arguments) Expr { return undefined{} }
 }
 
-func (e constant) Eval() Func {
-	return func(args Arguments) float64 { return e.Value }
+func (e integer) Eval() Func {
+	return func(args Arguments) Expr { return e }
+}
+
+func (e fraction) Eval() Func {
+	return func(args Arguments) Expr { return e.simplifyRational() }
 }
 
 func (e variable) Eval() Func {
-	return func(args Arguments) float64 { return args[e] }
+	return func(args Arguments) Expr {
+		value, ok := args[e]
+		if ok {
+			return Simplify(value)
+		}
+		return e
+	}
 }
 
 func (e add) Eval() Func {
-	return func(args Arguments) float64 {
+	return func(args Arguments) Expr {
 		sum := e.Operands[0].Eval()(args) // Initiate with first operand since 0 may not always be identity
 		for ix := 1; ix < len(e.Operands); ix++ {
-			sum += e.Operands[ix].Eval()(args)
+			sum = Add(sum, e.Operands[ix].Eval()(args))
 		}
-		return sum
+		return Simplify(sum)
 	}
 }
 
 func (e mul) Eval() Func {
-	return func(args Arguments) float64 {
+	return func(args Arguments) Expr {
 		prod := e.Operands[0].Eval()(args) // Initiate with first operand since 1 may not always be identity
 		for ix := 1; ix < len(e.Operands); ix++ {
-			prod *= e.Operands[ix].Eval()(args)
+			prod = Mul(prod, e.Operands[ix].Eval()(args))
 		}
-		return prod
+		return Simplify(prod)
 	}
 }
 
 func (e exp) Eval() Func {
-	return func(args Arguments) float64 { return math.Exp(e.Arg.Eval()(args)) }
+	return func(args Arguments) Expr { return Simplify(Exp(e.Arg.Eval()(args))) }
 }
 
 func (e log) Eval() Func {
-	return func(args Arguments) float64 { return math.Log(e.Arg.Eval()(args)) }
+	return func(args Arguments) Expr { return Simplify(Log(e.Arg.Eval()(args))) }
 }
 
 func (e pow) Eval() Func {
-	return func(args Arguments) float64 { return math.Pow(e.Base.Eval()(args), e.Exponent.Eval()(args)) }
+	return func(args Arguments) Expr {
+		return Simplify(Pow(e.Base.Eval()(args), e.Exponent.Eval()(args)))
+	}
 }
 
 /* Evaluation to string */
 
 func (e undefined) String() string {
 	return "Undefined"
-}
-
-func (e constant) String() string {
-	if e.Value < 0 {
-		return fmt.Sprintf("( %v )", e.Value)
-	} else {
-		return fmt.Sprint(e.Value)
-	}
 }
 
 func (e variable) String() string {

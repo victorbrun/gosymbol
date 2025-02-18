@@ -8,18 +8,19 @@ import (
 
 func main() {
 	x := gosymbol.Var("x")
-	f := gosymbol.Exp(x)
-
+	y := gosymbol.Var("y")
+	f := gosymbol.Add(x, gosymbol.PI, y)
+	fmt.Println("f(x, y) = ", f)
 	val := gosymbol.Arguments{}
-	err := val.AddArgument(gosymbol.Var("x"), 8)
+	err := val.AddArgument(gosymbol.Var("x"), y)
 	if err != nil {
 		fmt.Println(val, err)
 	}
-	err = val.AddArgument(gosymbol.Var("x"), 9)
+	err = val.AddArgument(gosymbol.Var("y"), y)
 	if err != nil {
 		fmt.Println(val, err)
 	}
 	fn := f.Eval()
 	fn_eval := fn(val)
-	fmt.Println("f(x) = ", fn_eval)
+	fmt.Printf("f(%s, %s) = %s\n", val[x], val[y], fn_eval)
 }

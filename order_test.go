@@ -15,8 +15,8 @@ func TestTopOperandSort(t *testing.T) {
 			expectedOutput: Mul(Var("a"), Var("b"), Var("c"), Var("d")),
 		},
 		{ // Confirms that we only sort the top most operands
-			input:          Add(Pow(Add(Var("b"), Var("a")), Const(2)), Const(1)),
-			expectedOutput: Add(Const(1), Pow(Add(Var("b"), Var("a")), Const(2))),
+			input:          Add(Pow(Add(Var("b"), Var("a")), (Int(2))), (Int(1))),
+			expectedOutput: Add((Int(1)), Pow(Add(Var("b"), Var("a")), (Int(2)))),
 		},
 	}
 
@@ -122,71 +122,71 @@ func TestComapre(t *testing.T) {
 		},
 		{ // Test 13: (1 + x)^2 < (1 + x)^3
 			input: inputArgs{
-				expr1: Pow(Add(Const(1), Var("x")), Const(2)),
-				expr2: Pow(Add(Const(1), Var("x")), Const(3)),
+				expr1: Pow(Add((Int(1)), Var("x")), (Int(2))),
+				expr2: Pow(Add((Int(1)), Var("x")), (Int(3))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 14: (1 + x)^2 |> (1 + x)^3
 			input: inputArgs{
-				expr2: Pow(Add(Const(1), Var("x")), Const(2)),
-				expr1: Pow(Add(Const(1), Var("x")), Const(3)),
+				expr2: Pow(Add((Int(1)), Var("x")), (Int(2))),
+				expr1: Pow(Add((Int(1)), Var("x")), (Int(3))),
 			},
 			expectedOutput: false,
 		},
 		{ // Test 15: (1 + x)^2 < (1 + y)^2
 			input: inputArgs{
-				expr1: Pow(Add(Const(1), Var("x")), Const(2)),
-				expr2: Pow(Add(Const(1), Var("y")), Const(2)),
+				expr1: Pow(Add((Int(1)), Var("x")), (Int(2))),
+				expr2: Pow(Add((Int(1)), Var("y")), (Int(2))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 16: (1 + x)^2 |> (1 + y)^2
 			input: inputArgs{
-				expr2: Pow(Add(Const(1), Var("x")), Const(2)),
-				expr1: Pow(Add(Const(1), Var("y")), Const(2)),
+				expr2: Pow(Add((Int(1)), Var("x")), (Int(2))),
+				expr1: Pow(Add((Int(1)), Var("y")), (Int(2))),
 			},
 			expectedOutput: false,
 		},
 		{ // Test 17: (1 + x)^3 < (1 + y)^2
 			input: inputArgs{
-				expr1: Pow(Add(Const(1), Var("x")), Const(3)),
-				expr2: Pow(Add(Const(1), Var("y")), Const(2)),
+				expr1: Pow(Add((Int(1)), Var("x")), (Int(3))),
+				expr2: Pow(Add((Int(1)), Var("y")), (Int(2))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 18: (1 + x)^3 |> (1 + y)^2
 			input: inputArgs{
-				expr2: Pow(Add(Const(1), Var("x")), Const(3)),
-				expr1: Pow(Add(Const(1), Var("y")), Const(2)),
+				expr2: Pow(Add((Int(1)), Var("x")), (Int(3))),
+				expr1: Pow(Add((Int(1)), Var("y")), (Int(2))),
 			},
 			expectedOutput: false,
 		},
 		{ // Test 19: a * x^2 < x^3
 			input: inputArgs{
-				expr1: Mul(Var("a"), Pow(Var("x"), Const(2))),
-				expr2: Pow(Var("x"), Const(3)),
+				expr1: Mul(Var("a"), Pow(Var("x"), (Int(2)))),
+				expr2: Pow(Var("x"), (Int(3))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 20: a * x^2 |> x^3
 			input: inputArgs{
-				expr2: Mul(Var("a"), Pow(Var("x"), Const(2))),
-				expr1: Pow(Var("x"), Const(3)),
+				expr2: Mul(Var("a"), Pow(Var("x"), (Int(2)))),
+				expr1: Pow(Var("x"), (Int(3))),
 			},
 			expectedOutput: false,
 		},
 		{ // Test 21: x < x^2
 			input: inputArgs{
 				expr1: Var("x"),
-				expr2: Pow(Var("x"), Const(2)),
+				expr2: Pow(Var("x"), (Int(2))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 22: x |> x^2
 			input: inputArgs{
 				expr2: Var("x"),
-				expr1: Pow(Var("x"), Const(2)),
+				expr1: Pow(Var("x"), (Int(2))),
 			},
 			expectedOutput: false,
 		},
@@ -207,14 +207,14 @@ func TestComapre(t *testing.T) {
 		{ // Test 25: Exp(x) < Exp(x^2)
 			input: inputArgs{
 				expr1: Exp(Var("x")),
-				expr2: Exp(Pow(Var("x"), Const(2))),
+				expr2: Exp(Pow(Var("x"), (Int(2)))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 26: Exp(x) |> Exp(x^2)
 			input: inputArgs{
 				expr2: Exp(Var("x")),
-				expr1: Exp(Pow(Var("x"), Const(2))),
+				expr1: Exp(Pow(Var("x"), (Int(2)))),
 			},
 			expectedOutput: false,
 		},
@@ -235,14 +235,14 @@ func TestComapre(t *testing.T) {
 		{ // Test 29: Log(x) < Log(x^2)
 			input: inputArgs{
 				expr1: Log(Var("x")),
-				expr2: Log(Pow(Var("x"), Const(2))),
+				expr2: Log(Pow(Var("x"), (Int(2)))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 30: Log(x) |> Log(x^2)
 			input: inputArgs{
 				expr2: Log(Var("x")),
-				expr1: Log(Pow(Var("x"), Const(2))),
+				expr1: Log(Pow(Var("x"), (Int(2)))),
 			},
 			expectedOutput: false,
 		},
@@ -263,14 +263,14 @@ func TestComapre(t *testing.T) {
 		{ // Test 33: Sqrt(x) < Sqrt(x^2)
 			input: inputArgs{
 				expr1: Sqrt(Var("x")),
-				expr2: Sqrt(Pow(Var("x"), Const(2))),
+				expr2: Sqrt(Pow(Var("x"), (Int(2)))),
 			},
 			expectedOutput: true,
 		},
 		{ // Test 34: Sqrt(x) |> Sqrt(x^2)
 			input: inputArgs{
 				expr2: Sqrt(Var("x")),
-				expr1: Sqrt(Pow(Var("x"), Const(2))),
+				expr1: Sqrt(Pow(Var("x"), (Int(2)))),
 			},
 			expectedOutput: false,
 		},

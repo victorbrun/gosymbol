@@ -1,14 +1,18 @@
 package gosymbol
 
-func (e constant) D(v variable) Expr {
-	return Const(0.0)
+func (e integer) D(v variable) Expr {
+	return Int(0)
+}
+
+func (e fraction) D(v variable) Expr {
+	return Int(0)
 }
 
 func (e variable) D(v variable) Expr {
 	if v == e {
-		return Const(1.0)
+		return Int(1)
 	} else {
-		return Const(0.0)
+		return Int(0)
 	}
 }
 
@@ -37,15 +41,18 @@ func (e exp) D(v variable) Expr {
 }
 
 func (e log) D(v variable) Expr {
-	return Mul(Pow(e.Arg, Const(-1)), e.Arg.D(v))
+	return Mul(Pow(e.Arg, Int(-1)), e.Arg.D(v))
 }
 
 // IF EXPONENT IS CONSTANT: Power rule: D(x^a) = ax^(a-1)
 // IF EXPONENT IS NOT CONSTANT: Exponential deriv: D(f^g) = D(exp(g*log(f))) = exp(g*log(f))*D(g*log(f))
 func (e pow) D(v variable) Expr {
-	if exponentTyped, ok := e.Exponent.(constant); ok {
-		return Mul(e.Exponent, Pow(e.Base, Const(exponentTyped.Value-1)), e.Base.D(v))
-	} else {
+	switch exponentTyped := e.Exponent.(type) {
+	case integer:
+		return Mul(e.Exponent, Pow(e.Base, Add(exponentTyped, Int(-1))), e.Base.D(v))
+	case fraction:
+		return Mul(e.Exponent, Pow(e.Base, Add(exponentTyped, Int(-1))), e.Base.D(v))
+	default:
 		exponentLogBaseProd := Mul(e.Exponent, Log(e.Base))
 		return Mul(Exp(exponentLogBaseProd), exponentLogBaseProd.D(v))
 	}
@@ -53,5 +60,5 @@ func (e pow) D(v variable) Expr {
 
 // D(sqrt(f)) = (1/2)*(1/sqrt(f))*D(f)
 func (e sqrt) D(v variable) Expr {
-	return Mul(Div(Const(1), Const(2)), Div(Const(1), e), e.Arg.D(v))
+	return Mul(Div(Int(1), Int(2)), Div(Int(1), e), e.Arg.D(v))
 }

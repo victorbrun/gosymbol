@@ -17,24 +17,24 @@ func TestD(t *testing.T) {
 	}{
 		{ // Test 1
 			input: inputArgs{
-				expr:    Const(10),
+				expr:    (Int(10)),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Const(0),
+			expectedOutput: (Int(0)),
 		},
 		{ // Test 2
 			input: inputArgs{
 				expr:    Var("X"),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Const(1),
+			expectedOutput: (Int(1)),
 		},
 		{ // Test 3
 			input: inputArgs{
 				expr:    Var("X"),
 				diffVar: Var("Y"),
 			},
-			expectedOutput: Const(0),
+			expectedOutput: (Int(0)),
 		},
 		/*{ // Test 4
 			input: inputArgs{
@@ -48,14 +48,14 @@ func TestD(t *testing.T) {
 				expr: Log(Var("X")),
 				diffVar: "X",
 			},
-			expectedOutput: Div(Const(1), Var("X")),
+			expectedOutput: Div((1), Var("X")),
 		},
 		{ // Test 6
 			input: inputArgs{
-				expr: Pow(Var("X"), Const(2)),
+				expr: Pow(Var("X"), (2)),
 				diffVar: "X",
 			},
-			expectedOutput: Mul(Const(2), Pow(Var("X"), Const(1))),
+			expectedOutput: Mul((2), Pow(Var("X"), (1))),
 		},*/
 	}
 

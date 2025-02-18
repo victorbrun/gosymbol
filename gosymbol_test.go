@@ -11,7 +11,7 @@ func TestAddArgument(t *testing.T) {
 	type inputArgs struct {
 		args  Arguments
 		v     variable
-		value float64
+		value Expr
 	}
 
 	tests := []struct {
@@ -21,21 +21,21 @@ func TestAddArgument(t *testing.T) {
 	}{
 		{ // Test 1: testing with duplicate name
 			input: inputArgs{
-				args:  Arguments{Var("X"): 1},
+				args:  Arguments{Var("X"): Int(1)},
 				v:     Var("X"),
-				value: 2,
+				value: Int(2),
 			},
 			expectedError: &DuplicateArgumentError{},
-			expectedArgs:  Arguments{Var("X"): 1},
+			expectedArgs:  Arguments{Var("X"): Int(1)},
 		},
 		{ // Test 2: testing with no duplicate names
 			input: inputArgs{
-				args:  Arguments{Var("X"): 1},
+				args:  Arguments{Var("X"): Int(1)},
 				v:     Var("Y"),
-				value: 2,
+				value: Int(2),
 			},
 			expectedError: nil,
-			expectedArgs:  Arguments{Var("X"): 1, Var("Y"): 2},
+			expectedArgs:  Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 		},
 	}
 
