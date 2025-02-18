@@ -22,7 +22,7 @@ func (e variable) Eval() Func {
 	return func(args Arguments) Expr {
 		value, ok := args[e]
 		if ok {
-			return Simplify(value)
+			return value.Simplify()
 		}
 		return e
 	}
@@ -34,7 +34,7 @@ func (e add) Eval() Func {
 		for ix := 1; ix < len(e.Operands); ix++ {
 			sum = Add(sum, e.Operands[ix].Eval()(args))
 		}
-		return Simplify(sum)
+		return sum.Simplify()
 	}
 }
 
@@ -44,21 +44,21 @@ func (e mul) Eval() Func {
 		for ix := 1; ix < len(e.Operands); ix++ {
 			prod = Mul(prod, e.Operands[ix].Eval()(args))
 		}
-		return Simplify(prod)
+		return prod.Simplify()
 	}
 }
 
 func (e exp) Eval() Func {
-	return func(args Arguments) Expr { return Simplify(Exp(e.Arg.Eval()(args))) }
+	return func(args Arguments) Expr { return Exp(e.Arg.Eval()(args)).Simplify() }
 }
 
 func (e log) Eval() Func {
-	return func(args Arguments) Expr { return Simplify(Log(e.Arg.Eval()(args))) }
+	return func(args Arguments) Expr { return Log(e.Arg.Eval()(args)).Simplify().Simplify() }
 }
 
 func (e pow) Eval() Func {
 	return func(args Arguments) Expr {
-		return Simplify(Pow(e.Base.Eval()(args), e.Exponent.Eval()(args)))
+		return Pow(e.Base.Eval()(args), e.Exponent.Eval()(args)).Simplify()
 	}
 }
 

@@ -55,15 +55,15 @@ func TestD(t *testing.T) {
 				expr:    Log(Var("X")),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Div((1), Var("X")),
+			expectedOutput: Div(Int(1), Var("X")),
 		},
 		{ // Test 6
 			name: "Diff of power function",
 			input: inputArgs{
-				expr:    Pow(Var("X"), (2)),
-				diffVar: "X",
+				expr:    Pow(Var("X"), Int(2)),
+				diffVar: Var("X"),
 			},
-			expectedOutput: Mul(Int(2), Pow(Var("X"), Int(1))),
+			expectedOutput: Mul(Int(2), Var("X")),
 		},
 	}
 

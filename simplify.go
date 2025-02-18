@@ -4,8 +4,12 @@ func (expr undefined) Simplify() Expr {
 	return simplify(expr)
 }
 
-func (expr constant) Simplify() Expr {
-	return simplify(expr)
+func (expr integer) Simplify() Expr {
+	return expr
+}
+
+func (expr fraction) Simplify() Expr {
+	return (expr.simplifyRational())
 }
 
 func (expr variable) Simplify() Expr {

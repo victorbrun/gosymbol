@@ -139,13 +139,13 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "2 * 1",
-			input:          Mul(Const(2), Const(1)),
-			expectedOutput: Const(2),
+			input:          Mul(Int(2), Int(1)),
+			expectedOutput: Int(2),
 		},
 		{
 			name:           "2 * x^1 * 1",
-			input:          Mul(Const(2), Pow(Var("x"), Const(1)), Const(1)),
-			expectedOutput: Mul(Const(2), Var("x")),
+			input:          Mul(Int(2), Pow(Var("x"), Int(1)), Int(1)),
+			expectedOutput: Mul(Int(2), Var("x")),
 		},
 	}
 
