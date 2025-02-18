@@ -89,7 +89,6 @@ func TestExprEval(t *testing.T) {
 	}
 
 	for ix, test := range tests {
-		println(ix + 1)
 		result := test.input.expr.Eval()(test.input.args)
 		correctnesCheck(t, strconv.Itoa(ix+1), test.input, test.expectedOutput, result)
 	}
