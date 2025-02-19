@@ -62,7 +62,6 @@ type undefined struct {
 type variable struct {
 	Expr
 	Name VarName
-
 	// Indicating if variable is part of a pattern
 	isPattern bool
 }
@@ -100,7 +99,8 @@ type sqrt struct {
 	Arg Expr
 }
 
-// Const types
+/* Const types */
+
 type integer struct {
 	value int64
 }

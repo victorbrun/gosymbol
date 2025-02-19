@@ -1,6 +1,9 @@
 package gosymbol
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 var EmptyFraction = fraction{}
 
@@ -22,11 +25,20 @@ func (u fraction) denominator() integer {
 	return u.den
 }
 
-func Inv(u rational) rational {
+func ratInv(u rational) rational {
 	return Frac(u.denominator(), u.numerator()).simplifyRational()
 }
 
 func (u fraction) approx() float64 {
+	if u.den == Int(0) {
+		if u.num.value > 0 {
+			return math.Inf(1)
+		}
+		if u.num.value < 0 {
+			return math.Inf(0)
+		}
+		return math.NaN()
+	}
 	return u.num.approx() / u.den.approx()
 }
 
@@ -68,13 +80,13 @@ func ratMul(u rational, w rational) rational {
 }
 
 func ratDiv(u rational, w rational) rational {
-	return ratMul(u, Inv(w))
+	return ratMul(u, ratInv(w))
 }
 
 func ratPow(u rational, n integer) rational {
 	u = u.simplifyRational()
 	if n.value < 0 {
-		u = Inv(u)
+		u = ratInv(u)
 		n = intMinus(n)
 	}
 	switch v := u.(type) {
@@ -84,7 +96,7 @@ func ratPow(u rational, n integer) rational {
 			return EmptyFraction
 		}
 		if n.value < 0 {
-			return Inv(pow)
+			return ratInv(pow)
 		}
 		return pow
 	case fraction:

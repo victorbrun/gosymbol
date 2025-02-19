@@ -81,6 +81,9 @@ func intSubtract(a integer, b integer) integer {
 }
 
 func gcd(a integer, b integer) (integer, error) {
+	if a.value <= 0 || b.value <= 0 {
+		return integer{}, errors.New("GCD only accepts positive values")
+	}
 	for b != Int(0) {
 		r, err := intMod(a, b)
 		if err != nil {
