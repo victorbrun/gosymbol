@@ -43,7 +43,7 @@ func TopOperandSort(expr Expr) Expr {
 }
 
 func orderRule1(e1, e2 rational) bool {
-	return e1.approx() < e2.approx()
+	return e1.Approx() < e2.Approx()
 }
 func orderRule2(e1, e2 variable) bool              { return e1.Name < e2.Name }
 func orderRule2_1(e1, e2 constrainedVariable) bool { return e1.Name < e2.Name }

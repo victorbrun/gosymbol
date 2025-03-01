@@ -10,6 +10,7 @@ type Expr interface {
 	Eval() Func
 	D(variable) Expr
 	Simplify() Expr
+	Approx() float64
 }
 
 // The Binding type is used in patternmatching.go
@@ -64,6 +65,9 @@ type variable struct {
 	Name VarName
 	// Indicating if variable is part of a pattern
 	isPattern bool
+	// used for approximating constants
+	isConstant bool
+	constValue float64
 }
 
 type add struct {
@@ -107,7 +111,6 @@ type integer struct {
 
 type rational interface {
 	Expr
-	approx() float64
 	numerator() integer
 	denominator() integer
 	simplifyRational() rational

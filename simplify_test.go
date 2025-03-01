@@ -2,6 +2,7 @@ package gosymbol
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -24,8 +25,8 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "Sum with two integers and a real in the middle is simplified to a single integers and a real",
-			input:          Add(Int(2), Real("e"), Int(3)),
-			expectedOutput: Add(Int(5), Real("e")),
+			input:          Add(Int(2), Real("e", math.E), Int(3)),
+			expectedOutput: Add(Int(5), Real("e", math.E)),
 		},
 		{
 			name:           "undefined^y = undefined",
@@ -109,8 +110,8 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "Mult with two integers and a real in the middle is simplified to a single integers and a real",
-			input:          Mul(Int(2), Real("e"), Int(3)),
-			expectedOutput: Mul(Int(6), Real("e")),
+			input:          Mul(Int(2), Real("e", math.E), Int(3)),
+			expectedOutput: Mul(Int(6), Real("e", math.E)),
 		},
 		{
 			name:           "1 * x = x",

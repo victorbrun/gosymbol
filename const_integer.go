@@ -19,10 +19,6 @@ func (u integer) simplifyRational() rational {
 	return u
 }
 
-func (n integer) approx() float64 {
-	return float64(n.value)
-}
-
 func intQuotient(a integer, b integer) (integer, error) {
 	if b == Int(0) {
 		return integer{}, errors.New("Division by 0")
