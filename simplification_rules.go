@@ -9,12 +9,12 @@ import (
 // TODO: would be useful with a bool function negator,
 // it takes a function with any input and with bool input
 // and returns a function with the same input but with negated bool output
-func positiveant(expr Expr) bool {
+func positiveConstant(expr Expr) bool {
 	exprTyped, ok := expr.(rational)
 	return ok && exprTyped.approx() > Int(0).approx()
 }
 
-func negOrZeroant(expr Expr) bool {
+func negOrZeroConstant(expr Expr) bool {
 	exprTyped, ok := expr.(rational)
 	return ok && exprTyped.approx() <= Int(0).approx()
 }
@@ -256,13 +256,13 @@ var productSimplificationRules []transformationRule = []transformationRule{
 
 var powerSimplificationRules []transformationRule = []transformationRule{
 	{ // 0^x = 0 for x in R_+
-		pattern: Pow((Int(0)), constraPatternVar("x", positiveant)),
+		pattern: Pow((Int(0)), constraPatternVar("x", positiveConstant)),
 		transform: func(expr Expr) Expr {
 			return (Int(0))
 		},
 	},
 	{ // 0^x = Undefined for x <= 0
-		pattern: Pow((Int(0)), constraPatternVar("x", negOrZeroant)),
+		pattern: Pow((Int(0)), constraPatternVar("x", negOrZeroConstant)),
 		transform: func(expr Expr) Expr {
 			return Undefined()
 		},
