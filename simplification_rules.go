@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-/* rain functions */
+/* Constrain functions */
 
 // TODO: would be useful with a bool function negator,
 // it takes a function with any input and with bool input
