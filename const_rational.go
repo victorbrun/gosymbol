@@ -8,7 +8,7 @@ import (
 var EmptyFraction = fraction{}
 
 func (u fraction) String() string {
-	return fmt.Sprintf("%s/%s", u.num.String(), u.den.String())
+	return fmt.Sprintf("%s/%s", u.numerator().String(), u.denominator().String())
 }
 
 func (u fraction) numerator() integer {
@@ -30,39 +30,39 @@ func ratInv(u rational) rational {
 }
 
 func (u fraction) approx() float64 {
-	if u.den == Int(0) {
-		if u.num.value > 0 {
+	if u.denominator() == Int(0) {
+		if u.numerator().value > 0 {
 			return math.Inf(1)
 		}
-		if u.num.value < 0 {
+		if u.numerator().value < 0 {
 			return math.Inf(0)
 		}
 		return math.NaN()
 	}
-	return u.num.approx() / u.den.approx()
+	return u.numerator().approx() / u.denominator().approx()
 }
 
 func (u fraction) simplifyRational() rational {
 	if u == EmptyFraction {
 		return EmptyFraction
 	}
-	r, err := intMod(u.num, u.den)
+	r, err := intMod(u.numerator(), u.denominator())
 	if err != nil {
 		return EmptyFraction
 	}
 	if r == Int(0) {
-		q, err := intQuotient(u.num, u.den)
+		q, err := intQuotient(u.numerator(), u.den)
 		if err != nil {
 			return EmptyFraction
 		}
 		return q
 	}
-	gcd, err := gcd(u.num, u.den)
+	gcd, err := gcd(u.numerator(), u.denominator())
 	if err != nil {
 		return EmptyFraction
 	}
-	num, err1 := intQuotient(u.num, gcd)
-	den, err2 := intQuotient(u.den, gcd)
+	num, err1 := intQuotient(u.numerator(), gcd)
+	den, err2 := intQuotient(u.denominator(), gcd)
 	if err1 != nil || err2 != nil {
 		return EmptyFraction
 	}
@@ -100,8 +100,8 @@ func ratPow(u rational, n integer) rational {
 		}
 		return pow
 	case fraction:
-		num, err1 := intPow(v.num, n)
-		den, err2 := intPow(v.den, n)
+		num, err1 := intPow(v.numerator(), n)
+		den, err2 := intPow(v.denominator(), n)
 		if err1 != nil || err2 != nil {
 			return EmptyFraction
 		}
