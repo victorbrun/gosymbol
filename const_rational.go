@@ -145,12 +145,15 @@ func ratAbs(u rational) rational {
 func (u undefined) approx() float64 {
 	return math.NaN()
 }
+
 func (u undefined) numerator() integer {
 	return Int(0)
 }
+
 func (u undefined) denominator() integer {
 	return Int(0)
 }
+
 func (u undefined) simplifyRational() rational {
 	return u
 }

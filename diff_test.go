@@ -20,10 +20,10 @@ func TestD(t *testing.T) {
 		{ // Test 1
 			name: "Diff of constant",
 			input: inputArgs{
-				expr:    (Int(10)),
+				expr:    Int(10),
 				diffVar: Var("X"),
 			},
-			expectedOutput: (Int(0)),
+			expectedOutput: Int(0),
 		},
 		{ // Test 2
 			name: "Diff of variable",
@@ -31,7 +31,7 @@ func TestD(t *testing.T) {
 				expr:    Var("X"),
 				diffVar: Var("X"),
 			},
-			expectedOutput: (Int(1)),
+			expectedOutput: Int(1),
 		},
 		{ // Test 3
 			name: "Diff of variable not in expression",
@@ -39,7 +39,7 @@ func TestD(t *testing.T) {
 				expr:    Var("X"),
 				diffVar: Var("Y"),
 			},
-			expectedOutput: (Int(0)),
+			expectedOutput: Int(0),
 		},
 		{ // Test 4
 			name: "Diff of exponential function",

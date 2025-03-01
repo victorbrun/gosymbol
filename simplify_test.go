@@ -39,52 +39,52 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "0^x = 0",
-			input:          Pow((Int(0)), (Int(1))),
-			expectedOutput: (Int(0)),
+			input:          Pow(Int(0), Int(1)),
+			expectedOutput: Int(0),
 		},
 		{
 			name:           "0^0 = undefined",
-			input:          Pow((Int(0)), (Int(0))),
+			input:          Pow(Int(0), Int(0)),
 			expectedOutput: Undefined(),
 		},
 		{
 			name:           "1^x = 1",
-			input:          Pow((Int(1)), Exp((Int(7)))),
-			expectedOutput: (Int(1)),
+			input:          Pow(Int(1), Exp(Int(7))),
+			expectedOutput: Int(1),
 		},
 		{
 			name:           "x^0 = 1",
-			input:          Pow(Var("kuk"), (Int(0))),
-			expectedOutput: (Int(1)),
+			input:          Pow(Var("kuk"), Int(0)),
+			expectedOutput: Int(1),
 		},
 		{
 			name:           "(v_1 * ... * v_n)^m = v_1^m * .. * v_n^m (note that the result is also sorted)",
-			input:          Pow(Mul(Var("x"), (Int(3)), Var("y")), Var("elle")),
-			expectedOutput: Mul(Pow((Int(3)), Var("elle")), Pow(Var("x"), Var("elle")), Pow(Var("y"), Var("elle"))),
+			input:          Pow(Mul(Var("x"), Int(3), Var("y")), Var("elle")),
+			expectedOutput: Mul(Pow(Int(3), Var("elle")), Pow(Var("x"), Var("elle")), Pow(Var("y"), Var("elle"))),
 		},
 		{
 			name:           "(i^j)^k = i^(j*k)",
-			input:          Pow(Pow(Var("i"), Var("j")), Exp(Mul((Int(1)), Var("k")))),
+			input:          Pow(Pow(Var("i"), Var("j")), Exp(Mul(Int(1), Var("k")))),
 			expectedOutput: Pow(Var("i"), Mul(Var("j"), Exp(Var("k")))),
 		},
 		{
 			name:           "undefined * ... = undefined",
-			input:          Mul(Undefined(), Var("x"), (Int(1))),
+			input:          Mul(Undefined(), Var("x"), Int(1)),
 			expectedOutput: Undefined(),
 		},
 		{
 			name:           "0 * ... = 0",
-			input:          Mul(Var("x"), (Int(-9)), (Int(0))),
-			expectedOutput: (Int(0)),
+			input:          Mul(Var("x"), Int(-9), Int(0)),
+			expectedOutput: Int(0),
 		},
 		{
 			name:           "undefined * 0 = undefined",
-			input:          Mul(Undefined(), (Int(0))),
+			input:          Mul(Undefined(), Int(0)),
 			expectedOutput: Undefined(),
 		},
 		{
 			name:           "0 * undefined = undefined",
-			input:          Mul((Int(0)), Undefined()),
+			input:          Mul(Int(0), Undefined()),
 			expectedOutput: Undefined(),
 		},
 		{
@@ -114,13 +114,13 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "1 * x = x",
-			input:          Mul((Int(1)), Exp(Var("x"))),
+			input:          Mul(Int(1), Exp(Var("x"))),
 			expectedOutput: Exp(Var("x")),
 		},
 		{
 			name:           "x * x = x^2",
 			input:          Mul(Var(VarName("x")), Var(VarName("x"))),
-			expectedOutput: Pow(Var(VarName("x")), (Int(2))),
+			expectedOutput: Pow(Var(VarName("x")), Int(2)),
 		},
 		{
 			name:           "x * x^n = x^(n+1)",
@@ -129,8 +129,8 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x * (1/x) = 1",
-			input:          Mul(Var("x"), Div((Int(1)), Var("x"))),
-			expectedOutput: (Int(1)),
+			input:          Mul(Var("x"), Div(Int(1), Var("x"))),
+			expectedOutput: Int(1),
 		},
 		{
 			name:           "x^m * x^n = x^(m+n)",

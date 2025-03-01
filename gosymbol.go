@@ -1,7 +1,5 @@
 package gosymbol
 
-const ()
-
 /* Factories */
 
 func Undefined() undefined {
