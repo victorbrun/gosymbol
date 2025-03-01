@@ -422,7 +422,7 @@ func TestIntMinus(t *testing.T) {
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
-			result := intMinus(test.input)
+			result := intNeg(test.input)
 
 			if result != test.expectedOutput {
 				t.Errorf("Following test failed: %s\nInput rational: %v\nExpected: %v\nGot: %v",

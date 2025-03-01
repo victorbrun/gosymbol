@@ -87,7 +87,7 @@ func ratPow(u rational, n integer) rational {
 	u = u.simplifyRational()
 	if n.value < 0 {
 		u = ratInv(u)
-		n = intMinus(n)
+		n = intNeg(n)
 	}
 	switch v := u.(type) {
 	case integer:
@@ -126,9 +126,9 @@ func ratAdd(u rational, w rational) rational {
 func ratMinus(u rational) rational {
 	switch v := u.(type) {
 	case integer:
-		return intMinus(v)
+		return intNeg(v)
 	case fraction:
-		return Frac(intMinus(u.numerator()), u.denominator())
+		return Frac(intNeg(u.numerator()), u.denominator())
 	}
 	return nil
 }

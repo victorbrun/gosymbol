@@ -138,7 +138,7 @@ func Frac(a integer, b integer) fraction {
 	if intMul(a, b).value >= 0 {
 		return fraction{num: intAbs(a), den: intAbs(b)}
 	}
-	return fraction{num: intMinus(intAbs(a)), den: intAbs(b)}
+	return fraction{num: intNeg(intAbs(a)), den: intAbs(b)}
 }
 
 func Real(symbol string) variable {

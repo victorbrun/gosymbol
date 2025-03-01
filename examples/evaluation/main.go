@@ -23,4 +23,11 @@ func main() {
 	fn := f.Eval()
 	fn_eval := fn(val)
 	fmt.Printf("f(%s, %s) = %s\n", val[x], val[y], fn_eval)
+
+	a, err := gosymbol.ParseLatex("(2+2)*6")
+	if err != nil {
+		println(err)
+	}
+
+	println("%p", &a)
 }

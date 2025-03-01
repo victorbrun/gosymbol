@@ -45,13 +45,13 @@ func intMod(a integer, b integer) (integer, error) {
 	return Int(a.value % b.value), nil
 }
 
-func intMinus(a integer) integer {
+func intNeg(a integer) integer {
 	return Int(-a.value)
 }
 
 func intAbs(a integer) integer {
 	if a.value < 0 {
-		return intMinus(a)
+		return intNeg(a)
 	}
 	return a
 }
@@ -77,7 +77,7 @@ func intPow(a integer, b integer) (integer, error) {
 }
 
 func intSubtract(a integer, b integer) integer {
-	return intAdd(a, intMinus(b))
+	return intAdd(a, intNeg(b))
 }
 
 func gcd(a integer, b integer) (integer, error) {
