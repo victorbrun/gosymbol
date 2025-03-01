@@ -2,7 +2,11 @@ package gosymbol
 
 import "fmt"
 
-func (e constant) D(v variable) Expr {
+func (e integer) D(v variable) Expr {
+	return differentiate(e, v)
+}
+
+func (e fraction) D(v variable) Expr {
 	return differentiate(e, v)
 }
 
@@ -40,14 +44,15 @@ Differentiates expr w.r.t. v.
 */
 func differentiate(expr Expr, v variable) Expr {
 	switch e := expr.(type) {
-	case constant:
-		return Const(0)
-
+	case integer:
+		return Int(0)
+	case fraction:
+		return Int(0)
 	case variable:
 		if v == e {
-			return Const(1)
+			return Int(1)
 		} else {
-			return Const(0)
+			return Int(0)
 		}
 
 	case add:
@@ -71,18 +76,20 @@ func differentiate(expr Expr, v variable) Expr {
 	case pow:
 		// IF EXPONENT IS CONSTANT: Power rule: D(x^a) = ax^(a-1)
 		// IF EXPONENT IS NOT CONSTANT: Exponential deriv: D(f^g) = D(exp(g*log(f))) = exp(g*log(f))*D(g*log(f))
-		if exponentTyped, ok := e.Exponent.(constant); ok {
-			return Mul(e.Exponent, Pow(e.Base, Const(exponentTyped.Value-1)), differentiate(e.Base, v))
-		} else {
+		switch exponentTyped := e.Exponent.(type) {
+		case integer:
+			return Mul(e.Exponent, Pow(e.Base, intAdd(exponentTyped, Int(-1))), differentiate(e.Base, v))
+		case fraction:
+			return Mul(e.Exponent, Pow(e.Base, ratAdd(exponentTyped, Int(-1))), differentiate(e.Base, v))
+		default:
 			exponentLogBaseProd := Mul(e.Exponent, Log(e.Base))
 			return Mul(Exp(exponentLogBaseProd), differentiate(exponentLogBaseProd, v))
 		}
-
 	case exp:
 		return Mul(e, differentiate(e.Arg, v))
 
 	case log:
-		return Mul(Pow(e.Arg, Const(-1)), differentiate(e.Arg, v))
+		return Mul(Pow(e.Arg, Int(-1)), differentiate(e.Arg, v))
 
 	default:
 		errMsg := fmt.Errorf("ERROR: expression %#v have no differentiation pattern case implemented", e)

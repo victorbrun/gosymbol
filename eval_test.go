@@ -2,7 +2,6 @@ package gosymbol
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"testing"
 )
@@ -15,77 +14,77 @@ func TestExprEval(t *testing.T) {
 
 	tests := []struct {
 		input          inputArgs
-		expectedOutput float64
+		expectedOutput Expr
 	}{
 		{
 			input: inputArgs{
-				expr: Const(0),
-				args: Arguments{Var("X"): 10},
+				expr: Int(0),
+				args: Arguments{Var("X"): Int(10)},
 			},
-			expectedOutput: 0,
+			expectedOutput: Int(0),
 		},
 		{
 			input: inputArgs{
 				expr: Var("X"),
-				args: Arguments{Var("X"): 1.0},
+				args: Arguments{Var("X"): Int(1)},
 			},
-			expectedOutput: 1.0,
+			expectedOutput: Int(1),
 		},
 		{
 			input: inputArgs{
-				expr: Neg(Const(10)),
-				args: Arguments{Var("X"): 0},
+				expr: Neg(Int(10)),
+				args: Arguments{Var("X"): Int(0)},
 			},
-			expectedOutput: -10,
+			expectedOutput: Int(-10),
 		},
 		{
 			input: inputArgs{
 				expr: Add(Var("X"), Var("Y")),
-				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
+				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
-			expectedOutput: 3.0,
+			expectedOutput: Int(3),
 		},
 		{
 			input: inputArgs{
 				expr: Sub(Var("X"), Var("Y")),
-				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
+				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
-			expectedOutput: -1.0,
+			expectedOutput: Int(-1),
 		},
 		{
 			input: inputArgs{
 				expr: Mul(Var("X"), Var("Y")),
-				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
+				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
-			expectedOutput: 2.0,
+			expectedOutput: Int(2),
 		},
 		{
 			input: inputArgs{
 				expr: Div(Var("X"), Var("Y")),
-				args: Arguments{Var("X"): 1.0, Var("Y"): 2.0},
+				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
-			expectedOutput: 0.5,
+			expectedOutput: Div(Int(1), Int(2)).(rational),
 		},
 		{
 			input: inputArgs{
 				expr: Exp(Var("X")),
-				args: Arguments{Var("X"): 0},
+				args: Arguments{Var("X"): Int(0)},
 			},
-			expectedOutput: 1,
+			expectedOutput: Int(1),
 		},
 		{
 			input: inputArgs{
 				expr: Log(Var("X")),
-				args: Arguments{Var("X"): 1},
+				args: Arguments{Var("X"): Int(1)},
 			},
-			expectedOutput: math.Log(1),
+			expectedOutput: Int(0),
 		},
 		{
 			input: inputArgs{
-				expr: Pow(Var("X"), Const(-1)),
-				args: Arguments{Var("X"): 10},
+				expr: Pow(Var("X"), Int(-1)),
+				args: Arguments{Var("X"): Int(10)},
 			},
-			expectedOutput: 1 / 10.0,
+			expectedOutput: Div(Int(1), Int(10)).(rational),
 		},
 	}
 
@@ -105,11 +104,11 @@ func TestExprString(t *testing.T) {
 			expectedOutput: "X",
 		},
 		{
-			input:          Const(-1),
-			expectedOutput: "( -1 )",
+			input:          Int(-1),
+			expectedOutput: "-1",
 		},
 		{
-			input:          Const(10),
+			input:          Int(10),
 			expectedOutput: "10",
 		},
 		{
@@ -118,7 +117,7 @@ func TestExprString(t *testing.T) {
 		},
 		{
 			input:          Sub(Var("X"), Var("Y")),
-			expectedOutput: "( X + ( ( -1 ) * Y ) )",
+			expectedOutput: "( X + ( -1 * Y ) )",
 		},
 		{
 			input:          Mul(Var("X"), Var("Y")),
@@ -126,7 +125,7 @@ func TestExprString(t *testing.T) {
 		},
 		{
 			input:          Div(Var("X"), Var("Y")),
-			expectedOutput: "( X * ( Y^( -1 ) ) )",
+			expectedOutput: "( X * ( Y^-1 ) )",
 		},
 		{
 			input:          Exp(Var("X")),
@@ -137,7 +136,7 @@ func TestExprString(t *testing.T) {
 			expectedOutput: "log( X )",
 		},
 		{
-			input:          Pow(Var("X"), Const(9)),
+			input:          Pow(Var("X"), Int(9)),
 			expectedOutput: "( X^9 )",
 		},
 	}

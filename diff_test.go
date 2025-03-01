@@ -20,10 +20,10 @@ func TestD(t *testing.T) {
 		{ // Test 1
 			name: "Diff of constant",
 			input: inputArgs{
-				expr:    Const(10),
+				expr:    Int(10),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Const(0),
+			expectedOutput: Int(0),
 		},
 		{ // Test 2
 			name: "Diff of variable",
@@ -31,7 +31,7 @@ func TestD(t *testing.T) {
 				expr:    Var("X"),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Const(1),
+			expectedOutput: Int(1),
 		},
 		{ // Test 3
 			name: "Diff of variable not in expression",
@@ -39,7 +39,7 @@ func TestD(t *testing.T) {
 				expr:    Var("X"),
 				diffVar: Var("Y"),
 			},
-			expectedOutput: Const(0),
+			expectedOutput: Int(0),
 		},
 		{ // Test 4
 			name: "Diff of exponential function",
@@ -55,15 +55,15 @@ func TestD(t *testing.T) {
 				expr:    Log(Var("X")),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Div(Const(1), Var("X")),
+			expectedOutput: Div(Int(1), Var("X")),
 		},
 		{ // Test 6
 			name: "Diff of power function",
 			input: inputArgs{
-				expr:    Pow(Var("X"), Const(2)),
+				expr:    Pow(Var("X"), Int(2)),
 				diffVar: Var("X"),
 			},
-			expectedOutput: Mul(Const(2), Var("X")),
+			expectedOutput: Mul(Int(2), Var("X")),
 		},
 	}
 

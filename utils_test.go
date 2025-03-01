@@ -32,19 +32,19 @@ func TestRecContains(t *testing.T) {
 		},
 		{ // Test 3: Testing for part of n-ary operator
 			input: inputArgs{
-				expr: Add(Const(1), Const(2), Const(3)),
-				u:    Add(Const(1), Const(2)),
+				expr: Add(Int(1), Int(2), Int(3)),
+				u:    Add(Int(1), Int(2)),
 			},
 			expectedOutput: false,
 		},
 		{ // Test 4: Testing for sub-tree equality
 			input: inputArgs{
 				expr: Add(
-					Const(1),
-					Mul(Const(2), Var("X")),
-					Div(Const(1), Var("y")),
+					Int(1),
+					Mul(Int(2), Var("X")),
+					Div(Int(1), Var("y")),
 				),
-				u: Mul(Const(2), Var("X")),
+				u: Mul(Int(2), Var("X")),
 			},
 			expectedOutput: true,
 		},
@@ -75,35 +75,35 @@ func TestSubstitute(t *testing.T) {
 	}{
 		{ // Test 1: base case 1: constant
 			input: inputArgs{
-				expr: Const(7),
-				u:    Const(7),
-				t:    Const(-7),
+				expr: Int(7),
+				u:    Int(7),
+				t:    Int(-7),
 			},
-			expectedOutput: Const(-7),
+			expectedOutput: Int(-7),
 		},
 		{ // Test 2: base case 2: variable
 			input: inputArgs{
 				expr: Var("X"),
 				u:    Var("X"),
-				t:    Const(0),
+				t:    Int(0),
 			},
-			expectedOutput: Const(0),
+			expectedOutput: Int(0),
 		},
 		{ // Test 3: add operator
 			input: inputArgs{
-				expr: Add(Var("X"), Var("Y"), Const(0), Var("Y")),
+				expr: Add(Var("X"), Var("Y"), Int(0), Var("Y")),
 				u:    Var("Y"),
 				t:    Var("Z"),
 			},
-			expectedOutput: Add(Var("X"), Var("Z"), Const(0), Var("Z")),
+			expectedOutput: Add(Var("X"), Var("Z"), Int(0), Var("Z")),
 		},
 		{ // Test 4: mul operator
 			input: inputArgs{
-				expr: Mul(Var("X"), Var("Y"), Const(0), Var("Y")),
+				expr: Mul(Var("X"), Var("Y"), Int(0), Var("Y")),
 				u:    Var("Y"),
 				t:    Var("Z"),
 			},
-			expectedOutput: Mul(Var("X"), Var("Z"), Const(0), Var("Z")),
+			expectedOutput: Mul(Var("X"), Var("Z"), Int(0), Var("Z")),
 		},
 		{ // Test 5: Div
 			input: inputArgs{
@@ -115,16 +115,16 @@ func TestSubstitute(t *testing.T) {
 		},
 		{ // Test 6: substituting whole subtree
 			input: inputArgs{
-				expr: Add(Div(Const(9), Var("X")), Var("Y"), Const(0), Var("Y")),
-				u:    Div(Const(9), Var("X")),
+				expr: Add(Div(Int(9), Var("X")), Var("Y"), Int(0), Var("Y")),
+				u:    Div(Int(9), Var("X")),
 				t:    Var("Z"),
 			},
-			expectedOutput: Add(Var("Z"), Var("Y"), Const(0), Var("Y")),
+			expectedOutput: Add(Var("Z"), Var("Y"), Int(0), Var("Y")),
 		},
 		{ // Test 7: nested substitution, making sure that the recursion starts bottom up
 			input: inputArgs{
-				expr: Div(Const(1), Div(Const(1), Var("X"))),
-				u:    Div(Const(1), Var("X")),
+				expr: Div(Int(1), Div(Int(1), Var("X"))),
+				u:    Div(Int(1), Var("X")),
 				t:    Var("X"),
 			},
 			expectedOutput: Var("X"),
@@ -133,7 +133,7 @@ func TestSubstitute(t *testing.T) {
 			input: inputArgs{
 				expr: Var("X"),
 				u:    Var("Y"),
-				t:    Const(0),
+				t:    Int(0),
 			},
 			expectedOutput: Var("X"),
 		},
@@ -155,16 +155,16 @@ func TestSubstitute(t *testing.T) {
 		},
 		{ // Test 11: pow operator
 			input: inputArgs{
-				expr: Pow(Var("X"), Const(10)),
-				u:    Pow(Var("X"), Const(10)),
+				expr: Pow(Var("X"), Int(10)),
+				u:    Pow(Var("X"), Int(10)),
 				t:    Var("Y"),
 			},
 			expectedOutput: Var("Y"),
 		},
 		{ // Test 12: 4 level nested substitution
 			input: inputArgs{
-				expr: Div(Const(1), Div(Const(1), Div(Const(1), Div(Const(1), Var("X"))))),
-				u:    Div(Const(1), Var("X")),
+				expr: Div(Int(1), Div(Int(1), Div(Int(1), Div(Int(1), Var("X"))))),
+				u:    Div(Int(1), Var("X")),
 				t:    Var("X"),
 			},
 			expectedOutput: Var("X"),
@@ -187,7 +187,7 @@ func TestVariableNames(t *testing.T) {
 			expectedOutput: []VarName{},
 		},
 		{
-			input:          Const(0),
+			input:          Int(0),
 			expectedOutput: []VarName{},
 		},
 		{
@@ -203,7 +203,7 @@ func TestVariableNames(t *testing.T) {
 			expectedOutput: []VarName{"X", "Y"},
 		},
 		{
-			input:          Pow(Mul(Var("X"), Var("X"), Var("Y")), Const(10)),
+			input:          Pow(Mul(Var("X"), Var("X"), Var("Y")), Int(10)),
 			expectedOutput: []VarName{"X", "Y"},
 		},
 	}
@@ -224,7 +224,7 @@ func TestDepth(t *testing.T) {
 			expectedOutput: 0,
 		},
 		{
-			input:          Const(1),
+			input:          Int(1),
 			expectedOutput: 0,
 		},
 		{
@@ -236,11 +236,11 @@ func TestDepth(t *testing.T) {
 			expectedOutput: 0,
 		},
 		{
-			input:          Add(Const(0), Var("x"), Const(0), Var("x"), Const(0), Var("x")),
+			input:          Add(Int(0), Var("x"), Int(0), Var("x"), Int(0), Var("x")),
 			expectedOutput: 1,
 		},
 		{
-			input:          Add(Mul(Var("x"), Pow(Const(10), Exp(Var("x")))), Var("x"), Const(0), Var("x"), Const(0), Var("x")),
+			input:          Add(Mul(Var("x"), Pow(Int(10), Exp(Var("x")))), Var("x"), Int(0), Var("x"), Int(0), Var("x")),
 			expectedOutput: 4,
 		},
 	}

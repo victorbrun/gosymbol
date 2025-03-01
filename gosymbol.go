@@ -1,15 +1,9 @@
 package gosymbol
 
-const ()
-
 /* Factories */
 
 func Undefined() undefined {
 	return undefined{}
-}
-
-func Const(val float64) constant {
-	return constant{Value: val}
 }
 
 func Var(name VarName) variable {
@@ -29,11 +23,20 @@ func constraPatternVar(name VarName, constrFunc func(Expr) bool) constrainedVari
 }
 
 func Neg(arg Expr) mul {
-	return Mul(Const(-1), arg)
+	return Mul(Int(-1), arg)
 }
 
 func Add(ops ...Expr) add {
-	return add{Operands: ops}
+	var newOps []Expr
+	for _, op := range ops {
+		switch opTyped := op.(type) {
+		case add:
+			newOps = append(newOps, opTyped.Operands...)
+		default:
+			newOps = append(newOps, op)
+		}
+	}
+	return add{Operands: newOps}
 }
 
 func Sub(lhs, rhs Expr) add {
@@ -41,7 +44,16 @@ func Sub(lhs, rhs Expr) add {
 }
 
 func Mul(ops ...Expr) mul {
-	return mul{Operands: ops}
+	var newOps []Expr
+	for _, op := range ops {
+		switch opTyped := op.(type) {
+		case mul:
+			newOps = append(newOps, opTyped.Operands...)
+		default:
+			newOps = append(newOps, op)
+		}
+	}
+	return mul{Operands: newOps}
 }
 
 /*
@@ -52,11 +64,24 @@ otherwise it returns a mul type. This is to avoid unneccessary
 calls to Simplify.
 */
 func Div(lhs, rhs Expr) Expr {
-	if Equal(lhs, Const(1)) {
-		return Pow(rhs, Const(-1))
-	} else {
-		return Mul(lhs, Pow(rhs, Const(-1)))
+	num, okNum := lhs.(integer)
+	den, okDen := rhs.(integer)
+	if okNum && okDen {
+		if intMul(num, den).value >= 0 {
+			return fraction{num: intAbs(num), den: intAbs(den)}
+		}
+		return fraction{num: intNeg(intAbs(num)), den: intAbs(den)}
 	}
+	if Equal(rhs, Int(0)) {
+		return undefined{}
+	}
+	if Equal(rhs, Int(1)) {
+		return lhs
+	}
+	if Equal(lhs, Int(1)) {
+		return Pow(rhs, Int(-1))
+	}
+	return Mul(lhs, Pow(rhs, Int(-1)))
 }
 
 func Exp(arg Expr) exp {
@@ -79,7 +104,7 @@ func TransformationRule(pattern Expr, transform func(Expr) Expr) transformationR
 	return transformationRule{pattern: pattern, transform: transform}
 }
 
-func (args Arguments) AddArgument(v variable, value float64) error {
+func (args Arguments) AddArgument(v variable, value Expr) error {
 	for arg := range args {
 		if arg.Name == v.Name {
 			return &DuplicateArgumentError{}
@@ -112,3 +137,14 @@ func (rule transformationRule) match(expr Expr) bool {
 		return false
 	}
 }
+
+func Int(value int64) integer {
+	return integer{value: value}
+}
+
+func Real(symbol string) variable {
+	return variable{Name: VarName(symbol), isPattern: false}
+}
+
+var PI = Real("π")
+var E = Exp(Int(1))

@@ -4,8 +4,12 @@ func (expr undefined) Simplify() Expr {
 	return simplify(expr)
 }
 
-func (expr constant) Simplify() Expr {
-	return simplify(expr)
+func (expr integer) Simplify() Expr {
+	return expr
+}
+
+func (expr fraction) Simplify() Expr {
+	return (expr.simplifyRational())
 }
 
 func (expr variable) Simplify() Expr {
@@ -72,7 +76,7 @@ func simplify(expr Expr) Expr {
 	// are fully simplified so we just return them.
 	appliedRuleIdx := -1
 	switch expr.(type) {
-	case constant:
+	case rational:
 		// Fully simplified
 	case variable:
 		// Fully simplified
@@ -84,6 +88,10 @@ func simplify(expr Expr) Expr {
 		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
 		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
+	case exp:
+		expr, appliedRuleIdx = rulesApplicator(expr, expSimplificationRules)
+	case log:
+		expr, appliedRuleIdx = rulesApplicator(expr, logSimplificationRules)
 	}
 
 	// If the expression has been altered it might be possible to apply some other rule
