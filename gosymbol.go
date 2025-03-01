@@ -117,32 +117,53 @@ func (rule transformationRule) match(expr Expr) bool {
 //
 // Following Definition 3.19 in COHEN, Joel S. Computer algebra and
 // symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003,
-// the expression u is an BAE if any of the following rules are satisfied
+// the expression u is a BAE if any of the following rules are satisfied:
+//
 // - BAE-1: u is an integer.
+//
 // - BAE-2: u is a fraction.
+//
 // - BAE-3: u is a symbol.
+//
 // - BAE-4: u is a product with one or more operands that are BAEs.
+//
 // - BAE-5: u is a sum with one or more operands that are BAEs.
+//
 // - BAE-6: u is a quotient with two operands that are BAEs.
+//
 // - BAE-7: u is a unary or binary difference where each operand is a BAE.
+//
 // - BAE-8: u is a power where both operands are BAE.
+//
 // - BAE-9: u is a factorial where the operand is a BAE.
+//
 // - BAE-10: u is a function form with one or more operands that are BAEs.
 //
 // The following experssions are BAE:
 // 1. 2/4,
+//
 // 2. a * (x + x),
+//
 // 3. a + (b^3 / b),
+//
 // 4. b - 3 * b,
+//
 // 5. a + ( b + c ) + d,
+//
 // 6. 2 * 3 * x * x^2,
+//
 // 7. f(x)^1,
+//
 // 8. + x^2 - x,
+//
 // 9. 0^3,
+//
 // 10. * x,
+//
 // 11. 2 / (a - a),
+//
 // 12. 3!.
-func isBAE(expr Expr) bool {
+func IsBAE(expr Expr) bool {
 	switch expr.(type) {
 	case constant:
 		// BAE-1
@@ -157,7 +178,7 @@ func isBAE(expr Expr) bool {
 		// BAE-4
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			op := Operand(expr, ix)
-			if isBAE(op) {
+			if IsBAE(op) {
 				return true
 			}
 		}
@@ -166,7 +187,7 @@ func isBAE(expr Expr) bool {
 		// BAE-5
 		for ix := 1; ix <= NumberOfOperands(expr); ix++ {
 			op := Operand(expr, ix)
-			if isBAE(op) {
+			if IsBAE(op) {
 				return true
 			}
 		}
@@ -174,8 +195,62 @@ func isBAE(expr Expr) bool {
 	case pow:
 		base := Operand(expr, 1)
 		exponent := Operand(expr, 2)
-		return isBAE(base) && isBAE(exponent)
+		return IsBAE(base) && IsBAE(exponent)
 	default:
 		return false
 	}
+}
+
+// Returns if expr is an automatically simplified algebraic expression (ASAE).
+//
+// Following Definition 3.21 in COHEN, Joel S. Computer algebra and
+// symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003,
+// the expression u is an ASAE if any of the following are satisfied:
+//
+// - ASAE-1: u is an integer.
+//
+// - ASAE-2: u is a fraction on standard form.
+//
+// - ASAE-3: u is a symbol except the Undefined symbol
+func IsASAE(expr Expr) bool {
+	switch exprTyped := expr.(type) {
+	case constant:
+		//ASAE-1
+		return true
+	case variable:
+		// ASAE-3
+		return true
+	case undefined:
+		// ASAE-3
+		return false
+	case mul:
+		// ASAE-4
+		return mulIsASAE(exprTyped)
+	case add:
+		// ASAE-5
+		return addIsASAE(exprTyped)
+	case pow:
+		// ASAE-6
+		return powIsASAE(exprTyped)
+	default:
+		return false
+	}
+}
+
+// ASAE-4
+// TODO
+func mulIsASAE(expr mul) bool {
+	return false
+}
+
+// ASAE-5
+// TODO
+func addIsASAE(expr add) bool {
+	return false
+}
+
+// ASAE-6
+// TODO
+func powIsASAE(expr pow) bool {
+	return false
 }

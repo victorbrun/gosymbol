@@ -20,6 +20,7 @@ func negOrZeroConstant(expr Expr) bool {
 }
 
 var sumSimplificationRules []transformationRule = []transformationRule{
+	
 	{ // Addition with only one operand simplify to the operand
 		pattern: Add(patternVar("x")),
 		transform: func(expr Expr) Expr {

@@ -1,5 +1,7 @@
 package gosymbol
 
+import "reflect"
+
 func (expr undefined) Simplify() Expr {
 	return simplify(expr)
 }
@@ -121,4 +123,28 @@ func rulesApplicator(expr Expr, ruleSlice []transformationRule) (Expr, int) {
 // TODO: figure this out
 func Expand(expr Expr) Expr {
 	panic("Not implemented yet")
+}
+
+// Flattens top level mul and add operands
+func topOperandFlatten(expr Expr) Expr {
+	// No modifiaction are done to non add and mul expressions
+	_, exprIsAdd := expr.(add)
+	_, exprIsMul := expr.(mul)
+	if !exprIsAdd && !exprIsMul {
+		return expr
+	}
+
+	for ix := 1; ix <= NumberOfOperands(expr); ix++ {
+		op := Operand(expr, ix)
+		switch opTyped := op.(type) {
+		case add:
+
+		case mul:
+
+		}
+
+		if reflect.DeepEqual(op, Const(0)) {
+			return true
+		}
+	}
 }

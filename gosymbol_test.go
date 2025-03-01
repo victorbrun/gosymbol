@@ -98,7 +98,31 @@ func TestIsBAE(t *testing.T) {
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
-			output := isBAE(test.input)
+			output := IsBAE(test.input)
+			if output != test.expectedOutput {
+				errMsg := fmt.Sprintf(
+					"Failed test: %v\nInput: %v\nExpected: %v\nGot: %v",
+					test.name,
+					test.input,
+					test.expectedOutput,
+					output,
+				)
+				t.Error(errMsg)
+			}
+		})
+	}
+}
+
+func TestIsASAE(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          Expr
+		expectedOutput bool
+	}{}
+
+	for ix, test := range tests {
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			output := IsASAE(test.input)
 			if output != test.expectedOutput {
 				errMsg := fmt.Sprintf(
 					"Failed test: %v\nInput: %v\nExpected: %v\nGot: %v",
