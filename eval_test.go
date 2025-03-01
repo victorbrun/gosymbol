@@ -63,7 +63,7 @@ func TestExprEval(t *testing.T) {
 				expr: Div(Var("X"), Var("Y")),
 				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
-			expectedOutput: Frac(Int(1), Int(2)),
+			expectedOutput: Div(Int(1), Int(2)).(rational),
 		},
 		{
 			input: inputArgs{
@@ -84,7 +84,7 @@ func TestExprEval(t *testing.T) {
 				expr: Pow(Var("X"), Int(-1)),
 				args: Arguments{Var("X"): Int(10)},
 			},
-			expectedOutput: Frac(Int(1), Int(10)),
+			expectedOutput: Div(Int(1), Int(10)).(rational),
 		},
 	}
 

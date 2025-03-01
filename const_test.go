@@ -15,7 +15,7 @@ func TestNumerator(t *testing.T) {
 	}{
 		{
 			name:           "numerator of fraction n/m is n",
-			input:          Frac(Int(1), Int(2)),
+			input:          Div(Int(1), Int(2)).(rational),
 			expectedOutput: Int(1),
 		},
 		{
@@ -44,7 +44,7 @@ func TestDenominator(t *testing.T) {
 	}{
 		{
 			name:           "denominator of fraction n/m is m",
-			input:          Frac(Int(1), Int(2)),
+			input:          Div(Int(1), Int(2)).(rational),
 			expectedOutput: Int(2),
 		},
 		{
@@ -73,17 +73,17 @@ func TestApprox(t *testing.T) {
 	}{
 		{
 			name:           "approx of fraction 1/2",
-			input:          Frac(Int(1), Int(2)),
+			input:          Div(Int(1), Int(2)).(rational),
 			expectedOutput: 0.5,
 		},
 		{
 			name:           "approx of fraction 1/0 (infinity)",
-			input:          Frac(Int(1), Int(0)),
+			input:          Div(Int(1), Int(0)).(rational),
 			expectedOutput: math.Inf(1),
 		},
 		{
 			name:           "approx of empty fraction NaN",
-			input:          EmptyFraction,
+			input:          Undefined(),
 			expectedOutput: math.NaN(),
 		},
 	}
@@ -107,18 +107,18 @@ func TestSimplifyRational(t *testing.T) {
 	}{
 		{
 			name:           "simplify fraction 4/2",
-			input:          Frac(Int(-4), Int(2)),
+			input:          Div(Int(-4), Int(2)).(rational),
 			expectedOutput: Int(-2),
 		},
 		{
 			name:           "simplify fraction 0/1",
-			input:          Frac(Int(0), Int(1)),
+			input:          Div(Int(0), Int(1)).(rational),
 			expectedOutput: Int(0),
 		},
 		{
 			name:           "simplify empty fraction",
-			input:          EmptyFraction,
-			expectedOutput: EmptyFraction,
+			input:          Undefined(),
+			expectedOutput: Undefined(),
 		},
 	}
 
@@ -142,9 +142,9 @@ func TestRatMul(t *testing.T) {
 	}{
 		{
 			name:           "multiply fractions 1/2 * 3/4",
-			input1:         Frac(Int(1), Int(2)),
-			input2:         Frac(Int(3), Int(4)),
-			expectedOutput: Frac(Int(3), Int(8)),
+			input1:         Div(Int(1), Int(2)).(rational),
+			input2:         Div(Int(3), Int(4)).(rational),
+			expectedOutput: Div(Int(3), Int(8)).(rational),
 		},
 		{
 			name:           "multiply integer 2 * 3",
@@ -154,9 +154,9 @@ func TestRatMul(t *testing.T) {
 		},
 		{
 			name:           "multiply by empty fraction",
-			input1:         Frac(Int(1), Int(2)),
-			input2:         EmptyFraction,
-			expectedOutput: EmptyFraction,
+			input1:         Div(Int(1), Int(2)).(rational),
+			input2:         Undefined(),
+			expectedOutput: Undefined(),
 		},
 	}
 
@@ -180,9 +180,9 @@ func TestRatDiv(t *testing.T) {
 	}{
 		{
 			name:           "divide fractions 1/2 ÷ 3/4",
-			input1:         Frac(Int(1), Int(2)),
-			input2:         Frac(Int(3), Int(4)),
-			expectedOutput: Frac(Int(2), Int(3)),
+			input1:         Div(Int(1), Int(2)).(rational),
+			input2:         Div(Int(3), Int(4)).(rational),
+			expectedOutput: Div(Int(2), Int(3)).(rational),
 		},
 		{
 			name:           "divide integer 6 ÷ 3",
@@ -192,9 +192,9 @@ func TestRatDiv(t *testing.T) {
 		},
 		{
 			name:           "divide by empty fraction",
-			input1:         Frac(Int(1), Int(2)),
-			input2:         EmptyFraction,
-			expectedOutput: EmptyFraction,
+			input1:         Div(Int(1), Int(2)).(rational),
+			input2:         Undefined(),
+			expectedOutput: Undefined(),
 		},
 	}
 
@@ -218,9 +218,9 @@ func TestRatPow(t *testing.T) {
 	}{
 		{
 			name:           "power of fraction (1/2)^2",
-			input:          Frac(Int(1), Int(2)),
+			input:          Div(Int(1), Int(2)).(rational),
 			exponent:       Int(2),
-			expectedOutput: Frac(Int(1), Int(4)),
+			expectedOutput: Div(Int(1), Int(4)).(rational),
 		},
 		{
 			name:           "power of integer 2^3",
@@ -230,15 +230,15 @@ func TestRatPow(t *testing.T) {
 		},
 		{
 			name:           "power of fraction (3/2)^-1",
-			input:          Frac(Int(3), Int(2)),
+			input:          Div(Int(3), Int(2)).(rational),
 			exponent:       Int(-1),
-			expectedOutput: Frac(Int(2), Int(3)),
+			expectedOutput: Div(Int(2), Int(3)).(rational),
 		},
 		{
 			name:           "power of empty fraction",
-			input:          EmptyFraction,
+			input:          Undefined(),
 			exponent:       Int(2),
-			expectedOutput: EmptyFraction,
+			expectedOutput: Undefined(),
 		},
 	}
 
@@ -262,9 +262,9 @@ func TestRatAdd(t *testing.T) {
 	}{
 		{
 			name:           "add fractions 1/2 + 3/4",
-			input1:         Frac(Int(1), Int(2)),
-			input2:         Frac(Int(3), Int(4)),
-			expectedOutput: Frac(Int(5), Int(4)),
+			input1:         Div(Int(1), Int(2)).(rational),
+			input2:         Div(Int(3), Int(4)).(rational),
+			expectedOutput: Div(Int(5), Int(4)).(rational),
 		},
 		{
 			name:           "add integer 1 + 2",
@@ -304,13 +304,13 @@ func TestRatMinus(t *testing.T) {
 		},
 		{
 			name:           "minus of fraction 1/2",
-			input:          Frac(Int(1), Int(2)),
-			expectedOutput: Frac(Int(-1), Int(2)),
+			input:          Div(Int(1), Int(2)).(rational),
+			expectedOutput: Div(Int(-1), Int(2)).(rational),
 		},
 		{
 			name:           "minus of empty fraction",
-			input:          EmptyFraction,
-			expectedOutput: EmptyFraction,
+			input:          Undefined(),
+			expectedOutput: Undefined(),
 		},
 	}
 
@@ -334,9 +334,9 @@ func TestRatSubtract(t *testing.T) {
 	}{
 		{
 			name:           "subtract fractions 3/4 - 1/2",
-			input1:         Frac(Int(3), Int(4)),
-			input2:         Frac(Int(1), Int(2)),
-			expectedOutput: Frac(Int(1), Int(4)),
+			input1:         Div(Int(3), Int(4)).(rational),
+			input2:         Div(Int(1), Int(2)).(rational),
+			expectedOutput: Div(Int(1), Int(4)).(rational),
 		},
 		{
 			name:           "subtract integer 5 - 2",
@@ -346,9 +346,9 @@ func TestRatSubtract(t *testing.T) {
 		},
 		{
 			name:           "subtract from empty fraction",
-			input1:         EmptyFraction,
-			input2:         Frac(Int(1), Int(2)),
-			expectedOutput: EmptyFraction,
+			input1:         Undefined(),
+			input2:         Div(Int(1), Int(2)).(rational),
+			expectedOutput: Undefined(),
 		},
 	}
 
@@ -376,13 +376,13 @@ func TestRatAbs(t *testing.T) {
 		},
 		{
 			name:           "absolute value of fraction -1/2",
-			input:          Frac(Int(-1), Int(2)),
-			expectedOutput: Frac(Int(1), Int(2)),
+			input:          Div(Int(-1), Int(2)).(rational),
+			expectedOutput: Div(Int(1), Int(2)).(rational),
 		},
 		{
 			name:           "absolute value of empty fraction",
-			input:          EmptyFraction,
-			expectedOutput: EmptyFraction,
+			input:          Undefined(),
+			expectedOutput: Undefined(),
 		},
 	}
 

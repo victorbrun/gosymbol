@@ -66,11 +66,24 @@ otherwise it returns a mul type. This is to avoid unneccessary
 calls to Simplify.
 */
 func Div(lhs, rhs Expr) Expr {
+	num, okNum := lhs.(integer)
+	den, okDen := rhs.(integer)
+	if okNum && okDen {
+		if intMul(num, den).value >= 0 {
+			return fraction{num: intAbs(num), den: intAbs(den)}
+		}
+		return fraction{num: intNeg(intAbs(num)), den: intAbs(den)}
+	}
+	if Equal(rhs, Int(0)) {
+		return undefined{}
+	}
+	if Equal(rhs, Int(1)) {
+		return lhs
+	}
 	if Equal(lhs, Int(1)) {
 		return Pow(rhs, Int(-1))
-	} else {
-		return Mul(lhs, Pow(rhs, Int(-1)))
 	}
+	return Mul(lhs, Pow(rhs, Int(-1)))
 }
 
 func Exp(arg Expr) exp {
@@ -129,16 +142,6 @@ func (rule transformationRule) match(expr Expr) bool {
 
 func Int(value int64) integer {
 	return integer{value: value}
-}
-
-func Frac(a integer, b integer) fraction {
-	if b == Int(0) {
-		return EmptyFraction
-	}
-	if intMul(a, b).value >= 0 {
-		return fraction{num: intAbs(a), den: intAbs(b)}
-	}
-	return fraction{num: intNeg(intAbs(a)), den: intAbs(b)}
 }
 
 func Real(symbol string) variable {

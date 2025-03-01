@@ -14,8 +14,8 @@ func TestSimplify(t *testing.T) {
 	}{
 		{
 			name:           "Sum between rationals is simplified to a single rational",
-			input:          Add(Int(6), Frac(Int(2), Int(3))),
-			expectedOutput: Frac(Int(20), Int(3)),
+			input:          Add(Int(6), Div(Int(2), Int(3))),
+			expectedOutput: Div(Int(20), Int(3)),
 		},
 		{
 			name:           "Sum between integers is simpliied to a single integer",
@@ -99,7 +99,7 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "Mult between rationals is simplified to a single rational",
-			input:          Mul(Int(6), Frac(Int(2), Int(3))),
+			input:          Mul(Int(6), Div(Int(2), Int(3))),
 			expectedOutput: Int(4),
 		},
 		{
