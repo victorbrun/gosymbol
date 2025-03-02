@@ -54,7 +54,7 @@ func replaceOperand(t Expr, n int, u Expr) Expr {
 	switch v := t.(type) {
 	case undefined:
 		return v
-	case constant:
+	case rational:
 		return v
 	case variable:
 		return v
@@ -109,9 +109,9 @@ func Equal(t, u Expr) bool {
 	case undefined:
 		_, ok := u.(undefined)
 		return ok
-	case constant:
-		uTyped, ok := u.(constant)
-		return ok && v.Value == uTyped.Value
+	case rational:
+		uTyped, ok := u.(rational)
+		return ok && v == uTyped
 	case variable:
 		uTyped, ok := u.(variable)
 		return ok && v.Name == uTyped.Name
@@ -170,7 +170,7 @@ func Equal(t, u Expr) bool {
 
 // Returns true if t and u are equal up to type
 // for every element in resp. syntax tree, otherwise
-// false. This means that two constants of different
+// false. This means that two rationals of different
 // value, or variables with different names, would
 // return true.
 func TypeEqual(t, u Expr) bool {
@@ -185,8 +185,8 @@ func TypeEqual(t, u Expr) bool {
 	case undefined:
 		_, ok := u.(undefined)
 		return ok
-	case constant:
-		_, ok := u.(constant)
+	case rational:
+		_, ok := u.(rational)
 		return ok
 	case variable:
 		_, ok := u.(variable)
@@ -218,9 +218,9 @@ func RecContains(expr, u Expr) bool {
 	case undefined:
 		_, ok := u.(undefined)
 		return ok
-	case constant:
-		uTyped, ok := u.(constant)
-		return ok && v.Value == uTyped.Value
+	case rational:
+		uTyped, ok := u.(rational)
+		return ok && v == uTyped
 	case variable:
 		uTyped, ok := u.(variable)
 		return ok && v.Name == uTyped.Name
@@ -299,7 +299,7 @@ func variables(expr Expr, targetSlice *[]Expr) {
 	switch v := expr.(type) {
 	case undefined:
 		return
-	case constant:
+	case rational:
 		return
 	case variable:
 		*targetSlice = append(*targetSlice, v)
@@ -318,7 +318,7 @@ func NumberOfOperands(expr Expr) int {
 	switch v := expr.(type) {
 	case undefined:
 		return 0
-	case constant:
+	case rational:
 		return 0
 	case variable:
 		return 0
@@ -355,7 +355,7 @@ func Operand(expr Expr, n int) Expr {
 	switch v := expr.(type) {
 	case undefined:
 		return nil
-	case constant:
+	case rational:
 		return nil
 	case variable:
 		return nil
@@ -395,7 +395,7 @@ func Depth(expr Expr) int {
 	switch expr.(type) {
 	case undefined:
 		return 0
-	case constant:
+	case rational:
 		return 0
 	case variable:
 		return 0

@@ -42,7 +42,9 @@ func TopOperandSort(expr Expr) Expr {
 	return expr
 }
 
-func orderRule1(e1, e2 constant) bool              { return e1.Value < e2.Value }
+func orderRule1(e1, e2 rational) bool {
+	return e1.approx() < e2.approx()
+}
 func orderRule2(e1, e2 variable) bool              { return e1.Name < e2.Name }
 func orderRule2_1(e1, e2 constrainedVariable) bool { return e1.Name < e2.Name }
 func orderRule3(e1, e2 add) bool {
@@ -118,7 +120,7 @@ The function returns true if e1 "comes before" e2 and false otherwis false.
 "comes before" is defined using the order relation defined in [1] (with some
 extensions to include functions like exp, sin, etc).
 E.g.:
-O-1: if e1 and e2 are constants then compare(e1, e2) -> e1 < e2
+O-1: if e1 and e2 are rationals then compare(e1, e2) -> e1 < e2
 O-2: if e1 and e2 are variables compare(e1, e2) is defined by the
 lexographical order of the symbols.
 O-3: etc.
@@ -138,16 +140,16 @@ way around.
 */
 func compare(e1, e2 Expr) bool {
 	switch e1Typed := e1.(type) {
-	case constant:
+	case rational:
 		switch e2Typed := e2.(type) {
-		case constant:
+		case rational:
 			return orderRule1(e1Typed, e2Typed)
 		default:
 			return true
 		}
 	case variable:
 		switch e2Typed := e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return orderRule2(e1Typed, e2Typed)
@@ -158,7 +160,7 @@ func compare(e1, e2 Expr) bool {
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Const(1)), e2)
+			return compare(Pow(e1, (Int(1))), e2)
 		case exp:
 			return compare(Exp(e1), e2)
 		case log:
@@ -171,7 +173,7 @@ func compare(e1, e2 Expr) bool {
 		}
 	case constrainedVariable:
 		switch e2Typed := e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return e1Typed.Name < e2Typed.Name // This is very ugly :(
@@ -182,7 +184,7 @@ func compare(e1, e2 Expr) bool {
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Const(1)), e2)
+			return compare(Pow(e1, (Int(1))), e2)
 		case exp:
 			return compare(Exp(e1), e2)
 		case log:
@@ -195,7 +197,7 @@ func compare(e1, e2 Expr) bool {
 		}
 	case add:
 		switch e2Typed := e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return compare(e1, Add(e2))
@@ -206,7 +208,7 @@ func compare(e1, e2 Expr) bool {
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Const(1)), e2)
+			return compare(Pow(e1, (Int(1))), e2)
 		case exp:
 			return compare(e1, Add(e2))
 		case log:
@@ -219,7 +221,7 @@ func compare(e1, e2 Expr) bool {
 		}
 	case mul:
 		switch e2Typed := e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return compare(e1, Mul(e2))
@@ -243,31 +245,31 @@ func compare(e1, e2 Expr) bool {
 		}
 	case pow:
 		switch e2Typed := e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
-			return compare(e1, Pow(e2, Const(1)))
+			return compare(e1, Pow(e2, (Int(1))))
 		case constrainedVariable:
-			return compare(e1, Pow(e2, Const(1)))
+			return compare(e1, Pow(e2, (Int(1))))
 		case add:
-			return compare(e1, Pow(e2, Const(1)))
+			return compare(e1, Pow(e2, (Int(1))))
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
 			return orderRule4(e1Typed, e2Typed)
 		case exp:
-			return compare(e1, Pow(e2, Const(1)))
+			return compare(e1, Pow(e2, (Int(1))))
 		case log:
-			return compare(e1, Pow(e2, Const(1)))
+			return compare(e1, Pow(e2, (Int(1))))
 		case sqrt:
-			return compare(e1, Pow(e2, Const(1)))
+			return compare(e1, Pow(e2, (Int(1))))
 		default:
 			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 			panic(errMsg)
 		}
 	case exp:
 		switch e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return compare(e1, Exp(e2))
@@ -278,7 +280,7 @@ func compare(e1, e2 Expr) bool {
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Const(1)), e2)
+			return compare(Pow(e1, (Int(1))), e2)
 		case exp:
 			e1Arg := Operand(e1, 1)
 			e2Arg := Operand(e2, 1)
@@ -297,7 +299,7 @@ func compare(e1, e2 Expr) bool {
 		}
 	case log:
 		switch e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return compare(e1, Exp(e2))
@@ -308,7 +310,7 @@ func compare(e1, e2 Expr) bool {
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Const(1)), e2)
+			return compare(Pow(e1, (Int(1))), e2)
 		case exp:
 			e1Arg := Operand(e1, 1)
 			e2Arg := Operand(e2, 1)
@@ -327,7 +329,7 @@ func compare(e1, e2 Expr) bool {
 		}
 	case sqrt:
 		switch e2.(type) {
-		case constant:
+		case rational:
 			return false
 		case variable:
 			return compare(e1, Exp(e2))
@@ -338,7 +340,7 @@ func compare(e1, e2 Expr) bool {
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Const(1)), e2)
+			return compare(Pow(e1, Int(1)), e2)
 		case exp:
 			e1Arg := Operand(e1, 1)
 			e2Arg := Operand(e2, 1)

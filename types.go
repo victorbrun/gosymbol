@@ -1,8 +1,8 @@
 package gosymbol
 
 type VarName string
-type Arguments map[variable]float64
-type Func func(Arguments) float64
+type Arguments map[variable]Expr
+type Func func(Arguments) Expr
 
 type Expr interface {
 	// Public functions
@@ -59,15 +59,9 @@ type undefined struct {
 	Expr
 }
 
-type constant struct {
-	Expr
-	Value float64
-}
-
 type variable struct {
 	Expr
 	Name VarName
-
 	// Indicating if variable is part of a pattern
 	isPattern bool
 }
@@ -103,4 +97,23 @@ type log struct {
 type sqrt struct {
 	Expr
 	Arg Expr
+}
+
+/* Const types */
+
+type integer struct {
+	value int64
+}
+
+type rational interface {
+	Expr
+	approx() float64
+	numerator() integer
+	denominator() integer
+	simplifyRational() rational
+}
+
+type fraction struct {
+	num integer
+	den integer
 }

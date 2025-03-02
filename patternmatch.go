@@ -17,9 +17,9 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 		}
 		return false
 
-	case constant:
-		if c, ok := expr.(constant); ok {
-			return c.Value == p.Value
+	case rational:
+		if c, ok := expr.(rational); ok {
+			return c == p
 		}
 		return false
 
