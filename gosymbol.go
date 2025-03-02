@@ -1,5 +1,10 @@
 package gosymbol
 
+import "fmt"
+
+var PI = Real("π")
+var E = Exp(Int(1))
+
 /* Factories */
 
 func Undefined() undefined {
@@ -20,6 +25,14 @@ func ConstrVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
 
 func constraPatternVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
 	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: true}
+}
+
+func Int(value int64) integer {
+	return integer{value: value}
+}
+
+func Real(symbol string) variable {
+	return variable{Name: VarName(symbol), isPattern: false}
 }
 
 func Neg(arg Expr) mul {
@@ -82,6 +95,11 @@ func Div(lhs, rhs Expr) Expr {
 		return Pow(rhs, Int(-1))
 	}
 	return Mul(lhs, Pow(rhs, Int(-1)))
+}
+
+// Constructs fraction
+func Frac(nom integer, denom integer) fraction {
+	return Div(nom, denom).(fraction)
 }
 
 func Exp(arg Expr) exp {
@@ -269,30 +287,211 @@ func IsASAE(expr Expr) bool {
 }
 
 // ASAE-4
-// TODO
-func mulIsASAE(expr mul) bool {
-	panic("Not implemented")
+// u is a product satisfying all of the following properties:
+//
+// 0. u has two or more operands u1 * u2 * ...
+//
+// 1. u has all admissible factors
+//
+// 2. At most one operand ui is a constant (integer or fraction)
+//
+// 3. If i != j, then AsaeBase(ui) != AsaeBase(uj)
+//
+// 4. If i < j, then compare(ui, uj) = true
+func mulIsASAE(u mul) bool {
+	// 0.
+	if len(u.Operands) < 2 {
+		return false
+	}
+
+	// 1.
+	if !hasAllAdmissibleFactors(u) {
+		return false
+	}
+
+	// 2.
+	constCount := 0
+	for _, factor := range u.Operands {
+		switch factor.(type) {
+		case integer:
+			constCount++
+		case fraction:
+			constCount++
+		}
+	}
+	if constCount > 0 {
+		return false
+	}
+
+	// 3. and 4.
+	for ix := 1; ix <= len(u.Operands); ix++ {
+		ui := Operand(u, ix)
+		for jx := ix + 1; jx <= len(u.Operands); jx++ {
+			uj := Operand(u, jx)
+			if Equal(AsaeBase(ui), AsaeBase(uj)) {
+				return false
+			} else if !compare(ui, uj) {
+				return false
+			}
+		}
+	}
+
+	// If we have not returned before arriving here,
+	// every property is satisfied
+	return true
+}
+
+// Returns if expr has all admissible factors.
+//
+// A factor is said to be admissible if it
+// is an ASAE which can be either an integer
+// (!= 0, 1), fraction, symbol (except undefined),
+// sum, power, function.
+//
+// Note: the factor of a product cannot be a product
+// for it to be admissible.
+func hasAllAdmissibleFactors(expr mul) bool {
+	// Iterating over each factor and checking if
+	// it is a admissible factor. Returning false
+	// at first non-admissible factor
+	for _, factor := range expr.Operands {
+		switch factor.(type) {
+		case undefined:
+			return false
+		case mul:
+			return false
+		case integer:
+			if Equal(factor, Int(0)) || Equal(factor, Int(1)) {
+				return false
+			}
+		default:
+			if !IsASAE(factor) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // ASAE-5
 // TODO
 func addIsASAE(expr add) bool {
-	panic("Not implemented")
+	return false
 }
 
 // ASAE-6
 // TODO
 func powIsASAE(expr pow) bool {
-	panic("Not implemented")
+	return false
 }
 
-func Int(value int64) integer {
-	return integer{value: value}
+// Returns the base of an ASAE expression
+//
+// Examples:
+//
+// 1. AsaeBase(x^2) = x
+//
+// 2. AsaeBase(x) = x
+func AsaeBase(expr Expr) Expr {
+	switch expr.(type) {
+	case pow:
+		return Operand(expr, 1)
+	case integer:
+		return Undefined()
+	case fraction:
+		return Undefined()
+	default:
+		return expr
+	}
 }
 
-func Real(symbol string) variable {
-	return variable{Name: VarName(symbol), isPattern: false}
+// Returns the base of an ASAE expression
+//
+// Examples:
+//
+// 1. AsaeExponent(x^2) = 2
+//
+// 2. AsaeExponent(x) = 1
+func AsaeExponent(expr Expr) Expr {
+	switch expr.(type) {
+	case pow:
+		return Operand(expr, 2)
+	case integer:
+		return Undefined()
+	case fraction:
+		return Undefined()
+	default:
+		return Int(1)
+	}
 }
 
-var PI = Real("π")
-var E = Exp(Int(1))
+// Returns the term from a ASAE multiplication.
+//
+// Examples:
+//
+// 1. Term(x) = *x
+//
+// 2. Term(2*y) = *y
+//
+// 3. Term(x*y) = x*y
+func AsaeTerm(expr Expr) Expr {
+	// The steps taken in this function only works
+	// if the input expression is already an ASAE
+	if !IsASAE(expr) {
+		panic(fmt.Sprintf("Expression is not an ASAE: %v", expr))
+	}
+
+	switch exprTyped := expr.(type) {
+	case integer:
+		return Undefined()
+	case fraction:
+		return Undefined()
+	case mul:
+		op1 := Operand(expr, 1)
+		switch op1.(type) {
+		case integer:
+			return Mul(exprTyped.Operands[1:]...)
+		case fraction:
+			return Mul(exprTyped.Operands[1:]...)
+		default:
+			return expr
+		}
+	default:
+		return Mul(expr)
+	}
+
+}
+
+// Returns the constant from a ASAE multiplication.
+//
+// Examples:
+//
+// 1. Term(x) = 1
+//
+// 2. Term(2*y) = 2
+//
+// 3. Term(x*y) = 1
+func AsaeConst(expr Expr) Expr {
+	if !IsASAE(expr) {
+		panic(fmt.Sprintf("Expression is not an ASAE: %v", expr))
+	}
+
+	switch expr.(type) {
+	case integer:
+		return Undefined()
+	case fraction:
+		return Undefined()
+	case mul:
+		op1 := Operand(expr, 1)
+		switch op1.(type) {
+		case integer:
+			return op1
+		case fraction:
+			return op1
+		default:
+			return Int(1)
+		}
+	default:
+		return Int(1)
+	}
+}

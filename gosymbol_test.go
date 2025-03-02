@@ -118,12 +118,124 @@ func TestIsASAE(t *testing.T) {
 		name           string
 		input          Expr
 		expectedOutput bool
-	}{}
+	}{
+		// Test ASAE-4
+		{
+			name:           "2 * x * y * z^2",
+			input:          Mul(Int(2), Var("x"), Var("y"), Pow(Var("z"), Int(2))),
+			expectedOutput: true,
+		},
+		{
+			name:           "2 * (x * y) * z^2 (ASAE-4-1 is not satisfied)",
+			input:          Mul(Int(2), Mul(Var("x"), Var("y")), Pow(Var("z"), Int(2))),
+			expectedOutput: false,
+		},
+		{
+			name:           "1 * x * y * z^2 (ASAE-4-1 is not satisfied)",
+			input:          Mul(Int(1), Var("x"), Var("y"), Pow(Var("z"), Int(2))),
+			expectedOutput: false,
+		},
+		{
+			name:           "2 * x * y * z * z^2 (ASAE-4-3 is not satisfied)",
+			input:          Mul(Int(2), Var("x"), Var("y"), Var("z"), Pow(Var("z"), Int(2))),
+			expectedOutput: false,
+		},
+	}
 
 	for ix, test := range tests {
 		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
 			output := IsASAE(test.input)
 			if output != test.expectedOutput {
+				errMsg := fmt.Sprintf(
+					"Failed test: %v\nInput: %v\nExpected: %v\nGot: %v",
+					test.name,
+					test.input,
+					test.expectedOutput,
+					output,
+				)
+				t.Error(errMsg)
+			}
+		})
+	}
+}
+
+func TestAsaeTerm(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          Expr
+		expectedOutput Expr
+	}{
+		{
+			name:           "term(x) = *x",
+			input:          Var("x"),
+			expectedOutput: Mul(Var("x")),
+		},
+		{
+			name:           "term(2*y) = *y",
+			input:          Mul(Int(2), Var("y")),
+			expectedOutput: Mul(Var("y")),
+		},
+		{
+			name:           "term(x*y) = x*y",
+			input:          Mul(Var("x"), Var("y")),
+			expectedOutput: Mul(Var("x"), Var("y")),
+		},
+	}
+
+	for ix, test := range tests {
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			output := AsaeTerm(test.input)
+			if !Equal(output, test.expectedOutput) {
+				errMsg := fmt.Sprintf(
+					"Failed test: %v\nInput: %v\nExpected: %v\nGot: %v",
+					test.name,
+					test.input,
+					test.expectedOutput,
+					output,
+				)
+				t.Error(errMsg)
+			}
+		})
+	}
+}
+
+func TestAsaeConst(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          Expr
+		expectedOutput Expr
+	}{
+		{
+			name:           "const(x) = 1",
+			input:          Var("x"),
+			expectedOutput: Int(1),
+		},
+		{
+			name:           "const(2*y) = 2",
+			input:          Mul(Int(2), Var("y")),
+			expectedOutput: Int(2),
+		},
+		{
+			name:           "const(x*y) = x*y",
+			input:          Mul(Var("x"), Var("y")),
+			expectedOutput: Int(1),
+		},
+		{
+			name:           "const(69) = undefined",
+			input:          Int(69),
+			expectedOutput: Undefined(),
+		},
+		{
+			name:           "const(6/9) = undefined",
+			input:          Frac(Int(6), Int(9)),
+			expectedOutput: Undefined(),
+		},
+	}
+
+	for ix, test := range tests {
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			output := AsaeConst(test.input)
+			if !Equal(output, test.expectedOutput) {
 				errMsg := fmt.Sprintf(
 					"Failed test: %v\nInput: %v\nExpected: %v\nGot: %v",
 					test.name,
