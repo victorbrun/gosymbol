@@ -61,7 +61,7 @@ func TestIsBAE(t *testing.T) {
 	}{
 		{
 			name:           "2/4 is BAE",
-			input:          Div(Const(2), Const(4)),
+			input:          Div(Int(2), Int(4)),
 			expectedOutput: true,
 		},
 		{
@@ -71,7 +71,7 @@ func TestIsBAE(t *testing.T) {
 		},
 		{
 			name:           "a + (b^3 / b)",
-			input:          Add(Var("a"), Div(Pow(Var("b"), Const(3)), Var("b"))),
+			input:          Add(Var("a"), Div(Pow(Var("b"), Int(3)), Var("b"))),
 			expectedOutput: true,
 		},
 		{
@@ -81,17 +81,17 @@ func TestIsBAE(t *testing.T) {
 		},
 		{
 			name:           "2 * 3 * x * x^2",
-			input:          Mul(Const(2), Const(3), Var("x"), Pow(Var("x"), Const(2))),
+			input:          Mul(Int(2), Int(3), Var("x"), Pow(Var("x"), Int(2))),
 			expectedOutput: true,
 		},
 		{
 			name:           "0^3",
-			input:          Pow(Const(0), Const(3)),
+			input:          Pow(Int(0), Int(3)),
 			expectedOutput: true,
 		},
 		{
 			name:           "2 / (a - a)",
-			input:          Div(Const(2), Add(Var("a"), Neg(Var("a")))),
+			input:          Div(Int(2), Add(Var("a"), Neg(Var("a")))),
 			expectedOutput: true,
 		},
 	}

@@ -20,7 +20,7 @@ func negOrZeroConstant(expr Expr) bool {
 }
 
 var sumSimplificationRules []transformationRule = []transformationRule{
-	
+
 	{ // Addition with only one operand simplify to the operand
 		pattern: Add(patternVar("x")),
 		transform: func(expr Expr) Expr {
@@ -35,7 +35,7 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 	},
 	{
 		// 0 + x = x
-		pattern: Add(Const(0), patternVar("x")),
+		pattern: Add(Int(0), patternVar("x")),
 		transform: func(expr Expr) Expr {
 			return Operand(expr, 2)
 		},
@@ -156,7 +156,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 				return false
 			}
 
-			// Checks if the arguments of expr contains Const(1)
+			// Checks if the arguments of expr contains Int(1)
 			// Note: we cannot use RecContains as it would return true
 			// on any 1, e.g, even on x^1.
 			one := Int(1)

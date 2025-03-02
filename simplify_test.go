@@ -44,7 +44,7 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "0^(-1) = undefined",
-			input:          Pow(Const(0), Const(-1)),
+			input:          Pow(Int(0), Int(-1)),
 			expectedOutput: Undefined(),
 		},
 		{
@@ -59,8 +59,8 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "1^x = 1",
-			input:          Pow(Const(1), Var("x")),
-			expectedOutput: Const(1),
+			input:          Pow(Int(1), Var("x")),
+			expectedOutput: Int(1),
 		},
 		{
 			name:           "x^0 = 1",
@@ -69,7 +69,7 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x^1 = x",
-			input:          Pow(Var("x"), Const(1)),
+			input:          Pow(Var("x"), Int(1)),
 			expectedOutput: Var("x"),
 		},
 		{
@@ -164,12 +164,12 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "x + 0 = x",
-			input:          Add(Var("x"), Const(0)),
+			input:          Add(Var("x"), Int(0)),
 			expectedOutput: Var("x"),
 		},
 		{
 			name:           "0 + x = x",
-			input:          Add(Const(0), Var("x")),
+			input:          Add(Int(0), Var("x")),
 			expectedOutput: Var("x"),
 		},
 
@@ -182,13 +182,13 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "2x + y + (3/2)x = (7/2)x + y",
-			input:          Add(Mul(Const(2), Var("x")), Var("y"), Mul(Div(Const(3), Const(2)), Var("x"))),
-			expectedOutput: Add(Mul(Div(Const(7), Const(2)), Var("x")), Var("y")),
+			input:          Add(Mul(Int(2), Var("x")), Var("y"), Mul(Div(Int(3), Int(2)), Var("x"))),
+			expectedOutput: Add(Mul(Div(Int(7), Int(2)), Var("x")), Var("y")),
 		},
 		{
 			name:           "x + 1 + (-1)(x + 1) = 0",
-			input:          Add(Var("x"), Const(1), Mul(Const(-1), Add(Var("x"), Const(1)))),
-			expectedOutput: Const(0),
+			input:          Add(Var("x"), Int(1), Mul(Int(-1), Add(Var("x"), Int(1)))),
+			expectedOutput: Int(0),
 		},
 		{
 			name:           "( ( ( u + v ) * w ) * x + y ) + z = ( u + v ) * w * x + y + z ",
@@ -197,48 +197,48 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "2(xyz) + 3x(yz) + 4(xy)z = 9xyz",
-			input:          Add(Mul(Const(2), Mul(Var("x"), Var("y"), Var("z"))), Mul(Const(3), Var("x"), Mul(Var("y"), Var("z"))), Mul(Const(4), Mul(Var("x"), Var("y")), Var("z"))),
-			expectedOutput: Mul(Const(9), Var("x"), Var("y"), Var("z")),
+			input:          Add(Mul(Int(2), Mul(Var("x"), Var("y"), Var("z"))), Mul(Int(3), Var("x"), Mul(Var("y"), Var("z"))), Mul(Int(4), Mul(Var("x"), Var("y")), Var("z"))),
+			expectedOutput: Mul(Int(9), Var("x"), Var("y"), Var("z")),
 		},
 
 		// Below tests are taken from pages 74 - 76 in
 		// COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003.
 		{
 			name:           "( x * y ) * ( x * y )^2 = x^3 * y^3",
-			input:          Mul(Mul(Var("x"), Var("y")), Pow(Mul(Var("x"), Var("y")), Const(2))),
-			expectedOutput: Mul(Pow(Var("x"), Const(3)), Pow(Var("y"), Const(3))),
+			input:          Mul(Mul(Var("x"), Var("y")), Pow(Mul(Var("x"), Var("y")), Int(2))),
+			expectedOutput: Mul(Pow(Var("x"), Int(3)), Pow(Var("y"), Int(3))),
 		},
 		{
 			name:           "( x * y ) * ( x * y )^(1/2) = x * y * ( x  * y )^(1/2)",
-			input:          Mul(Mul(Var("x"), Var("y")), Pow(Mul(Var("x"), Var("y")), Div(Const(1), Const(2)))),
-			expectedOutput: Mul(Pow(Var("x"), Const(3)), Pow(Var("y"), Const(3))),
+			input:          Mul(Mul(Var("x"), Var("y")), Pow(Mul(Var("x"), Var("y")), Div(Int(1), Int(2)))),
+			expectedOutput: Mul(Pow(Var("x"), Int(3)), Pow(Var("y"), Int(3))),
 		},
 		{
 			name:           "( a * x^3 ) / x = a * x^2",
-			input:          Div(Mul(Var("a"), Pow(Var("x"), Const(3))), Var("x")),
-			expectedOutput: Mul(Var("a"), Pow(Var("x"), Const(2))),
+			input:          Div(Mul(Var("a"), Pow(Var("x"), Int(3))), Var("x")),
+			expectedOutput: Mul(Var("a"), Pow(Var("x"), Int(2))),
 		},
 
 		// Below tests are taken from pages 77 in
 		// COHEN, Joel S. Computer algebra and symbolic computation: Mathematical methods. AK Peters/CRC Press, 2003.
 		{
 			name:           "u / 0 = undefined",
-			input:          Div(Var("u"), Const(0)),
+			input:          Div(Var("u"), Int(0)),
 			expectedOutput: Undefined(),
 		},
 		{
 			name:           "0 / u = 0 (u ~= 0)",
-			input:          Div(Const(0), Const(1)),
-			expectedOutput: Const(0),
+			input:          Div(Int(0), Int(1)),
+			expectedOutput: Int(0),
 		},
 		{
 			name:           "0 / u = 0 (u ~= 0)",
-			input:          Div(Const(0), Const(-1)),
-			expectedOutput: Const(0),
+			input:          Div(Int(0), Int(-1)),
+			expectedOutput: Int(0),
 		},
 		{
 			name:           "u / 1",
-			input:          Div(Var("u"), Const(1)),
+			input:          Div(Var("u"), Int(1)),
 			expectedOutput: Var("u"),
 		},
 	}

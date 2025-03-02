@@ -74,8 +74,8 @@ func differentiate(expr Expr, v variable) Expr {
 		return Add(terms...)
 
 	case pow:
-		// IF EXPONENT IS CONSTANT: Power rule: D(x^a) = ax^(a-1)
-		// IF EXPONENT IS NOT CONSTANT: Exponential deriv: D(f^g) = D(exp(g*log(f))) = exp(g*log(f))*D(g*log(f))
+		// IF EXPONENT IS INT OR RAT: Power rule: D(x^a) = ax^(a-1)
+		// IF EXPONENT IS NOT INT OR RAT: Exponential deriv: D(f^g) = D(exp(g*log(f))) = exp(g*log(f))*D(g*log(f))
 		switch exponentTyped := e.Exponent.(type) {
 		case integer:
 			return Mul(e.Exponent, Pow(e.Base, intAdd(exponentTyped, Int(-1))), differentiate(e.Base, v))

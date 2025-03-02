@@ -190,8 +190,11 @@ func (rule transformationRule) match(expr Expr) bool {
 // 12. 3!.
 func IsBAE(expr Expr) bool {
 	switch expr.(type) {
-	case constant:
+	case integer:
 		// BAE-1
+		return true
+	case fraction:
+		// BAE-2
 		return true
 	case undefined:
 		// BAE-3
@@ -239,9 +242,12 @@ func IsBAE(expr Expr) bool {
 // - ASAE-3: u is a symbol except the Undefined symbol
 func IsASAE(expr Expr) bool {
 	switch exprTyped := expr.(type) {
-	case constant:
+	case integer:
 		//ASAE-1
 		return true
+	case fraction:
+		//ASAE-2
+		return Equal(exprTyped, exprTyped.simplifyRational())
 	case variable:
 		// ASAE-3
 		return true
@@ -265,19 +271,19 @@ func IsASAE(expr Expr) bool {
 // ASAE-4
 // TODO
 func mulIsASAE(expr mul) bool {
-	return false
+	panic("Not implemented")
 }
 
 // ASAE-5
 // TODO
 func addIsASAE(expr add) bool {
-	return false
+	panic("Not implemented")
 }
 
 // ASAE-6
 // TODO
 func powIsASAE(expr pow) bool {
-	return false
+	panic("Not implemented")
 }
 
 func Int(value int64) integer {

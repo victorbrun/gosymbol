@@ -18,7 +18,7 @@ func TestD(t *testing.T) {
 		expectedOutput Expr
 	}{
 		{ // Test 1
-			name: "Diff of constant",
+			name: "Diff of integer",
 			input: inputArgs{
 				expr:    Int(10),
 				diffVar: Var("X"),
