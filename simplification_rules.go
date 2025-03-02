@@ -60,12 +60,6 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Mul(Int(2), Operand(expr, 1))
 		},
 	},
-	{ // yx + zx = 2x.
-		pattern: Add(Mul(patternVar("z"), patternVar("x")), Mul(patternVar("y"), patternVar("x"))),
-		transform: func(expr Expr) Expr {
-			return Mul(Int(2), Operand(expr, 1))
-		},
-	},
 	{ // Sum of constants is replaced with the constant that the sum evaluates to.
 		// Note that sum of some constants will replace the constants with their sum.
 		patternFunction: func(expr Expr) bool {
@@ -194,7 +188,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Add(Mul(u, v), Mul(u, w))
 		},
 	},
-	{ // Right distributive property: u * ( v + w ) = uv + uw
+	{ // Right distributive property: ( v + w ) * u = vu + wu
 		pattern: Mul(Add(patternVar("v"), patternVar("w")), patternVar("u")),
 		transform: func(expr Expr) Expr {
 			v := Operand(Operand(expr, 1), 1)
