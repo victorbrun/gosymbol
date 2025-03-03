@@ -21,19 +21,6 @@ func ratInv(u rational) rational {
 	return Div(u.denominator(), u.numerator()).(rational).simplifyRational()
 }
 
-func (u fraction) approx() float64 {
-	if u.denominator() == Int(0) {
-		if u.numerator().value > 0 {
-			return math.Inf(1)
-		}
-		if u.numerator().value < 0 {
-			return math.Inf(0)
-		}
-		return math.NaN()
-	}
-	return u.numerator().approx() / u.denominator().approx()
-}
-
 func (u fraction) simplifyRational() rational {
 	r, err := intMod(u.numerator(), u.denominator())
 	if err != nil {

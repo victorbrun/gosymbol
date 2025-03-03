@@ -1,5 +1,7 @@
 package gosymbol
 
+import "math"
+
 /* Factories */
 
 func Undefined() undefined {
@@ -142,9 +144,9 @@ func Int(value int64) integer {
 	return integer{value: value}
 }
 
-func Real(symbol string) variable {
-	return variable{Name: VarName(symbol), isPattern: false}
+func Real(symbol string, approxValue float64) variable {
+	return variable{Name: VarName(symbol), isPattern: false, isConstant: true, constValue: approxValue}
 }
 
-var PI = Real("π")
+var PI = Real("π", math.Pi)
 var E = Exp(Int(1))
