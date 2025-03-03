@@ -3,7 +3,6 @@ package gosymbol
 import (
 	"errors"
 	"fmt"
-	"math"
 	"testing"
 )
 
