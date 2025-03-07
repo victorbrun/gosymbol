@@ -2,10 +2,11 @@ package gosymbol
 
 import (
 	"fmt"
-	"github.com/victorbrun/gosymbol/latex/lexer"
-	"github.com/victorbrun/gosymbol/latex/token"
 	"slices"
 	"strconv"
+
+	"github.com/victorbrun/gosymbol/latex/lexer"
+	"github.com/victorbrun/gosymbol/latex/token"
 )
 
 type (
@@ -127,18 +128,16 @@ func (p *Parser) parseExpression(precedence int) Expr {
 
 	for !p.peekTokenIs(token.EOF) && precedence < p.peekPrecedence() {
 		if !p.curTokenIsOperator() && !p.peekTokenIsOperator() {
-			p.curToken = token.Token{Type: token.ASTERISK, Literal: ""}
-			return p.parseInfixExpression(leftExp)
+			p.nextToken()
+			leftExp = p.parseImplicitMultiplication(leftExp)
+		} else {
+			infix := p.infixParseFns[p.peekToken.Type]
+			if infix == nil {
+				return leftExp
+			}
+			p.nextToken()
+			leftExp = infix(leftExp)
 		}
-
-		infix := p.infixParseFns[p.peekToken.Type]
-		if infix == nil {
-			return leftExp
-		}
-
-		p.nextToken()
-
-		leftExp = infix(leftExp)
 	}
 	return leftExp
 }
@@ -242,6 +241,11 @@ func (p *Parser) parseInfixExpression(left Expr) Expr {
 	p.nextToken()
 	right := p.parseExpression(precedence)
 	return infixConstructor(left, right)
+}
+
+func (p *Parser) parseImplicitMultiplication(left Expr) Expr {
+	right := p.parseExpression(precedenceProduct)
+	return Mul(left, right)
 }
 
 func (p *Parser) parseGroupedExpression(delimiter token.TokenType) Expr {
