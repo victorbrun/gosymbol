@@ -39,49 +39,49 @@ func TestExprEval(t *testing.T) {
 		},
 		{
 			input: inputArgs{
-				expr: Add(Var("X"), Var("Y")),
+				expr: FromLatex(`X + Y`),
 				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
 			expectedOutput: Int(3),
 		},
 		{
 			input: inputArgs{
-				expr: Sub(Var("X"), Var("Y")),
+				expr: FromLatex(`X - Y`),
 				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
 			expectedOutput: Int(-1),
 		},
 		{
 			input: inputArgs{
-				expr: Mul(Var("X"), Var("Y")),
+				expr: FromLatex(`XY`),
 				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
 			expectedOutput: Int(2),
 		},
 		{
 			input: inputArgs{
-				expr: Div(Var("X"), Var("Y")),
+				expr: FromLatex(`X/Y`),
 				args: Arguments{Var("X"): Int(1), Var("Y"): Int(2)},
 			},
 			expectedOutput: Div(Int(1), Int(2)).(rational),
 		},
 		{
 			input: inputArgs{
-				expr: Exp(Var("X")),
+				expr: FromLatex(`e^X`),
 				args: Arguments{Var("X"): Int(0)},
 			},
 			expectedOutput: Int(1),
 		},
 		{
 			input: inputArgs{
-				expr: Log(Var("X")),
+				expr: FromLatex(`\log(X)`),
 				args: Arguments{Var("X"): Int(1)},
 			},
 			expectedOutput: Int(0),
 		},
 		{
 			input: inputArgs{
-				expr: Pow(Var("X"), Int(-1)),
+				expr: FromLatex(`X^{-1}`),
 				args: Arguments{Var("X"): Int(10)},
 			},
 			expectedOutput: Div(Int(1), Int(10)).(rational),

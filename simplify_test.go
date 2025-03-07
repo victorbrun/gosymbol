@@ -2,7 +2,6 @@ package gosymbol
 
 import (
 	"fmt"
-	"math"
 	"reflect"
 	"testing"
 )
@@ -15,18 +14,18 @@ func TestSimplify(t *testing.T) {
 	}{
 		{
 			name:           "Sum between rationals is simplified to a single rational",
-			input:          Add(Int(6), Div(Int(2), Int(3))),
-			expectedOutput: Div(Int(20), Int(3)),
+			input:          FromLatex(`6 + \frac{2}{3}`),
+			expectedOutput: FromLatex(`\frac{20}{3}`),
 		},
 		{
 			name:           "Sum between integers is simpliied to a single integer",
-			input:          Add(Int(2), Int(3)),
+			input:          FromLatex(`2 + 3`),
 			expectedOutput: Int(5),
 		},
 		{
 			name:           "Sum with two integers and a real in the middle is simplified to a single integers and a real",
-			input:          Add(Int(2), Real("e", math.E), Int(3)),
-			expectedOutput: Add(Int(5), Real("e", math.E)),
+			input:          FromLatex(`2 + e + 3`),
+			expectedOutput: FromLatex(`5 + e`),
 		},
 		{
 			name:           "undefined^y = undefined",
@@ -39,8 +38,8 @@ func TestSimplify(t *testing.T) {
 			expectedOutput: Undefined(),
 		},
 		{
-			name:           "0^x = 0",
-			input:          Pow(Int(0), Int(1)),
+			name:           "0^1 = 0",
+			input:          FromLatex(`0^1`),
 			expectedOutput: Int(0),
 		},
 		{
@@ -50,7 +49,7 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "1^x = 1",
-			input:          Pow(Int(1), Exp(Int(7))),
+			input:          FromLatex(`1^{e^7}`),
 			expectedOutput: Int(1),
 		},
 		{
@@ -60,13 +59,13 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "(v_1 * ... * v_n)^m = v_1^m * .. * v_n^m (note that the result is also sorted)",
-			input:          Pow(Mul(Var("x"), Int(3), Var("y")), Var("elle")),
-			expectedOutput: Mul(Pow(Int(3), Var("elle")), Pow(Var("x"), Var("elle")), Pow(Var("y"), Var("elle"))),
+			input:          FromLatex(`(3xy)^l`),
+			expectedOutput: FromLatex(`3^l x^l y^l`),
 		},
 		{
 			name:           "(i^j)^k = i^(j*k)",
-			input:          Pow(Pow(Var("i"), Var("j")), Exp(Mul(Int(1), Var("k")))),
-			expectedOutput: Pow(Var("i"), Mul(Var("j"), Exp(Var("k")))),
+			input:          FromLatex(`(i^j)^{\exp(1*k)}`),
+			expectedOutput: FromLatex(`i^{j\exp(k)}`),
 		},
 		{
 			name:           "undefined * ... = undefined",
@@ -75,7 +74,7 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "0 * ... = 0",
-			input:          Mul(Var("x"), Int(-9), Int(0)),
+			input:          FromLatex("x * (-9) * 0"),
 			expectedOutput: Int(0),
 		},
 		{
@@ -100,53 +99,53 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "Mult between rationals is simplified to a single rational",
-			input:          Mul(Int(6), Div(Int(2), Int(3))),
+			input:          FromLatex(`6\frac{2}{3}`),
 			expectedOutput: Int(4),
 		},
 		{
 			name:           "Mult between integers is simpliied to a single integer",
-			input:          Mul(Int(2), Int(3)),
+			input:          FromLatex("2*3"),
 			expectedOutput: Int(6),
 		},
 		{
 			name:           "Mult with two integers and a real in the middle is simplified to a single integers and a real",
-			input:          Mul(Int(2), Real("e", math.E), Int(3)),
-			expectedOutput: Mul(Int(6), Real("e", math.E)),
+			input:          FromLatex("2e3"),
+			expectedOutput: FromLatex("6e"),
 		},
 		{
 			name:           "1 * x = x",
-			input:          Mul(Int(1), Exp(Var("x"))),
-			expectedOutput: Exp(Var("x")),
+			input:          FromLatex("1e^x"),
+			expectedOutput: FromLatex("e^x"),
 		},
 		{
 			name:           "x * x = x^2",
-			input:          Mul(Var(VarName("x")), Var(VarName("x"))),
-			expectedOutput: Pow(Var(VarName("x")), Int(2)),
+			input:          FromLatex("x*x"),
+			expectedOutput: FromLatex("x^2"),
 		},
 		{
 			name:           "x * x^n = x^(n+1)",
-			input:          Mul(Var(VarName("x")), Pow(Var(VarName("x")), Int(2))),
-			expectedOutput: Pow(Var(VarName("x")), Int(3)),
+			input:          FromLatex("x * x^2"),
+			expectedOutput: FromLatex("x^3"),
 		},
 		{
 			name:           "x * (1/x) = 1",
-			input:          Mul(Var("x"), Div(Int(1), Var("x"))),
+			input:          FromLatex(`x \frac{1}{x}`),
 			expectedOutput: Int(1),
 		},
 		{
 			name:           "x^m * x^n = x^(m+n)",
-			input:          Mul(Pow(Var("x"), Var("n")), Pow(Var("x"), Var("m"))),
-			expectedOutput: Pow(Var("x"), Add(Var("m"), Var("n"))),
+			input:          FromLatex("x^m x^n"),
+			expectedOutput: FromLatex("x^{m+n}"),
 		},
 		{
 			name:           "2 * 1",
-			input:          Mul(Int(2), Int(1)),
-			expectedOutput: Int(2),
+			input:          FromLatex("2*1"),
+			expectedOutput: FromLatex("2"),
 		},
 		{
 			name:           "2 * x^1 * 1",
-			input:          Mul(Int(2), Pow(Var("x"), Int(1)), Int(1)),
-			expectedOutput: Mul(Int(2), Var("x")),
+			input:          FromLatex("2 * x^1 * 1"),
+			expectedOutput: FromLatex("2x"),
 		},
 	}
 

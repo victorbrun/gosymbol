@@ -15,12 +15,12 @@ func TestApprox(t *testing.T) {
 	}{
 		{
 			name:           "approx of fraction 1/2",
-			input:          Div(Int(1), Int(2)).(rational),
+			input:          FromLatex(`\frac{1}{2}`),
 			expectedOutput: 0.5,
 		},
 		{
 			name:           "approx of fraction 1/0 (infinity)",
-			input:          Div(Int(1), Int(0)).(rational),
+			input:          FromLatex(`\frac{1}{0}`),
 			expectedOutput: math.Inf(1),
 		},
 		{
@@ -40,32 +40,32 @@ func TestApprox(t *testing.T) {
 		},
 		{
 			name:           "approx of 1 + 2 is 3",
-			input:          Add(Int(1), Int(2)),
+			input:          FromLatex(`1 + 2`),
 			expectedOutput: 3.0,
 		},
 		{
 			name:           "approx of 1 + x is NaN",
-			input:          Add(Int(1), Var("x")),
+			input:          FromLatex(`1 + x`),
 			expectedOutput: math.NaN(),
 		},
 		{
 			name:           "approx of 2 * 3 is 6",
-			input:          Mul(Int(2), Int(3)),
+			input:          FromLatex(`2 * 3`),
 			expectedOutput: 6.0,
 		},
 		{
 			name:           "approx of 2 * x is NaN",
-			input:          Add(Int(2), Var("x")),
+			input:          FromLatex(`2 * x`),
 			expectedOutput: math.NaN(),
 		},
 		{
 			name:           "approx of 2 ^ 3 is 8",
-			input:          Pow(Int(2), Int(3)),
+			input:          FromLatex(`2^3`),
 			expectedOutput: 8.0,
 		},
 		{
 			name:           "approx of 2 ^ x is NaN",
-			input:          Pow(Int(2), Var("x")),
+			input:          FromLatex(`2^x`),
 			expectedOutput: math.NaN(),
 		},
 		{
@@ -75,22 +75,22 @@ func TestApprox(t *testing.T) {
 		},
 		{
 			name:           "approx Exp(2) is e^2 from math package",
-			input:          Exp(Int(2)),
+			input:          FromLatex(`\exp(2)`),
 			expectedOutput: math.Exp(2),
 		},
 		{
 			name:           "approx of Exp(x) is NaN",
-			input:          Exp(Var("x")),
+			input:          FromLatex(`e^x`),
 			expectedOutput: math.NaN(),
 		},
 		{
 			name:           "approx Log(2) is log(2) for math package",
-			input:          Log(Int(2)),
+			input:          FromLatex(`\log(2)`),
 			expectedOutput: math.Log(2),
 		},
 		{
 			name:           "approx of Log(x) is NaN",
-			input:          Log(Var("x")),
+			input:          FromLatex(`\log(x)`),
 			expectedOutput: math.NaN(),
 		},
 	}
