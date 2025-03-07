@@ -1,6 +1,10 @@
 package gosymbol
 
-import "math"
+import (
+	"math"
+
+	"github.com/victorbrun/gosymbol/latex/lexer"
+)
 
 /* Factories */
 
@@ -150,3 +154,10 @@ func Real(symbol string, approxValue float64) variable {
 
 var PI = Real("π", math.Pi)
 var E = Exp(Int(1))
+
+func FromLatex(expression string) Expr {
+	l := lexer.New(expression)
+	p := parserNew(l)
+	program := p.parseExpression(precedenceLowest)
+	return program
+}
