@@ -20,7 +20,39 @@ func negOrZeroConstant(expr Expr) bool {
 }
 
 var sumSimplificationRules []transformationRule = []transformationRule{
+	{ // x + (y + z) = x + y + z (flattening of sum)
+		patternFunction: func(expr Expr) bool {
+			switch exprTyped := expr.(type) {
+			case add:
+				// Returning true if any operand is a add
+				for _, term := range exprTyped.Operands {
+					switch term.(type) {
+					case add:
+						return true
+					}
+				}
+			}
 
+			// If we arrived here, no operand is add
+			return false
+		},
+		transform: func(expr Expr) Expr {
+			var newOps []Expr
+			switch exprTyped := expr.(type) {
+			case add:
+				// Flattening terms into newOps
+				for _, term := range exprTyped.Operands {
+					switch termTyped := term.(type) {
+					case add:
+						newOps = append(newOps, termTyped.Operands...)
+					default:
+						newOps = append(newOps, termTyped)
+					}
+				}
+			}
+			return Add(newOps...)
+		},
+	},
 	{ // Addition with only one operand simplify to the operand
 		pattern: Add(patternVar("x")),
 		transform: func(expr Expr) Expr {
@@ -45,7 +77,7 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 		// while -x = -1*x.
 		pattern: Add(Neg(patternVar("x")), patternVar("x")),
 		transform: func(expr Expr) Expr {
-			return (Int(0))
+			return Int(0)
 		},
 	},
 	{ // x + x = 2x.
@@ -109,6 +141,39 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 }
 
 var productSimplificationRules []transformationRule = []transformationRule{
+	{ // x + (y + z) = x + y + z (flattening of sum)
+		patternFunction: func(expr Expr) bool {
+			switch exprTyped := expr.(type) {
+			case mul:
+				// Returning true if any operand is a mul
+				for _, term := range exprTyped.Operands {
+					switch term.(type) {
+					case mul:
+						return true
+					}
+				}
+			}
+
+			// If we arrived here, no operand is mul
+			return false
+		},
+		transform: func(expr Expr) Expr {
+			var newOps []Expr
+			switch exprTyped := expr.(type) {
+			case mul:
+				// Flattening factors into newOps
+				for _, term := range exprTyped.Operands {
+					switch termTyped := term.(type) {
+					case mul:
+						newOps = append(newOps, termTyped.Operands...)
+					default:
+						newOps = append(newOps, termTyped)
+					}
+				}
+			}
+			return Mul(newOps...)
+		},
+	},
 	{ // 0 * ... = 0
 		patternFunction: func(expr Expr) bool {
 			// Ensures expr is of type mul

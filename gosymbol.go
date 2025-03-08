@@ -1,7 +1,5 @@
 package gosymbol
 
-import "fmt"
-
 var PI = Real("π")
 var E = Exp(Int(1))
 
@@ -40,16 +38,7 @@ func Neg(arg Expr) mul {
 }
 
 func Add(ops ...Expr) add {
-	var newOps []Expr
-	for _, op := range ops {
-		switch opTyped := op.(type) {
-		case add:
-			newOps = append(newOps, opTyped.Operands...)
-		default:
-			newOps = append(newOps, op)
-		}
-	}
-	return add{Operands: newOps}
+	return add{Operands: ops}
 }
 
 func Sub(lhs, rhs Expr) add {
@@ -57,16 +46,7 @@ func Sub(lhs, rhs Expr) add {
 }
 
 func Mul(ops ...Expr) mul {
-	var newOps []Expr
-	for _, op := range ops {
-		switch opTyped := op.(type) {
-		case mul:
-			newOps = append(newOps, opTyped.Operands...)
-		default:
-			newOps = append(newOps, op)
-		}
-	}
-	return mul{Operands: newOps}
+	return mul{Operands: ops}
 }
 
 /*
@@ -319,7 +299,7 @@ func mulIsASAE(u mul) bool {
 			constCount++
 		}
 	}
-	if constCount > 0 {
+	if constCount > 1 {
 		return false
 	}
 
@@ -374,15 +354,143 @@ func hasAllAdmissibleFactors(expr mul) bool {
 }
 
 // ASAE-5
-// TODO
-func addIsASAE(expr add) bool {
-	return false
+// u is a sum satisfying all of the following properties:
+//
+// 0. u has two or more operands u1 * u2 * ...
+//
+// 1. u has all admissible terms
+//
+// 2. At most one operand ui is a constant (integer or fraction)
+//
+// 3. If i != j, then AsaeTerm(ui) != AsaeTerm(uj)
+//
+// 4. If i < j, then compare(ui, uj) = true
+func addIsASAE(u add) bool {
+	// 0.
+	if len(u.Operands) < 2 {
+		return false
+	}
+
+	// 1.
+	if !hasAllAdmissibleTerms(u) {
+		return false
+	}
+
+	// 2.
+	constCount := 0
+	for _, term := range u.Operands {
+		switch term.(type) {
+		case integer:
+			constCount++
+		case fraction:
+			constCount++
+		}
+	}
+	if constCount > 1 {
+		return false
+	}
+
+	// 3. and 4.
+	for ix := 1; ix <= len(u.Operands); ix++ {
+		ui := Operand(u, ix)
+		for jx := ix + 1; jx <= len(u.Operands); jx++ {
+			uj := Operand(u, jx)
+			if Equal(AsaeTerm(ui), AsaeTerm(uj)) {
+				return false
+			} else if !compare(ui, uj) {
+				return false
+			}
+		}
+	}
+
+	// If we have not returned before arriving here,
+	// every property is satisfied
+	return true
+}
+
+// Returns if expr has all admissible terms.
+//
+// A term is said to be admissible if it
+// is an ASAE which can be either an integer
+// (!= 0), fraction, symbol (except undefined),
+// product, power, function.
+//
+// Note: the term of a sum cannot be a sum
+// for it to be admissible.
+func hasAllAdmissibleTerms(expr add) bool {
+	// Iterating over each factor and checking if
+	// it is a admissible factor. Returning false
+	// at first non-admissible factor
+	for _, factor := range expr.Operands {
+		switch factor.(type) {
+		case undefined:
+			return false
+		case add:
+			return false
+		case integer:
+			if Equal(factor, Int(0)) {
+				return false
+			}
+		default:
+			if !IsASAE(factor) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // ASAE-6
-// TODO
-func powIsASAE(expr pow) bool {
-	return false
+// u is a power v^w satisfying all of the following properties:
+//
+// 1. the expressions v and w are ASAE
+//
+// 2. The exponent w is not 0 or 1
+//
+// 3. If w is an integer, then the base v is an ASAE
+// which is a symbol (except undefined), sum, or function
+//
+// 4. If w is not an integer, then the base v is any ASAE
+// except 0 or 1
+func powIsASAE(u pow) bool {
+	v := Operand(u, 1)
+	w := Operand(u, 2)
+
+	// 1.
+	if !IsASAE(v) || !IsASAE(w) {
+		return false
+	}
+
+	// 2.
+	if Equal(w, Int(0)) || Equal(w, Int(1)) {
+		return false
+	}
+
+	switch w.(type) {
+	// 3.
+	case integer:
+		switch v.(type) {
+		case undefined:
+			return false
+		case integer:
+			return false
+		case fraction:
+			return false
+		case mul:
+			return false
+		case pow:
+			return false
+		}
+	// 4.
+	default:
+		if Equal(v, Int(0)) || Equal(v, Int(1)) {
+			return false
+		}
+	}
+
+	// If we have not returned before arriving here,
+	// every property is satisfied
+	return true
 }
 
 // Returns the base of an ASAE expression
@@ -435,12 +543,6 @@ func AsaeExponent(expr Expr) Expr {
 //
 // 3. Term(x*y) = x*y
 func AsaeTerm(expr Expr) Expr {
-	// The steps taken in this function only works
-	// if the input expression is already an ASAE
-	if !IsASAE(expr) {
-		panic(fmt.Sprintf("Expression is not an ASAE: %v", expr))
-	}
-
 	switch exprTyped := expr.(type) {
 	case integer:
 		return Undefined()
@@ -472,10 +574,6 @@ func AsaeTerm(expr Expr) Expr {
 //
 // 3. Term(x*y) = 1
 func AsaeConst(expr Expr) Expr {
-	if !IsASAE(expr) {
-		panic(fmt.Sprintf("Expression is not an ASAE: %v", expr))
-	}
-
 	switch expr.(type) {
 	case integer:
 		return Undefined()

@@ -192,8 +192,8 @@ func TestSimplify(t *testing.T) {
 		},
 		{
 			name:           "( ( ( u + v ) * w ) * x + y ) + z = ( u + v ) * w * x + y + z ",
-			input:          Add(Add(Mul(Mul(Add(Var("u"), Var("v")), Var("w")), Var("x")), Var("y")), Var("z")),
-			expectedOutput: Add(Mul(Add(Var("u"), Var("v")), Var("w"), Var("x")), Var("y"), Var("z")),
+			input:          Add(Mul(Add(Var("u"), Var("v")), Var("w"), Var("x")), Var("y"), Var("z")),
+			expectedOutput: Add(Add(Mul(Mul(Add(Var("u"), Var("v")), Var("w")), Var("x")), Var("y")), Var("z")),
 		},
 		{
 			name:           "2(xyz) + 3x(yz) + 4(xy)z = 9xyz",

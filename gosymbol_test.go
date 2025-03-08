@@ -140,6 +140,85 @@ func TestIsASAE(t *testing.T) {
 			input:          Mul(Int(2), Var("x"), Var("y"), Var("z"), Pow(Var("z"), Int(2))),
 			expectedOutput: false,
 		},
+		{
+			name:           "2 * x + 3 * y + 4 * z",
+			input:          Add(Mul(Int(2), Var("x")), Mul(Int(3), Var("y")), Mul(Int(4), Var("z"))),
+			expectedOutput: true,
+		},
+
+		// Test ASAE-5
+		{
+			name:           "1 + ( x + y ) + z (ASAE-5-1 is not satisfied)",
+			input:          Add(Int(1), Add(Var("x"), Var("y")), Var("z")),
+			expectedOutput: false,
+		},
+		{
+			name:           "1 + 2 + x (ASAE-5-2 is not satisfied)",
+			input:          Add(Int(1), Int(2), Var("x")),
+			expectedOutput: false,
+		},
+		{
+			name:           "1 + x + 2 * x (ASAE-5-3 is not satisfied)",
+			input:          Add(Int(1), Var("x"), Mul(Int(2), Var("x"))),
+			expectedOutput: false,
+		},
+		{
+			name:           "z + y + x (ASAE-5-4 is not satisfied)",
+			input:          Add(Var("z"), Var("y"), Var("x")),
+			expectedOutput: false,
+		},
+
+		// Test ASAE-6
+		{
+			name:           "x^2",
+			input:          Pow(Var("x"), Int(2)),
+			expectedOutput: true,
+		},
+		{
+			name:           "( 1 + x )^3",
+			input:          Pow(Add(Int(1), Var("x")), Int(3)),
+			expectedOutput: true,
+		},
+		{
+			name:           "2^m",
+			input:          Pow(Int(2), Var("m")),
+			expectedOutput: true,
+		},
+		{
+			name:           "(x * y)^(1/2)",
+			input:          Pow(Mul(Var("x"), Var("y")), Frac(Int(1), Int(2))),
+			expectedOutput: true,
+		},
+		{
+			name:           "(x^(1/2))^(1/2)",
+			input:          Pow(Pow(Var("x"), Frac(Int(1), Int(2))), Frac(Int(1), Int(2))),
+			expectedOutput: true,
+		},
+		{
+			name:           "2^3",
+			input:          Pow(Int(2), Int(3)),
+			expectedOutput: false,
+		},
+		{
+			name:           "(x^2)^3",
+			input:          Pow(Pow(Var("x"), Int(2)), Int(3)),
+			expectedOutput: false,
+		},
+		{
+			name:           "( x * y )^2",
+			input:          Pow(Mul(Var("x"), Var("y")), Int(2)),
+			expectedOutput: false,
+		},
+		{
+			name:           "( 1 + x )^1",
+			input:          Pow(Add(Int(1), Var("x")), Int(1)),
+			expectedOutput: false,
+		},
+		{
+			name:           "1^m",
+			input:          Pow(Int(1), Var("m")),
+			expectedOutput: false,
+		},
 	}
 
 	for ix, test := range tests {
