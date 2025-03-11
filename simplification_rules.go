@@ -11,12 +11,12 @@ import (
 // and returns a function with the same input but with negated bool output
 func positiveConstant(expr Expr) bool {
 	exprTyped, ok := expr.(rational)
-	return ok && exprTyped.approx() > Int(0).approx()
+	return ok && exprTyped.Approx() > Int(0).Approx()
 }
 
 func negOrZeroConstant(expr Expr) bool {
 	exprTyped, ok := expr.(rational)
-	return ok && exprTyped.approx() <= Int(0).approx()
+	return ok && exprTyped.Approx() <= Int(0).Approx()
 }
 
 var sumSimplificationRules []transformationRule = []transformationRule{
