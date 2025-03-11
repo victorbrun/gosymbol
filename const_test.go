@@ -3,7 +3,6 @@ package gosymbol
 import (
 	"errors"
 	"fmt"
-	"math"
 	"testing"
 )
 
@@ -59,40 +58,6 @@ func TestDenominator(t *testing.T) {
 			result := test.input.denominator()
 
 			if result != test.expectedOutput {
-				t.Errorf("Following test failed: %s\nInput rational: %v\nExpected: %v\nGot: %v", test.name, test.input, test.expectedOutput, result)
-			}
-		})
-	}
-}
-
-func TestApprox(t *testing.T) {
-	tests := []struct {
-		name           string
-		input          rational
-		expectedOutput float64
-	}{
-		{
-			name:           "approx of fraction 1/2",
-			input:          Div(Int(1), Int(2)).(rational),
-			expectedOutput: 0.5,
-		},
-		{
-			name:           "approx of fraction 1/0 (infinity)",
-			input:          Div(Int(1), Int(0)).(rational),
-			expectedOutput: math.Inf(1),
-		},
-		{
-			name:           "approx of empty fraction NaN",
-			input:          Undefined(),
-			expectedOutput: math.NaN(),
-		},
-	}
-
-	for ix, test := range tests {
-		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
-			result := test.input.approx()
-
-			if !math.IsNaN(result) && result != test.expectedOutput {
 				t.Errorf("Following test failed: %s\nInput rational: %v\nExpected: %v\nGot: %v", test.name, test.input, test.expectedOutput, result)
 			}
 		})

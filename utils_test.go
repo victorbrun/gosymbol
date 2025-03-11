@@ -32,19 +32,15 @@ func TestRecContains(t *testing.T) {
 		},
 		{ // Test 3: Testing for part of n-ary operator
 			input: inputArgs{
-				expr: Add(Int(1), Int(2), Int(3)),
-				u:    Add(Int(1), Int(2)),
+				expr: FromLatex("1 + 2 + 3"),
+				u:    FromLatex("1 + 2"),
 			},
 			expectedOutput: false,
 		},
 		{ // Test 4: Testing for sub-tree equality
 			input: inputArgs{
-				expr: Add(
-					Int(1),
-					Mul(Int(2), Var("X")),
-					Div(Int(1), Var("y")),
-				),
-				u: Mul(Int(2), Var("X")),
+				expr: FromLatex("1 + 2x + 1/y"),
+				u:    FromLatex("2x"),
 			},
 			expectedOutput: true,
 		},
@@ -236,11 +232,11 @@ func TestDepth(t *testing.T) {
 			expectedOutput: 0,
 		},
 		{
-			input:          Add(Int(0), Var("x"), Int(0), Var("x"), Int(0), Var("x")),
+			input:          FromLatex("0 + x + 0 + x + 0 + x"),
 			expectedOutput: 1,
 		},
 		{
-			input:          Add(Mul(Var("x"), Pow(Int(10), Exp(Var("x")))), Var("x"), Int(0), Var("x"), Int(0), Var("x")),
+			input:          FromLatex(`(x 10^{\exp(x)}) + x + 0 + x + 0`),
 			expectedOutput: 4,
 		},
 	}
