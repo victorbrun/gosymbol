@@ -13,19 +13,19 @@ func Undefined() undefined {
 }
 
 func Var(name VarName) variable {
-	return variable{Name: name, isPattern: false}
+	return variable{name: name, isPattern: false}
 }
 
 func patternVar(name VarName) variable {
-	return variable{Name: name, isPattern: true}
+	return variable{name: name, isPattern: true}
 }
 
 func ConstrVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
-	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: false}
+	return constrainedVariable{name: name, Constraint: constrFunc, isPattern: false}
 }
 
 func constraPatternVar(name VarName, constrFunc func(Expr) bool) constrainedVariable {
-	return constrainedVariable{Name: name, Constraint: constrFunc, isPattern: true}
+	return constrainedVariable{name: name, Constraint: constrFunc, isPattern: true}
 }
 
 func Neg(arg Expr) mul {
@@ -112,7 +112,7 @@ func TransformationRule(pattern Expr, transform func(Expr) Expr) transformationR
 
 func (args Arguments) AddArgument(v variable, value Expr) error {
 	for arg := range args {
-		if arg.Name == v.Name {
+		if arg.Name() == v.Name() {
 			return &DuplicateArgumentError{}
 		}
 	}
@@ -148,8 +148,8 @@ func Int(value int64) integer {
 	return integer{value: value}
 }
 
-func Real(symbol string, approxValue float64) variable {
-	return variable{Name: VarName(symbol), isPattern: false, isConstant: true, constValue: approxValue}
+func Real(symbol string, approxValue float64) real {
+	return real{name: VarName(symbol), value: approxValue}
 }
 
 var PI = Real("π", math.Pi)

@@ -3,15 +3,15 @@ package gosymbol
 import "math"
 
 func (n integer) Approx() float64 {
-	return float64(n.value)
+	return n.Value()
 }
 
 func (f fraction) Approx() float64 {
 	if f.denominator() == Int(0) {
-		if f.numerator().value > 0 {
+		if f.numerator().Value() > 0 {
 			return math.Inf(1)
 		}
-		if f.numerator().value < 0 {
+		if f.numerator().Value() < 0 {
 			return math.Inf(0)
 		}
 		return math.NaN()
@@ -23,10 +23,11 @@ func (u undefined) Approx() float64 {
 	return math.NaN()
 }
 
+func (x real) Approx() float64 {
+	return x.Value()
+}
+
 func (x variable) Approx() float64 {
-	if x.isConstant {
-		return x.constValue
-	}
 	return math.NaN()
 }
 

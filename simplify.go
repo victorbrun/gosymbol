@@ -12,6 +12,10 @@ func (expr fraction) Simplify() Expr {
 	return (expr.simplifyRational())
 }
 
+func (expr real) Simplify() Expr {
+	return expr
+}
+
 func (expr variable) Simplify() Expr {
 	return simplify(expr)
 }

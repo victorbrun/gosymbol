@@ -65,7 +65,7 @@ func TestSimplify(t *testing.T) {
 		{
 			name:           "(i^j)^k = i^(j*k)",
 			input:          FromLatex(`(i^j)^{\exp(1*k)}`),
-			expectedOutput: FromLatex(`i^{j\exp(k)}`),
+			expectedOutput: FromLatex(`i^{\exp(k)j}`),
 		},
 		{
 			name:           "undefined * ... = undefined",

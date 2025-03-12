@@ -10,13 +10,13 @@ import (
 // it takes a function with any input and with bool input
 // and returns a function with the same input but with negated bool output
 func positiveConstant(expr Expr) bool {
-	exprTyped, ok := expr.(rational)
-	return ok && exprTyped.Approx() > Int(0).Approx()
+	exprTyped, ok := expr.(constant)
+	return ok && exprTyped.Value() > Int(0).Value()
 }
 
 func negOrZeroConstant(expr Expr) bool {
-	exprTyped, ok := expr.(rational)
-	return ok && exprTyped.Approx() <= Int(0).Approx()
+	exprTyped, ok := expr.(constant)
+	return ok && exprTyped.Value() <= Int(0).Value()
 }
 
 var sumSimplificationRules []transformationRule = []transformationRule{
@@ -58,8 +58,8 @@ var sumSimplificationRules []transformationRule = []transformationRule{
 			return Mul(Int(2), Operand(expr, 1))
 		},
 	},
-	{ // Sum of constants is replaced with the constant that the sum evaluates to.
-		// Note that sum of some constants will replace the constants with their sum.
+	{ // Sum of rationals is replaced with the rationals that the sum evaluates to.
+		// Note that sum of some rationals will replace the rationals with their sum.
 		patternFunction: func(expr Expr) bool {
 			// Ensures expr is of type add
 			_, ok := expr.(add)
@@ -210,8 +210,8 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			return Pow(base, Add(exponent1, exponent2))
 		},
 	},
-	{ // Prod of constants is replaced with the constant that the product evaluates to.
-		// Note that product of some constants will replace the constants with their product.
+	{ // Prod of rationals is replaced with the rationals that the product evaluates to.
+		// Note that product of some rationals will replace the rationals with their product.
 		patternFunction: func(expr Expr) bool {
 			_, ok := expr.(mul)
 			if !ok {
@@ -231,7 +231,7 @@ var productSimplificationRules []transformationRule = []transformationRule{
 			}
 		},
 		transform: func(expr Expr) Expr {
-			// We multiply all the constants in the product
+			// We multiply all the rationals in the product
 			var prod rational
 			prod = Int(1)
 			nons := make([]Expr, 0)
@@ -313,8 +313,7 @@ var powerSimplificationRules []transformationRule = []transformationRule{
 			return Pow(x, Mul(y, z))
 		},
 	},
-	{ // Prod of constants is replaced with the constant that the product evaluates to.
-		// Note that product of some constants will replace the constants with their product.
+	{ // Power of rational to an integer is replaced with the rational that the power evaluates to.
 		patternFunction: func(expr Expr) bool {
 			power, ok := expr.(pow)
 			if ok {

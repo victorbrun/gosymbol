@@ -10,6 +10,10 @@ func (e fraction) D(v variable) Expr {
 	return differentiate(e, v)
 }
 
+func (e real) D(v variable) Expr {
+	return differentiate(e, v)
+}
+
 func (e variable) D(v variable) Expr {
 	return differentiate(e, v)
 }
@@ -44,9 +48,7 @@ Differentiates expr w.r.t. v.
 */
 func differentiate(expr Expr, v variable) Expr {
 	switch e := expr.(type) {
-	case integer:
-		return Int(0)
-	case fraction:
+	case constant:
 		return Int(0)
 	case variable:
 		if v == e {
