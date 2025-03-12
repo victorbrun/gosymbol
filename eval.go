@@ -18,6 +18,10 @@ func (e fraction) Eval() Func {
 	return func(args Arguments) Expr { return e.simplifyRational() }
 }
 
+func (e real) Eval() Func {
+	return func(args Arguments) Expr { return e }
+}
+
 func (e variable) Eval() Func {
 	return func(args Arguments) Expr {
 		value, ok := args[e]
@@ -69,11 +73,15 @@ func (e undefined) String() string {
 }
 
 func (e variable) String() string {
-	return string(e.Name)
+	return string(e.Name())
 }
 
 func (e constrainedVariable) String() string {
-	return fmt.Sprintf("%v_CONSTRAINED", e.Name)
+	return fmt.Sprintf("%v_CONSTRAINED", e.Name())
+}
+
+func (e real) String() string {
+	return string(e.Name())
 }
 
 func (e add) String() string {

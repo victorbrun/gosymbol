@@ -10,6 +10,7 @@ type Expr interface {
 	Eval() Func
 	D(variable) Expr
 	Simplify() Expr
+	Approx() float64
 }
 
 // The Binding type is used in patternmatching.go
@@ -25,7 +26,7 @@ type Binding map[VarName]Expr
 // needs. TODO: replace this with some sort of logic DSL :)
 type constrainedVariable struct {
 	Expr
-	Name       VarName
+	name       VarName
 	Constraint func(expr Expr) bool
 
 	// Indicating if variable is part of a pattern
@@ -61,9 +62,10 @@ type undefined struct {
 
 type variable struct {
 	Expr
-	Name VarName
+	name VarName
 	// Indicating if variable is part of a pattern
 	isPattern bool
+	// used for approximating constants
 }
 
 type add struct {
@@ -107,7 +109,7 @@ type integer struct {
 
 type rational interface {
 	Expr
-	approx() float64
+	constant
 	numerator() integer
 	denominator() integer
 	simplifyRational() rational
@@ -117,3 +119,39 @@ type fraction struct {
 	num integer
 	den integer
 }
+
+type real struct {
+	name  VarName
+	value float64
+}
+
+type constant interface {
+	Value() float64
+}
+
+func (n integer) Value() float64 { return float64(n.value) }
+func (u fraction) Value() float64 {
+	return float64(u.numerator().Value()) / float64(u.denominator().Value())
+}
+func (u real) Value() float64      { return u.value }
+func (u undefined) Value() float64 { return u.approx() }
+
+type symbol interface {
+	Expr
+	Name() VarName
+}
+
+func (x variable) Name() VarName            { return x.name }
+func (x constrainedVariable) Name() VarName { return x.name }
+func (u real) Name() VarName                { return u.name }
+func (u undefined) Name() VarName           { return VarName("undefined") }
+
+type function interface {
+	Expr
+	functionName() string
+}
+
+func (f exp) functionName() string       { return "exp" }
+func (f log) functionName() string       { return "log" }
+func (f sqrt) functionName() string      { return "sqrt" }
+func (u undefined) functionName() string { return "undefined" }

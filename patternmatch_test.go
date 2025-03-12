@@ -58,19 +58,19 @@ func TestPatternMatch(t *testing.T) {
 		{
 			name:            "Advanced test with same variable name in pattern and expression",
 			inputPattern:    Mul(patternVar("x"), Exp(patternVar("x"))),
-			inputExpression: Mul(Pow(Int(2), Var("x")), Exp(Pow(Int(2), Var("x")))),
+			inputExpression: FromLatex(`2^x \exp(2^x)`),
 			expectedOutput:  true,
 		},
 		{
 			name:            "Advanced test with different variable name in pattern and expression",
 			inputPattern:    Mul(patternVar("y"), Exp(patternVar("y"))),
-			inputExpression: Mul(Pow(Int(2), Var("x")), Exp(Pow(Int(2), Var("x")))),
+			inputExpression: FromLatex(`2^x \exp(2^x)`),
 			expectedOutput:  true,
 		},
 		{
 			name:            "Advanced test with different variable name in pattern and expression returning false",
 			inputPattern:    Mul(patternVar("y"), Exp(patternVar("y"))),
-			inputExpression: Mul(Pow(Int(2), Var("x")), Exp(Pow(Int(1), Var("x")))),
+			inputExpression: FromLatex(`2^x \exp(1^x)`),
 			expectedOutput:  false,
 		},
 	}

@@ -26,7 +26,7 @@ func TestTopOperandSort(t *testing.T) {
 	}
 }
 
-func TestComapre(t *testing.T) {
+func TestCompare(t *testing.T) {
 	type inputArgs struct {
 		expr1 Expr
 		expr2 Expr
@@ -195,14 +195,14 @@ func TestComapre(t *testing.T) {
 				expr1: Var("x"),
 				expr2: Exp(Var("y")),
 			},
-			expectedOutput: true,
+			expectedOutput: false,
 		},
 		{ // Test 24: x |> Exp(y)
 			input: inputArgs{
 				expr2: Var("x"),
 				expr1: Exp(Var("y")),
 			},
-			expectedOutput: false,
+			expectedOutput: true,
 		},
 		{ // Test 25: Exp(x) < Exp(x^2)
 			input: inputArgs{
@@ -223,14 +223,14 @@ func TestComapre(t *testing.T) {
 				expr1: Var("x"),
 				expr2: Log(Var("y")),
 			},
-			expectedOutput: true,
+			expectedOutput: false,
 		},
 		{ // Test 28: x |> Log(y)
 			input: inputArgs{
 				expr2: Var("x"),
 				expr1: Log(Var("y")),
 			},
-			expectedOutput: false,
+			expectedOutput: true,
 		},
 		{ // Test 29: Log(x) < Log(x^2)
 			input: inputArgs{
@@ -251,14 +251,14 @@ func TestComapre(t *testing.T) {
 				expr1: Var("x"),
 				expr2: Sqrt(Var("y")),
 			},
-			expectedOutput: true,
+			expectedOutput: false,
 		},
 		{ // Test 32: x |> Sqrt(y)
 			input: inputArgs{
 				expr2: Var("x"),
 				expr1: Sqrt(Var("y")),
 			},
-			expectedOutput: false,
+			expectedOutput: true,
 		},
 		{ // Test 33: Sqrt(x) < Sqrt(x^2)
 			input: inputArgs{

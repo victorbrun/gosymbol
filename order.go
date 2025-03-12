@@ -42,11 +42,12 @@ func TopOperandSort(expr Expr) Expr {
 	return expr
 }
 
-func orderRule1(e1, e2 rational) bool {
-	return e1.approx() < e2.approx()
+func orderRule1(e1, e2 constant) bool {
+	return e1.Value() < e2.Value()
 }
-func orderRule2(e1, e2 variable) bool              { return e1.Name < e2.Name }
-func orderRule2_1(e1, e2 constrainedVariable) bool { return e1.Name < e2.Name }
+
+func orderRule2(e1, e2 symbol) bool { return e1.Name() < e2.Name() }
+
 func orderRule3(e1, e2 add) bool {
 	e1NumOp := NumberOfOperands(e1)
 	e2NumOp := NumberOfOperands(e2)
@@ -73,6 +74,7 @@ func orderRule3(e1, e2 add) bool {
 	}
 	return e1NumOp < e2NumOp
 }
+
 func orderRule3_1(e1, e2 mul) bool {
 	e1NumOp := NumberOfOperands(e1)
 	e2NumOp := NumberOfOperands(e2)
@@ -99,6 +101,7 @@ func orderRule3_1(e1, e2 mul) bool {
 	}
 	return e1NumOp < e2NumOp
 }
+
 func orderRule4(e1, e2 pow) bool {
 	e1Base := Operand(e1, 1)
 	e2Base := Operand(e2, 1)
@@ -110,8 +113,21 @@ func orderRule4(e1, e2 pow) bool {
 		return compare(e1Exponent, e2Exponent)
 	}
 }
+
 func orderRule5(e1, e2 Expr) bool {
 	panic("rule dedicated to factorial which is not implemented")
+}
+
+func orderRule6(e1, e2 function) bool {
+	if e1.functionName() != e2.functionName() {
+		return e1.functionName() < e2.functionName()
+	}
+	for i := 0; i < min(NumberOfOperands(e1), NumberOfOperands(e2)); i++ {
+		if Operand(e1, i) != Operand(e2, i) {
+			return compare(Operand(e1, i), Operand(e2, i))
+		}
+	}
+	return NumberOfOperands(e1) <= NumberOfOperands(e2)
 }
 
 /*
@@ -140,223 +156,98 @@ way around.
 */
 func compare(e1, e2 Expr) bool {
 	switch e1Typed := e1.(type) {
+
 	case rational:
 		switch e2Typed := e2.(type) {
 		case rational:
 			return orderRule1(e1Typed, e2Typed)
 		default:
-			return true
+			return !compare(e2, e1)
 		}
-	case variable:
+
+	case real:
 		switch e2Typed := e2.(type) {
 		case rational:
 			return false
-		case variable:
-			return orderRule2(e1Typed, e2Typed)
-		case constrainedVariable:
-			return e1Typed.Name < e2Typed.Name // This is very ugly :(
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, (Int(1))), e2)
-		case exp:
-			return compare(Exp(e1), e2)
-		case log:
-			return compare(Log(e1), e2)
-		case sqrt:
-			return compare(Sqrt(e1), e2)
+		case real:
+			return orderRule1(e1Typed, e2Typed)
 		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
+			return !compare(e2, e1)
 		}
-	case constrainedVariable:
-		switch e2Typed := e2.(type) {
-		case rational:
-			return false
-		case variable:
-			return e1Typed.Name < e2Typed.Name // This is very ugly :(
-		case constrainedVariable:
-			return orderRule2_1(e1Typed, e2Typed)
-		case add:
-			return compare(Add(e1), e2)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, (Int(1))), e2)
-		case exp:
-			return compare(Exp(e1), e2)
-		case log:
-			return compare(Log(e1), e2)
-		case sqrt:
-			return compare(Sqrt(e1), e2)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case add:
-		switch e2Typed := e2.(type) {
-		case rational:
-			return false
-		case variable:
-			return compare(e1, Add(e2))
-		case constrainedVariable:
-			return compare(e1, Add(e2))
-		case add:
-			return orderRule3(e1Typed, e2Typed)
-		case mul:
-			return compare(Mul(e1), e2)
-		case pow:
-			return compare(Pow(e1, (Int(1))), e2)
-		case exp:
-			return compare(e1, Add(e2))
-		case log:
-			return compare(e1, Add(e2))
-		case sqrt:
-			return compare(e1, Add(e2))
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
+
 	case mul:
 		switch e2Typed := e2.(type) {
-		case rational:
+		case constant:
 			return false
-		case variable:
-			return compare(e1, Mul(e2))
-		case constrainedVariable:
-			return compare(e1, Mul(e2))
-		case add:
-			return compare(e1, Mul(e2))
 		case mul:
 			return orderRule3_1(e1Typed, e2Typed)
-		case pow:
-			return compare(e1, Mul(e2))
-		case exp:
-			return compare(e1, Mul(e2))
-		case log:
-			return compare(e1, Mul(e2))
-		case sqrt:
-			return compare(e1, Mul(e2))
 		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
+			return !compare(e2, e1)
 		}
+
 	case pow:
 		switch e2Typed := e2.(type) {
-		case rational:
+		case constant:
 			return false
-		case variable:
-			return compare(e1, Pow(e2, (Int(1))))
-		case constrainedVariable:
-			return compare(e1, Pow(e2, (Int(1))))
-		case add:
-			return compare(e1, Pow(e2, (Int(1))))
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
 			return orderRule4(e1Typed, e2Typed)
-		case exp:
-			return compare(e1, Pow(e2, (Int(1))))
-		case log:
-			return compare(e1, Pow(e2, (Int(1))))
-		case sqrt:
-			return compare(e1, Pow(e2, (Int(1))))
 		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
+			return !compare(e2, e1)
 		}
-	case exp:
-		switch e2.(type) {
-		case rational:
+
+	case add:
+		switch e2Typed := e2.(type) {
+		case constant:
 			return false
-		case variable:
-			return compare(e1, Exp(e2))
-		case constrainedVariable:
-			return compare(e1, Exp(e2))
-		case add:
-			return compare(Add(e1), e2)
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
 			return compare(Pow(e1, (Int(1))), e2)
-		case exp:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case log:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case sqrt:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case log:
-		switch e2.(type) {
-		case rational:
-			return false
-		case variable:
-			return compare(e1, Exp(e2))
-		case constrainedVariable:
-			return compare(e1, Exp(e2))
 		case add:
-			return compare(Add(e1), e2)
+			return orderRule3(e1Typed, e2Typed)
+		default:
+			return !compare(e2, e1)
+		}
+
+	case function:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
 			return compare(Pow(e1, (Int(1))), e2)
-		case exp:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case log:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case sqrt:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
-		}
-	case sqrt:
-		switch e2.(type) {
-		case rational:
-			return false
-		case variable:
-			return compare(e1, Exp(e2))
-		case constrainedVariable:
-			return compare(e1, Exp(e2))
 		case add:
 			return compare(Add(e1), e2)
+		case function:
+			return orderRule6(e1Typed, e2Typed)
+		default:
+			return !compare(e2, e1)
+		}
+
+	case symbol:
+		switch e2Typed := e2.(type) {
+		case constant:
+			return false
 		case mul:
 			return compare(Mul(e1), e2)
 		case pow:
-			return compare(Pow(e1, Int(1)), e2)
-		case exp:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case log:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
-		case sqrt:
-			e1Arg := Operand(e1, 1)
-			e2Arg := Operand(e2, 1)
-			return compare(e1Arg, e2Arg)
+			return compare(Pow(e1, (Int(1))), e2)
+		case add:
+			return compare(Add(e1), e2)
+		case function:
+			if e2Typed.functionName() == string(e1Typed.Name()) {
+				return true
+			}
+			return e2Typed.functionName() > string(e1Typed.Name())
+		case symbol:
+			return orderRule2(e1Typed, e2Typed)
 		default:
-			errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
-			panic(errMsg)
+			return !compare(e2, e1)
 		}
+
 	default:
 		errMsg := fmt.Sprintf("ERROR: function is not implemented for type: %v", reflect.TypeOf(e1Typed))
 		panic(errMsg)

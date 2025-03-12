@@ -9,14 +9,14 @@ import (
 func main() {
 	x := gosymbol.Var("x")
 	y := gosymbol.Var("y")
-	f := gosymbol.Add(x, gosymbol.PI, y)
+	f := gosymbol.FromLatex(`x + \pi + y`)
 	fmt.Println("f(x, y) = ", f)
 	val := gosymbol.Arguments{}
-	err := val.AddArgument(gosymbol.Var("x"), y)
+	err := val.AddArgument(x, y)
 	if err != nil {
 		fmt.Println(val, err)
 	}
-	err = val.AddArgument(gosymbol.Var("y"), y)
+	err = val.AddArgument(y, y)
 	if err != nil {
 		fmt.Println(val, err)
 	}
@@ -24,10 +24,10 @@ func main() {
 	fn_eval := fn(val)
 	fmt.Printf("f(%s, %s) = %s\n", val[x], val[y], fn_eval)
 
-	a, err := gosymbol.ParseLatex("(2+2)*6")
+	a := gosymbol.FromLatex("(2+2)*6")
 	if err != nil {
 		println(err)
 	}
 
-	println("%p", &a)
+	println("%s", a.String())
 }

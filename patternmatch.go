@@ -17,8 +17,8 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 		}
 		return false
 
-	case rational:
-		if c, ok := expr.(rational); ok {
+	case constant:
+		if c, ok := expr.(constant); ok {
 			return c == p
 		}
 		return false
@@ -34,13 +34,13 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 
 		// Extracts binding to pattern variable if it exists
 		// and gets if expression is a variable
-		boundExpr, bindingExists := bindings[p.Name]
+		boundExpr, bindingExists := bindings[p.Name()]
 
 		// If no expression is bound to this variable
 		// we bound the current expression to it and return
 		// true
 		if !bindingExists {
-			bindings[p.Name] = expr
+			bindings[p.Name()] = expr
 			return true
 		}
 
@@ -59,13 +59,13 @@ func patternMatch(expr, pattern Expr, bindings Binding) bool {
 
 		// Extracts binding to pattern variable if it exists
 		// and gets if expression is a variable
-		boundExpr, bindingExists := bindings[p.Name]
+		boundExpr, bindingExists := bindings[p.Name()]
 
 		// If no expression is bound to this variable
 		// we bound the current expression to it and return
 		// true
 		if !bindingExists && p.Constraint(expr) {
-			bindings[p.Name] = expr
+			bindings[p.Name()] = expr
 			return true
 		} else if !p.Constraint(expr) {
 			return false

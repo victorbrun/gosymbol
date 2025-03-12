@@ -114,7 +114,7 @@ func Equal(t, u Expr) bool {
 		return ok && v == uTyped
 	case variable:
 		uTyped, ok := u.(variable)
-		return ok && v.Name == uTyped.Name
+		return ok && v.Name() == uTyped.Name()
 	case constrainedVariable:
 		// TODO: how do we check equality of constrain??
 		return false
@@ -223,7 +223,7 @@ func RecContains(expr, u Expr) bool {
 		return ok && v == uTyped
 	case variable:
 		uTyped, ok := u.(variable)
-		return ok && v.Name == uTyped.Name
+		return ok && v.Name() == uTyped.Name()
 	case constrainedVariable:
 		// TODO: how do we check equality of constrain??
 		return false
@@ -255,9 +255,9 @@ func VariableNames(expr Expr) []VarName {
 		// Typing expression
 		switch v := e.(type) {
 		case variable:
-			stringSlice[ix] = string(v.Name)
+			stringSlice[ix] = string(v.Name())
 		case constrainedVariable:
-			stringSlice[ix] = string(v.Name)
+			stringSlice[ix] = string(v.Name())
 		default:
 			err := fmt.Errorf("somthing went wrong: %#v is expected to be of type variable or constrainedVariable", v)
 			panic(err)

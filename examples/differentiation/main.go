@@ -8,7 +8,7 @@ import (
 
 func main() {
 	x := gosymbol.Var("x")
-	f := gosymbol.Mul(x, gosymbol.Exp(x))
+	f := gosymbol.FromLatex(`x \exp(x)`)
 
 	fmt.Println("f(x) = ", f)
 	fmt.Println("f'(x) = ", f.D(x))
