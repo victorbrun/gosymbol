@@ -6,6 +6,35 @@ import (
 	"testing"
 )
 
+func TestPowerSimplify(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          Expr
+		expectedOutput Expr
+	}{
+		{
+			name:           "( ( x^(1/2) )^(1/2) )^8 = x^2 (example 3.35 p. 96)",
+			input:          Pow(Pow(Pow(Var("x"), Frac(Int(1), Int(2))), Frac(Int(1), Int(2))), Int(8)),
+			expectedOutput: Pow(Var("x"), Int(2)),
+		},
+		{
+			name:           "( ( x * y )^(1/2) * z^2 )^2 (example 3.36 p. 97)",
+			input:          Pow(Mul(Pow(Mul(Var("x"), Var("y")), Frac(Int(1), Int(2))), Pow(Var("z"), Int(2))), Int(2)),
+			expectedOutput: Mul(Var("x"), Var("y"), Pow(Var("z"), Int(4))),
+		},
+	}
+
+	for ix, test := range tests {
+		t.Run(fmt.Sprint(ix+1), func(t *testing.T) {
+			result := test.input.Simplify()
+
+			if !reflect.DeepEqual(result, test.expectedOutput) {
+				t.Errorf("Following test failed: %s\nInput: %v\nExpected: %v\nGot: %v", test.name, test.input, test.expectedOutput, result)
+			}
+		})
+	}
+}
+
 func TestSimplify(t *testing.T) {
 	tests := []struct {
 		name           string

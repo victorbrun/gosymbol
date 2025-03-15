@@ -425,14 +425,8 @@ var powerSimplificationRules2 []transformationRule = []transformationRule{
 			r := Operand(v, 1)
 			s := Operand(v, 2)
 
-			p := Mul(s, n).Simplify()
-
-			switch p.(type) {
-			case integer:
-				return Pow(r, p).Simplify()
-			default:
-				return Pow(r, p)
-			}
+			p := Mul(s, n)
+			return Pow(r, p)
 		},
 	},
 	{ // SINTPOW-5
@@ -465,7 +459,7 @@ var powerSimplificationRules2 []transformationRule = []transformationRule{
 
 			r := make([]Expr, NumberOfOperands(v))
 			for ix := range NumberOfOperands(v) {
-				r[ix] = Pow(Operand(v, ix+1), n).Simplify()
+				r[ix] = Pow(Operand(v, ix+1), n)
 			}
 
 			return Mul(r...)

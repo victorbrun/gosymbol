@@ -87,7 +87,7 @@ func simplify(expr Expr) Expr {
 	case mul:
 		expr, appliedRuleIdx = rulesApplicator(expr, productSimplificationRules)
 	case pow:
-		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules)
+		expr, appliedRuleIdx = rulesApplicator(expr, powerSimplificationRules2)
 	case exp:
 		expr, appliedRuleIdx = rulesApplicator(expr, expSimplificationRules)
 	case log:
