@@ -341,6 +341,138 @@ var productSimplificationRules []transformationRule = []transformationRule{
 	},
 }
 
+var powerSimplificationRules2 []transformationRule = []transformationRule{
+	{ // SPOW-1
+		patternFunction: func(e Expr) bool { return RecContains(e, Undefined()) },
+		transform:       func(e Expr) Expr { return Undefined() },
+	},
+	{ // SPOW-2: 0^x = 0
+		pattern:   Pow(Int(0), constraPatternVar("x", positiveConstant)),
+		transform: func(e Expr) Expr { return Int(0) },
+	},
+	{ // SPOW-3: 1^x = 1
+		pattern:   Pow(Int(1), patternVar("x")),
+		transform: func(e Expr) Expr { return Int(1) },
+	},
+	{ // SINTPOW-1:
+		patternFunction: func(e Expr) bool {
+			switch e.(type) {
+			case pow:
+				base := Operand(e, 1)
+				exp := Operand(e, 2)
+
+				switch exp.(type) {
+				case integer:
+					// Do noting to continue execution
+				default:
+					return false
+				}
+
+				switch base.(type) {
+				case integer:
+					return true
+				case fraction:
+					return true
+				default:
+					return false
+				}
+			default:
+				return false
+			}
+		},
+		transform: func(e Expr) Expr {
+			base := Operand(e, 1).(rational)
+			exp := Operand(e, 2).(integer)
+			return ratPow(base, exp)
+		},
+	},
+	{ // SINTPOW-2
+		pattern:   Pow(patternVar("x"), Int(0)),
+		transform: func(e Expr) Expr { return Int(1) },
+	},
+	{ // SINTPOW-3
+		pattern:   Pow(patternVar("x"), Int(1)),
+		transform: func(e Expr) Expr { return Operand(e, 1) },
+	},
+	{ // SINTPOW-4
+		patternFunction: func(e Expr) bool {
+			switch e.(type) {
+			case pow:
+				exp := Operand(e, 2)
+				switch exp.(type) {
+				case integer:
+					// Do nothing and continue execution
+				default:
+					return false
+				}
+
+				base := Operand(e, 1)
+				switch base.(type) {
+				case pow:
+					return true
+				default:
+					return false
+				}
+			default:
+				return false
+			}
+		},
+		transform: func(e Expr) Expr {
+			// Following notation used in book
+			v := Operand(e, 1)
+			n := Operand(e, 2)
+
+			r := Operand(v, 1)
+			s := Operand(v, 2)
+
+			p := Mul(s, n).Simplify()
+
+			switch p.(type) {
+			case integer:
+				return Pow(r, p).Simplify()
+			default:
+				return Pow(r, p)
+			}
+		},
+	},
+	{ // SINTPOW-5
+		patternFunction: func(e Expr) bool {
+			switch e.(type) {
+			case pow:
+				exp := Operand(e, 2)
+				switch exp.(type) {
+				case integer:
+					// Do nothing and continue execution
+				default:
+					return false
+				}
+
+				base := Operand(e, 1)
+				switch base.(type) {
+				case mul:
+					return true
+				default:
+					return false
+				}
+			default:
+				return false
+			}
+		},
+		transform: func(e Expr) Expr {
+			// Following notation in book
+			v := Operand(e, 1)
+			n := Operand(e, 2)
+
+			r := make([]Expr, NumberOfOperands(v))
+			for ix := range NumberOfOperands(v) {
+				r[ix] = Pow(Operand(v, ix+1), n).Simplify()
+			}
+
+			return Mul(r...)
+		},
+	},
+}
+
 var powerSimplificationRules []transformationRule = []transformationRule{
 	{ // 0^x = 0 for x in R_+
 		pattern: Pow((Int(0)), constraPatternVar("x", positiveConstant)),
